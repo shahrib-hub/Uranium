@@ -105,6 +105,17 @@ module.exports = async (interaction) => {
       });
     }
 
+    if (action === 'autoplay') {
+      const currentAutoplay = player.data.get('autoplay') || false;
+      const newAutoplay = !currentAutoplay;
+      player.data.set('autoplay', newAutoplay);
+      await updatePlayerMessage(interaction.client, player);
+      return interaction.reply({ 
+        embeds: [simpleEmbed(newAutoplay ? '🎵 Autoplay enabled! Related tracks will play after queue ends.' : '❌ Autoplay disabled.')], 
+        flags: 64 
+      });
+    }
+
     if (action === 'stop') {
       player.queue.clear();
       player.queue.current = null;

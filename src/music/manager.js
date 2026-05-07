@@ -36,14 +36,19 @@ function sendVoicePayload(client, guildId, payload) {
 module.exports.createMusicManager = function createMusicManager(client) {
   const defaultSource = process.env.DEFAULT_SOURCE || 'ytmsearch:';
 
-  const nodes = [
-    {
-      name: process.env.LAVALINK_NAME || process.env.LAVALINK_ID || 'Main',
-      url: lavalinkUrl(),
-      auth: process.env.LAVALINK_PASSWORD || 'youshallnotpass',
-      secure: boolEnv('LAVALINK_SECURE', false)
-    }
-  ];
+  const mainNode = {
+    name: 'Main',
+    url: lavalinkUrl(),
+    auth: process.env.LAVALINK_PASSWORD || 'youshallnotpass',
+    secure: boolEnv('LAVALINK_SECURE', false)
+  };
+
+  const secondaryNode = process.env.LAVALINK_HOST_SECONDARY ? {
+    name: 'Secondary',
+    url: `${process.env.LAVALINK_HOST_SECONDARY}:${process.env.LAVALINK_PORT_SECONDARY || 2333}`,
+    auth: process.env.LAVALINK_PASSWORD_SECONDARY || 'youshallnotpass',
+    secure: boolEnv('LAVALINK_SECURE_SECONDARY', false)
+  } : null;
 
   const kazagumo = new Kazagumo(
     {
@@ -55,10 +60,11 @@ module.exports.createMusicManager = function createMusicManager(client) {
       searchWithSameNode: true
     },
     new Connectors.DiscordJS(client),
-    nodes,
+    [mainNode], // Start with only Main node
     {
       moveOnDisconnect: true,
-      reconnectTries: numberEnv('LAVALINK_RECONNECT_TRIES', 10),
+      reconnectTries: Infinity, // Reconnect indefinitely
+      reconnectInterval: 10000, // 10 seconds between attempts
       restTimeout: numberEnv('LAVALINK_REST_TIMEOUT', 10000),
       resumable: false
     }
@@ -73,9 +79,47 @@ module.exports.createMusicManager = function createMusicManager(client) {
     maxVolume: numberEnv('MAX_VOLUME', 100)
   };
 
-  kazagumo.shoukaku.on('ready', (name) => console.log(`[music] Lavalink node ready: ${name}`));
+  let secondaryAdded = false;
+
+  kazagumo.shoukaku.on('ready', (name) => {
+    console.log(`[music] Lavalink node ready: ${name}`);
+    
+    // Fallback logic: If main node is back and secondary was active, move players back
+    if (name === 'Main' && secondaryAdded) {
+      console.log(`[music] Main node restored. Falling back from secondary node...`);
+      
+      const players = Array.from(kazagumo.players.values());
+      players.forEach(player => {
+        if (player.node.name === 'Secondary') {
+          player.moveNode('Main').catch(e => console.error(`[music] Failed to move player to Main:`, e));
+        }
+      });
+
+      // Cleanup: Remove secondary node after a short delay to ensure players moved
+      setTimeout(() => {
+        if (secondaryAdded) {
+          console.log(`[music] Deactivating secondary node.`);
+          kazagumo.shoukaku.removeNode('Secondary');
+          secondaryAdded = false;
+        }
+      }, 5000);
+    }
+  });
+
+  kazagumo.shoukaku.on('reconnecting', (name, tries) => {
+    console.log(`[music] Lavalink node ${name} reconnecting (Attempt ${tries})...`);
+    
+    // Failover logic: After 5 failed attempts on Main, activate Secondary if available
+    if (name === 'Main' && tries >= 5 && secondaryNode && !secondaryAdded) {
+      console.log(`[music] Main node failed 5 times. Activating secondary node: ${secondaryNode.name}`);
+      kazagumo.shoukaku.addNode(secondaryNode);
+      secondaryAdded = true;
+    }
+  });
+
   kazagumo.shoukaku.on('error', (name, error) => console.error(`[music] Lavalink node error (${name}):`, error?.message || error));
   kazagumo.shoukaku.on('close', (name, code, reason) => console.warn(`[music] Lavalink node closed: ${name}`, { code, reason }));
+  
   kazagumo.on('debug', (message) => {
     if (boolEnv('MUSIC_DEBUG', false)) console.log(`[music:debug] ${message}`);
   });

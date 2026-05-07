@@ -144,6 +144,7 @@ function buildNowPlayingEmbed(track, player, client) {
   const queueCount = player?.queue?.size ?? player?.queue?.length ?? 0;
   const loopLabel = String(player?.loop || 'none');
   const filterLabel = currentFilterLabel(player);
+  const autoplay = player?.data?.get('autoplay') || false;
   const isPaused = player?.paused;
   const statusEmoji = isPaused ? '⏸️' : '▶️';
   const accentColor = isPaused ? COLORS.PAUSED : COLORS.PLAYING;
@@ -168,7 +169,8 @@ function buildNowPlayingEmbed(track, player, client) {
       { name: '🔊 Volume', value: `\`${player?.volume ?? 100}%\``, inline: true },
       { name: '📋 Queue', value: `\`${queueCount} upcoming\``, inline: true },
       { name: '🔁 Loop', value: `\`${loopLabel}\``, inline: true },
-      { name: '🎛️ Filter', value: `\`${filterLabel}\``, inline: true }
+      { name: '🎛️ Filter', value: `\`${filterLabel}\``, inline: true },
+      { name: '🎵 Autoplay', value: autoplay ? '`ON ✅`' : '`OFF`', inline: true }
     )
     .setFooter({ text: 'Uranium • Premium Music Experience' });
 
@@ -212,7 +214,7 @@ function buildSearchEmbed(query, tracks) {
     .setFooter({ text: `${tracks.length} results • Select a track below` });
 }
 
-function buildControlButtons(guildId, paused = false) {
+function buildControlButtons(guildId, paused = false, autoplay = false) {
   return [
     new ActionRowBuilder().addComponents(
       new ButtonBuilder()
@@ -240,7 +242,11 @@ function buildControlButtons(guildId, paused = false) {
       new ButtonBuilder().setCustomId(`music_ctrl:vol_down:${guildId}`).setEmoji('🔉').setStyle(ButtonStyle.Secondary),
       new ButtonBuilder().setCustomId(`music_ctrl:vol_up:${guildId}`).setEmoji('🔊').setStyle(ButtonStyle.Secondary),
       new ButtonBuilder().setCustomId(`music_ctrl:loop:${guildId}`).setEmoji('🔁').setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId(`music_ctrl:filters:${guildId}`).setEmoji('🎛️').setStyle(ButtonStyle.Secondary)
+      new ButtonBuilder().setCustomId(`music_ctrl:filters:${guildId}`).setEmoji('🎛️').setStyle(ButtonStyle.Secondary),
+new ButtonBuilder()
+            .setCustomId(`music_ctrl:autoplay:${guildId}`)
+            .setEmoji('🔄')
+            .setStyle(autoplay ? ButtonStyle.Success : ButtonStyle.Secondary)
     )
   ];
 }
