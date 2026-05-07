@@ -36,6 +36,9 @@ export default function VoiceSelector() {
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || 'Failed to join channel');
+      } else {
+        // Success! Immediately update store so UI reflects the active player
+        useStore.getState().setPlayer(data);
       }
     } catch (e) { 
       console.error(e);

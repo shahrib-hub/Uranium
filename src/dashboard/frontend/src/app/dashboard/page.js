@@ -118,9 +118,9 @@ export default function DashboardPage() {
         <StatCard 
           icon={<Terminal size={24} className="text-red-500" />} 
           label="Music Status" 
-          value={guildInfo?.music?.active ? 'ACTIVE' : 'IDLE'} 
-          subtext={guildInfo?.music?.active ? `Playing in #${guildInfo.music.channel}` : 'No active streams'}
-          color={guildInfo?.music?.active ? 'text-green-500' : 'text-white/20'}
+          value={player.active ? 'ACTIVE' : 'IDLE'} 
+          subtext={player.active ? 'Node Synchronized' : 'No active streams'}
+          color={player.active ? 'text-green-500' : 'text-white/20'}
         />
         <StatCard 
           icon={<Globe size={24} className="text-red-500" />} 

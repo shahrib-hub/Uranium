@@ -35,15 +35,29 @@ export default function MusicControls() {
     handleAction('loop');
   };
 
-  if (!player?.active || !player.current) {
+  if (!player?.active) {
     return (
       <div className="glass p-12 rounded-[40px] flex flex-col items-center justify-center text-center space-y-6 ambient-red-border min-h-[300px]">
         <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center animate-pulse">
           <Activity className="text-white/20" size={32} />
         </div>
         <div>
-          <h3 className="text-2xl font-black text-white/40">No Active Session</h3>
-          <p className="text-sm text-white/20">Join a voice channel and start playing music to see controls.</p>
+          <h3 className="text-2xl font-black text-white/40 uppercase">No Active Session</h3>
+          <p className="text-sm text-white/20 font-medium">Join a voice channel node to initialize the Uranium player.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!player.current) {
+    return (
+      <div className="glass p-12 rounded-[40px] flex flex-col items-center justify-center text-center space-y-6 ambient-red-border min-h-[300px] border-green-500/20 bg-green-500/[0.01]">
+        <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center">
+          <Zap className="text-green-500 animate-pulse" size={32} />
+        </div>
+        <div>
+          <h3 className="text-2xl font-black text-green-500 uppercase italic">Uranium Standby</h3>
+          <p className="text-sm text-white/40 font-medium">Synchronized with <span className="text-white">#{player.channelName || 'Voice Node'}</span>. Search for a track to begin playback.</p>
         </div>
       </div>
     );

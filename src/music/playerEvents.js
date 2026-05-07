@@ -41,22 +41,22 @@ function startMessageRefresh(client, player) {
   messageRefreshIntervals.set(player.guildId, timer);
 }
 
-async function setVoiceChannelTopic(client, player, track, isPlaying = true) {
+async function updateVoiceChannelStatus(client, player, track, isPlaying = true) {
   try {
     if (!player?.voiceId) return;
     
     const voiceChannel = client.channels.cache.get(player.voiceId);
-    if (!voiceChannel || voiceChannel.type !== 2) return; // 2 = Voice channel
+    if (!voiceChannel || voiceChannel.type !== 2 || !voiceChannel.setStatus) return; 
     
     if (isPlaying && track) {
       const title = track.title || 'Unknown Track';
       const author = track.author || track.info?.author || '';
-      const topic = author 
-        ? `🎤 Playing: ${title} - ${author}` 
-        : `🎤 Playing: ${title}`;
-      await voiceChannel.setTopic(topic).catch(() => {});
+      const status = author 
+        ? `🎤 Playing ${title} - ${author}` 
+        : `🎤 Playing ${title}`;
+      await voiceChannel.setStatus(status).catch(() => {});
     } else {
-      await voiceChannel.setTopic(null).catch(() => {});
+      await voiceChannel.setStatus("").catch(() => {});
     }
   } catch (e) {
     // Silently fail
@@ -103,8 +103,8 @@ module.exports.registerPlayerEvents = function registerPlayerEvents(client) {
         player.message = msg;
         startMessageRefresh(client, player);
       }
-      // Set voice channel topic and bot presence
-      await setVoiceChannelTopic(client, player, track, true);
+      // Set voice channel status and bot presence
+      await updateVoiceChannelStatus(client, player, track, true);
       await updateBotPresence(client, track, true);
       // Emit to web dashboard
       client.dashboardBridge?.emitPlayerUpdate(player);
@@ -116,9 +116,9 @@ module.exports.registerPlayerEvents = function registerPlayerEvents(client) {
   kazagumo.on('playerEnd', async (player) => {
     try {
       stopMessageRefresh(player.guildId);
-      // Clear topic if no more tracks
+      // Clear status if no more tracks
       if (!player.queue?.length) {
-        await setVoiceChannelTopic(client, player, null, false);
+        await updateVoiceChannelStatus(client, player, null, false);
         await updateBotPresence(client, null, false);
       }
       await disableOldMessage(player);
@@ -132,7 +132,7 @@ module.exports.registerPlayerEvents = function registerPlayerEvents(client) {
     try {
       stopMessageRefresh(player.guildId);
       const guildId = player.guildId;
-      await setVoiceChannelTopic(client, player, null, false);
+      await updateVoiceChannelStatus(client, player, null, false);
       await updateBotPresence(client, null, false);
       await disableOldMessage(player);
       await sendToPlayerChannel(client, player, { embeds: [simpleEmbed('The queue is empty. Add more songs.')] });
