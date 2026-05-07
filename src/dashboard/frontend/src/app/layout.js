@@ -9,38 +9,42 @@ import { connectSocket } from '@/socket';
 function LayoutContent({ children }) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const guildId = searchParams.get('guild');
+  const { player, setPlayer } = useStore();
+  
+  // Get Guild ID from URL or Store (Persist across navigation)
+  const urlGuildId = searchParams.get('guild');
+  const effectiveGuildId = urlGuildId || player.guildId;
 
   useEffect(() => {
-    if (guildId) {
-      connectSocket(guildId);
+    if (effectiveGuildId) {
+      // Connect/reconnect socket
+      connectSocket(effectiveGuildId);
 
-      // Global Synchronization Fallback: 
-      // This ensures the Music and Dashboard pages always stay in sync 
-      // even if the real-time Socket.IO connection is blocked by a firewall.
-      const syncData = () => {
-        fetch(`/api/guild/${guildId}/player`)
-          .then(r => r.json())
-          .then(data => {
-             if (data) useStore.getState().setPlayer(data);
-          })
-          .catch(() => null);
+      // Force Sync Function: Manual check-in with bot every 3 seconds
+      const forceSync = async () => {
+        try {
+          const res = await fetch(`/api/guild/${effectiveGuildId}/player`);
+          const data = await res.json();
+          if (data && data.active !== undefined) {
+             setPlayer(data);
+          }
+        } catch (e) {
+          console.error('[SYNC] Sync failed:', e);
+        }
       };
 
-      syncData();
-      const interval = setInterval(syncData, 5000);
-      return () => {
-        clearInterval(interval);
-      };
+      forceSync();
+      const interval = setInterval(forceSync, 3000); // More frequent sync (3s)
+      return () => clearInterval(interval);
     }
-  }, [guildId]);
+  }, [effectiveGuildId]);
 
   const showSidebar = pathname.startsWith('/dashboard') || pathname.startsWith('/commands');
 
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="flex min-h-screen w-full overflow-x-hidden">
       {showSidebar && <Sidebar />}
-      <div className="flex-1 flex flex-col bg-gradient-to-br from-[#050505] to-[#0a0505]">
+      <div className="flex-1 flex flex-col bg-[#050505]">
         {showSidebar && <Header />}
         <main className={`flex-1 ${showSidebar ? 'pt-24' : ''}`}>
           {children}
