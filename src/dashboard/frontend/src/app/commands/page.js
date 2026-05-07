@@ -33,11 +33,8 @@ export default function CommandsPage() {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white selection:bg-red-500/30">
-      <Sidebar />
-      <Header />
-      
-      <main className="pl-80 pt-24 min-h-screen transition-all duration-500">
-        <div className="p-12 max-w-7xl mx-auto space-y-12">
+      <main className="min-h-screen transition-all duration-500">
+        <div className="p-4 md:p-12 max-w-7xl mx-auto space-y-12">
           {/* Hero Section */}
           <div className="relative group">
             <div className="absolute -inset-1 bg-gradient-to-r from-red-500 to-orange-600 rounded-[40px] blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
@@ -47,10 +44,10 @@ export default function CommandsPage() {
                   <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.2)]">
                     <Terminal size={28} />
                   </div>
-                  <h1 className="text-4xl font-black tracking-tighter uppercase italic">Protocol Registry</h1>
+                  <h1 className="text-4xl font-black tracking-tighter uppercase italic">Commands Registry</h1>
                 </div>
                 <p className="text-white/40 font-medium max-w-xl text-lg leading-relaxed">
-                  Deep introspection of the Uranium core. Every command, subcommand, and utility documented for maximum operational efficiency.
+                  Deep introspection of the Uranium core. Every command, utility, and capability documented for maximum operational efficiency.
                 </p>
               </div>
               
@@ -60,7 +57,7 @@ export default function CommandsPage() {
                 </div>
                 <input 
                   type="text" 
-                  placeholder="Filter protocols..."
+                  placeholder="Filter commands..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full bg-white/5 border border-white/10 rounded-3xl py-6 pl-16 pr-8 outline-none focus:border-red-500/50 transition-all font-bold text-lg placeholder:text-white/10 shadow-2xl"

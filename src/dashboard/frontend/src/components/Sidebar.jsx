@@ -56,7 +56,7 @@ export default function Sidebar() {
       activeOn: ['/dashboard/music']
     },
     { name: 'Moderation', icon: Shield, path: '/dashboard/mod', color: 'text-green-500', badge: 'Soon' },
-    { name: 'Terminal', icon: Terminal, path: '/commands', color: 'text-yellow-500' },
+    { name: 'Commands', icon: Terminal, path: '/commands', color: 'text-yellow-500' },
   ];
 
   return (
@@ -202,7 +202,7 @@ export default function Sidebar() {
               <span className="text-[10px] font-black uppercase text-red-500">Core Online</span>
             </div>
             <p className="text-[10px] text-white/40 font-medium leading-relaxed">
-              All systems operational. Shoukaku bridge stable.
+              Uranium Bot API is stable and Operational.
             </p>
           </div>
         </div>

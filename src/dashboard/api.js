@@ -118,7 +118,11 @@ function createApiRouter(client) {
           const modes = ['none', 'track', 'queue'];
           player.setLoop(modes[(modes.indexOf(player.loop || 'none') + 1) % modes.length]);
           break;
-        case 'autoplay': player.autoplay = !player.autoplay; break;
+        case 'autoplay': {
+          const current = player.data.get('autoplay') || false;
+          player.data.set('autoplay', !current);
+          break;
+        }
         case 'volume': 
           const vol = Math.min(100, Math.max(0, parseInt(value)));
           player.setVolume(vol); 
@@ -351,7 +355,7 @@ function serializePlayer(player, guildId) {
     volume: player.volume ?? 100, 
     loop: player.loop || 'none', 
     filter: player.data?.get('filter') || 'clear', 
-    autoplay: player.autoplay || false, 
+    autoplay: player.data?.get('autoplay') || false, 
     current: serializeTrack(player.queue?.current), 
     queueSize: player.queue?.size || 0, 
     queue: Array.from(player.queue || []).slice(0, 50).map((t, i) => ({ ...serializeTrack(t), position: i })) 

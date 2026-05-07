@@ -65,7 +65,7 @@ module.exports.createMusicManager = function createMusicManager(client) {
       moveOnDisconnect: true,
       reconnectTries: Infinity, // Reconnect indefinitely
       reconnectInterval: 10000, // 10 seconds between attempts
-      restTimeout: numberEnv('LAVALINK_REST_TIMEOUT', 10000),
+      restTimeout: 5000, // 5 seconds (Reduced from 10s for faster failure detection)
       resumable: false,
       userAgent: 'UraniumBot/1.0.0 (DiscordBot)'
     }

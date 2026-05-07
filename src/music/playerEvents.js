@@ -141,6 +141,7 @@ module.exports.registerPlayerEvents = function registerPlayerEvents(client) {
 
   kazagumo.on('playerStart', async (player, track) => {
     try {
+      player.data.set('lastTrack', track);
       clearLeaveTimer(player.guildId);
       if (!player.data.get('filter')) player.data.set('filter', getCurrentFilter(player));
       await disableOldMessage(player);
@@ -187,7 +188,7 @@ module.exports.registerPlayerEvents = function registerPlayerEvents(client) {
       
       const autoplayEnabled = player.data.get('autoplay');
       if (autoplayEnabled) {
-        const currentTrack = player.queue?.current;
+        const currentTrack = player.queue?.current || player.data.get('lastTrack');
         if (currentTrack) {
           const relatedTracks = await fetchRelatedTracks(client, currentTrack, 5);
           if (relatedTracks.length > 0) {

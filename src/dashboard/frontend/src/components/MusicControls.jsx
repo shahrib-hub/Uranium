@@ -1,5 +1,5 @@
 'use client';
-import { Play, Pause, SkipForward, SkipBack, Volume2, Repeat, Shuffle, Zap, Activity } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Volume2, Repeat, Shuffle, RefreshCw, Activity } from 'lucide-react';
 import { useStore } from '@/store';
 import PremiumButton from './PremiumButton';
 import { useState, useEffect } from 'react';
@@ -150,8 +150,9 @@ export default function MusicControls() {
             variant={player.autoplay ? 'red' : 'ghost'} 
             className={`p-3 ${player.autoplay ? 'bg-red-500/10' : ''}`}
             onClick={() => handleAction('autoplay')}
+            title="Autoplay"
           >
-            <Zap size={20} fill={player.autoplay ? 'currentColor' : 'none'} />
+            <RefreshCw size={20} className={player.autoplay ? 'animate-spin-slow text-red-500' : ''} />
           </PremiumButton>
         </div>
 

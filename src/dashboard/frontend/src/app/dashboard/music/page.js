@@ -18,7 +18,7 @@ export default function MusicPage() {
           className="flex items-center gap-4 mb-2"
         >
           <div className="h-px w-12 bg-red-500" />
-          <span className="text-[10px] sm:text-xs font-black uppercase tracking-[4px] text-red-500">Acoustic Command Center</span>
+          <span className="text-[10px] sm:text-xs font-black uppercase tracking-[4px] text-red-500">Commands Registry</span>
         </motion.div>
         <motion.h1 
           initial={{ opacity: 0, x: -20 }}
@@ -40,7 +40,7 @@ export default function MusicPage() {
             <div className="glass p-8 rounded-[40px] ambient-red-border">
               <h3 className="text-xl font-bold mb-6 flex items-center gap-3">
                 <Terminal className="text-red-500" size={24} />
-                Network Search
+                Commands
               </h3>
               <SearchPicker />
             </div>
@@ -60,7 +60,7 @@ export default function MusicPage() {
               <span className="text-[10px] font-black uppercase tracking-widest text-red-500">Engine Status</span>
             </div>
             <p className="text-xs text-white/40 leading-relaxed font-medium">
-              The Uranium Audio Engine is currently bridged via Shoukaku. 
+              The Uranium Audio Engine is currently bridged via the Uranium Bot API. 
               Real-time synchronization is active for all dashboard nodes.
             </p>
           </div>
