@@ -117,9 +117,9 @@ module.exports.createMusicManager = function createMusicManager(client) {
       mainFailures++;
       console.log(`[music] Main node failure count: ${mainFailures}`);
 
-      // Failover logic: After 5 failed attempts on Main, activate Secondary if available
-      if (mainFailures >= 5 && secondaryNode && !secondaryAdded) {
-        console.log(`[music] Main node failed 5 times. Activating secondary node: ${secondaryNode.name}`);
+      // Failover logic: After 3 failed attempts on Main, activate Secondary if available
+      if (mainFailures >= 3 && secondaryNode && !secondaryAdded) {
+        console.log(`[music] Main node failed 3 times. Activating secondary node: ${secondaryNode.name}`);
         kazagumo.shoukaku.addNode(secondaryNode);
         secondaryAdded = true;
       }
