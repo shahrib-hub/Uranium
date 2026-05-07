@@ -1,5 +1,5 @@
 'use client';
-import { Play, Pause, SkipForward, SkipBack, Volume2, Repeat, Shuffle, RefreshCw, Activity } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Volume2, Repeat, Shuffle, RefreshCw, Activity, Zap } from 'lucide-react';
 import { useStore } from '@/store';
 import PremiumButton from './PremiumButton';
 import { useState, useEffect } from 'react';

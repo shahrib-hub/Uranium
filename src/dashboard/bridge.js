@@ -46,7 +46,7 @@ class DashboardBridge {
    */
   emitPlayerUpdate(player) {
     if (!player?.guildId) return;
-    const data = serializePlayer(player);
+    const data = serializePlayer(player, this.client);
     this.io.to(`guild:${player.guildId}`).emit('playerUpdate', data);
   }
 

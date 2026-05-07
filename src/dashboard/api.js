@@ -85,7 +85,7 @@ function createApiRouter(client) {
 
   router.get('/guild/:guildId/player', requireGuildAccess(client), (req, res) => {
     const player = client.music?.players?.get(req.params.guildId);
-    res.json(serializePlayer(player, req.params.guildId));
+    res.json(serializePlayer(player, client, req.params.guildId));
   });
 
   router.post('/guild/:guildId/player/action', requireGuildAccess(client), async (req, res) => {
@@ -280,7 +280,7 @@ function createApiRouter(client) {
 
       const { createPlayer } = require('../music/service');
       const newPlayer = await createPlayer(client, guildId, voiceId, null);
-      res.json(serializePlayer(newPlayer, guildId));
+      res.json(serializePlayer(newPlayer, client, guildId));
       
       setImmediate(() => {
         client.dashboardBridge?.emitPlayerUpdate(newPlayer);
@@ -377,11 +377,11 @@ function serializeTrack(track) {
   };
 }
 
-function serializePlayer(player, guildId) {
+function serializePlayer(player, client, guildId) {
   if (!player) return { active: false, guildId: guildId || null };
   
   // Try to get channel name from client cache
-  const guild = player.shoukaku?.connector?.client?.guilds?.cache?.get(player.guildId);
+  const guild = client.guilds.cache.get(player.guildId);
   const channel = guild?.channels?.cache?.get(player.voiceId);
 
   return { 
