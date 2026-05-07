@@ -12,7 +12,27 @@ function LayoutContent({ children }) {
   const guildId = searchParams.get('guild');
 
   useEffect(() => {
-    if (guildId) connectSocket(guildId);
+    if (guildId) {
+      connectSocket(guildId);
+
+      // Global Synchronization Fallback: 
+      // This ensures the Music and Dashboard pages always stay in sync 
+      // even if the real-time Socket.IO connection is blocked by a firewall.
+      const syncData = () => {
+        fetch(`/api/guild/${guildId}/player`)
+          .then(r => r.json())
+          .then(data => {
+             if (data) useStore.getState().setPlayer(data);
+          })
+          .catch(() => null);
+      };
+
+      syncData();
+      const interval = setInterval(syncData, 5000);
+      return () => {
+        clearInterval(interval);
+      };
+    }
   }, [guildId]);
 
   const showSidebar = pathname.startsWith('/dashboard') || pathname.startsWith('/commands');

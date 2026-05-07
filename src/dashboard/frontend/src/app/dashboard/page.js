@@ -24,14 +24,6 @@ export default function DashboardPage() {
   const fetchData = async () => {
     if (!effectiveGuildId) return;
     
-    // Fetch Player State (Real-time fallback)
-    fetch(`/api/guild/${effectiveGuildId}/player`)
-      .then(r => r.json())
-      .then(data => {
-        if (data) useStore.getState().setPlayer(data);
-      })
-      .catch(console.error);
-
     // Fetch Guild Info
     fetch(`/api/guild/${effectiveGuildId}/info`)
       .then(r => r.json())
@@ -49,10 +41,6 @@ export default function DashboardPage() {
     if (effectiveGuildId) {
       setLoading(true);
       fetchData().finally(() => setLoading(false));
-
-      // Polling Fallback: Refresh every 5 seconds in case Socket.IO is blocked
-      const interval = setInterval(fetchData, 5000);
-      return () => clearInterval(interval);
     }
   }, [effectiveGuildId]);
 
