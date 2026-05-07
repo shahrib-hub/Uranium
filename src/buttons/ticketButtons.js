@@ -1,4 +1,5 @@
 // src/buttons/ticketButtons.js
+// hello
 const {
   ActionRowBuilder,
   ButtonBuilder,
@@ -71,12 +72,12 @@ module.exports = async function handleTicketInteraction(interaction) {
 
       // Confirm / Cancel creation (legacy panel)
       if (id === 'ticket_confirm_create') {
-        await interaction.update({ content: '✅ Creating ticket...', components: [], flags: 64 }).catch(() => {});
+        await interaction.update({ content: '✅ Creating ticket...', components: [], flags: 64 }).catch(() => { });
         return;
       }
 
       if (id === 'ticket_cancel_create') {
-        await interaction.update({ content: '❌ Ticket creation cancelled.', components: [], flags: 64 }).catch(() => {});
+        await interaction.update({ content: '❌ Ticket creation cancelled.', components: [], flags: 64 }).catch(() => { });
         return;
       }
 
@@ -128,15 +129,15 @@ module.exports = async function handleTicketInteraction(interaction) {
 
         const config = await getConfig(guild.id);
         const transcriptChannel = config ? await guild.channels.fetch(config.transcript_channel_id).catch(() => null) : null;
-        if (transcriptChannel) await transcriptChannel.send({ embeds: [embed], files: [file] }).catch(() => {});
-        await channel.send({ embeds: [embed], files: [file] }).catch(() => {});
+        if (transcriptChannel) await transcriptChannel.send({ embeds: [embed], files: [file] }).catch(() => { });
+        await channel.send({ embeds: [embed], files: [file] }).catch(() => { });
 
-        await channel.permissionOverwrites.edit(ticket.opener_id, { ViewChannel: false }).catch(() => {});
+        await channel.permissionOverwrites.edit(ticket.opener_id, { ViewChannel: false }).catch(() => { });
         const deleteRow = new ActionRowBuilder().addComponents(
           new ButtonBuilder().setCustomId('ticket_delete').setLabel('🗑️ Delete Ticket').setStyle(ButtonStyle.Danger)
         );
-        await channel.send({ content: 'This ticket is now closed. You may delete it if no longer needed.', components: [deleteRow] }).catch(() => {});
-        if (config) await channel.setParent(config.closed_category_id).catch(() => {});
+        await channel.send({ content: 'This ticket is now closed. You may delete it if no longer needed.', components: [deleteRow] }).catch(() => { });
+        if (config) await channel.setParent(config.closed_category_id).catch(() => { });
         await safeInteractionReply(interaction, { content: '✅ Ticket closed.' });
         return;
       }
@@ -144,7 +145,7 @@ module.exports = async function handleTicketInteraction(interaction) {
       // Delete
       if (id === 'ticket_delete') {
         await interaction.reply({ content: '🗑️ Deleting ticket in 5 seconds...', flags: 64 });
-        setTimeout(() => interaction.channel.delete().catch(() => {}), 5000);
+        setTimeout(() => interaction.channel.delete().catch(() => { }), 5000);
         return;
       }
 
@@ -177,7 +178,7 @@ module.exports = async function handleTicketInteraction(interaction) {
       if (!customId.startsWith('ticket_create_modal:')) return;
 
       // Defer first (acknowledge the modal)
-      await interaction.deferReply({ flags: 64 }).catch(() => {});
+      await interaction.deferReply({ flags: 64 }).catch(() => { });
 
       const [, type = 'Support'] = customId.split(':');
       const subject = interaction.fields.getTextInputValue('subject') || 'No subject';
@@ -212,11 +213,11 @@ module.exports = async function handleTicketInteraction(interaction) {
     console.error('[ticketButtons] error:', err);
     try {
       if (interaction.deferred || interaction.replied) {
-        await interaction.editReply({ content: '❌ An unexpected error occurred while processing the ticket.' }).catch(() => {});
+        await interaction.editReply({ content: '❌ An unexpected error occurred while processing the ticket.' }).catch(() => { });
       } else {
-        await interaction.reply({ content: '❌ An unexpected error occurred while processing the ticket.', flags: 64 }).catch(() => {});
+        await interaction.reply({ content: '❌ An unexpected error occurred while processing the ticket.', flags: 64 }).catch(() => { });
       }
-    } catch {}
+    } catch { }
   }
 };
 
@@ -238,7 +239,7 @@ async function safeInteractionReply(interaction, payload) {
           return await interaction.followUp({ ...payload, ephemeral: payload.ephemeral ?? true });
         } catch (followErr) {
           // final fallback: try to reply (may fail if already replied)
-          try { return await interaction.reply({ ...payload, ephemeral: payload.ephemeral ?? true }); } catch (_) {}
+          try { return await interaction.reply({ ...payload, ephemeral: payload.ephemeral ?? true }); } catch (_) { }
         }
       }
     } else {
