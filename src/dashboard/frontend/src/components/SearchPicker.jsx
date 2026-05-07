@@ -122,7 +122,7 @@ export default function SearchPicker() {
                   className="p-2 sm:p-3 rounded-xl bg-red-500 text-black hover:scale-110 transition-all shadow-lg shadow-red-500/20"
                   title="Play Now"
                 >
-                  <Play size={14} sm:size={16} fill="currentColor" />
+                  <Play size={16} fill="currentColor" />
                 </button>
                 <button 
                   onClick={() => performAction(track, 'next')}
@@ -136,7 +136,7 @@ export default function SearchPicker() {
                   className="p-2 sm:p-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all"
                   title="Add to Queue"
                 >
-                  <ListPlus size={14} sm:size={16} />
+                  <ListPlus size={16} />
                 </button>
               </div>
 
