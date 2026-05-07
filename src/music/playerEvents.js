@@ -47,6 +47,13 @@ async function updateVoiceChannelStatus(client, player, track, isPlaying = true)
     
     const voiceChannel = client.channels.cache.get(player.voiceId);
     if (!voiceChannel || voiceChannel.type !== 2 || !voiceChannel.setStatus) return; 
+
+    // Check for permissions (SetVoiceChannelStatus is 1n << 48n)
+    const me = voiceChannel.guild.members.me;
+    if (!voiceChannel.permissionsFor(me).has('SetVoiceChannelStatus')) {
+      console.warn(`[music] Missing 'SetVoiceChannelStatus' permission in ${voiceChannel.guild.name}`);
+      return;
+    }
     
     if (isPlaying && track) {
       const title = track.title || 'Unknown Track';
@@ -54,12 +61,16 @@ async function updateVoiceChannelStatus(client, player, track, isPlaying = true)
       const status = author 
         ? `🎤 Playing ${title} - ${author}` 
         : `🎤 Playing ${title}`;
-      await voiceChannel.setStatus(status).catch(() => {});
+      
+      console.log(`[music] Updating VC Status: ${status}`);
+      await voiceChannel.setStatus(status).catch(err => {
+        console.error(`[music] Failed to set VC status: ${err.message}`);
+      });
     } else {
       await voiceChannel.setStatus("").catch(() => {});
     }
   } catch (e) {
-    // Silently fail
+    console.error(`[music] VC Status error:`, e.message);
   }
 }
 
