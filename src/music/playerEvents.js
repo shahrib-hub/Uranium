@@ -41,38 +41,43 @@ function startMessageRefresh(client, player) {
   messageRefreshIntervals.set(player.guildId, timer);
 }
 
-async function setVoiceChannelStatus(client, player, track, isPlaying = true) {
+async function setVoiceChannelTopic(client, player, track, isPlaying = true) {
   try {
-    if (!player?.voiceId || !player?.guildId) {
-      console.log('[VC Status] Missing voiceId or guildId');
-      return;
-    }
+    if (!player?.voiceId) return;
     
     const voiceChannel = client.channels.cache.get(player.voiceId);
-    if (!voiceChannel) {
-      console.log('[VC Status] Voice channel not found in cache:', player.voiceId);
-      return;
-    }
-    
-    if (typeof voiceChannel.setStatus !== 'function') {
-      console.log('[VC Status] setStatus not available on channel type:', voiceChannel.type);
-      return;
-    }
+    if (!voiceChannel || voiceChannel.type !== 2) return; // 2 = Voice channel
     
     if (isPlaying && track) {
       const title = track.title || 'Unknown Track';
       const author = track.author || track.info?.author || '';
-      const status = author 
-        ? `🎤 Playing ${title} - ${author}` 
-        : `🎤 Playing ${title}`;
-      await voiceChannel.setStatus(status);
-      console.log('[VC Status] Set status:', status);
+      const topic = author 
+        ? `🎤 Playing: ${title} - ${author}` 
+        : `🎤 Playing: ${title}`;
+      await voiceChannel.setTopic(topic).catch(() => {});
     } else {
-      await voiceChannel.setStatus(null);
-      console.log('[VC Status] Cleared status');
+      await voiceChannel.setTopic(null).catch(() => {});
     }
   } catch (e) {
-    console.error('[VC Status] Error:', e.message);
+    // Silently fail
+  }
+}
+
+async function updateBotPresence(client, track, isPlaying = true) {
+  try {
+    const title = track?.title || 'Unknown Track';
+    const author = track?.author || track?.info?.author || '';
+    
+    if (isPlaying && track) {
+      await client.user.setActivity(
+        author ? `${title} - ${author}` : title,
+        { type: 'LISTENING', name: 'Spotify' }
+      );
+    } else {
+      await client.user.setActivity(null);
+    }
+  } catch (e) {
+    // Silently fail
   }
 }
 
@@ -98,8 +103,9 @@ module.exports.registerPlayerEvents = function registerPlayerEvents(client) {
         player.message = msg;
         startMessageRefresh(client, player);
       }
-      // Set voice channel status with now playing info
-      await setVoiceChannelStatus(client, player, track, true);
+      // Set voice channel topic and bot presence
+      await setVoiceChannelTopic(client, player, track, true);
+      await updateBotPresence(client, track, true);
       // Emit to web dashboard
       client.dashboardBridge?.emitPlayerUpdate(player);
     } catch (err) {
@@ -110,25 +116,27 @@ module.exports.registerPlayerEvents = function registerPlayerEvents(client) {
   kazagumo.on('playerEnd', async (player) => {
     try {
       stopMessageRefresh(player.guildId);
-      // Clear voice channel status when song ends
-      await setVoiceChannelStatus(client, player, null, false);
+      // Clear topic if no more tracks
+      if (!player.queue?.length) {
+        await setVoiceChannelTopic(client, player, null, false);
+        await updateBotPresence(client, null, false);
+      }
       await disableOldMessage(player);
       client.dashboardBridge?.emitPlayerUpdate(player);
     } catch (err) {
       console.error('[music] playerEnd cleanup failed:', err);
     }
-  });
+});
 
-kazagumo.on('playerEmpty', async (player) => {
+  kazagumo.on('playerEmpty', async (player) => {
     try {
       stopMessageRefresh(player.guildId);
       const guildId = player.guildId;
-      // Clear voice channel status when bot leaves
-      await setVoiceChannelStatus(client, player, null, false);
+      await setVoiceChannelTopic(client, player, null, false);
+      await updateBotPresence(client, null, false);
       await disableOldMessage(player);
       await sendToPlayerChannel(client, player, { embeds: [simpleEmbed('The queue is empty. Add more songs.')] });
       await player.destroy().catch(() => null);
-      // Notify dashboard player is gone
       client.dashboardIO?.to(`guild:${guildId}`).emit('playerUpdate', { active: false });
     } catch (err) {
       console.error('[music] playerEmpty failed:', err);
