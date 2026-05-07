@@ -55,17 +55,24 @@ async function fetchRelatedTracks(client, track, count = 5) {
   try {
     if (!client.music) return [];
     
-    // Improve query for better relevance (e.g. Hindi -> Hindi)
-    // Using YouTube Music search (ytmsearch:) is usually better for finding similar artists/genres
-    const query = `${track.title} ${track.author} related`;
+    // Using "radio" or "mix" in search is far more effective for YouTube's clustering algorithm
+    // than "related", which just matches words in titles.
+    const query = `${track.title} ${track.author} radio`;
     const result = await client.music.search({ 
       query: `ytmsearch:${query}` 
     });
-    const tracks = result.tracks || [];
+    let tracks = result.tracks || [];
     
-    return tracks
-      .filter(t => t.identifier !== track.identifier && t.uri !== track.uri)
-      .slice(0, count);
+    // Fallback to standard search if YTM returns nothing
+    if (tracks.length === 0) {
+      const fallbackResult = await client.music.search({ query: `ytsearch:${track.title} ${track.author} mix` });
+      tracks = fallbackResult.tracks || [];
+    }
+
+    // Filter out current track and prioritize same author/language vibe
+    const filtered = tracks.filter(t => t.identifier !== track.identifier && t.uri !== track.uri);
+    
+    return filtered.slice(0, count);
   } catch (e) {
     console.error('[Autoplay] Failed to fetch related tracks:', e.message);
     return [];
