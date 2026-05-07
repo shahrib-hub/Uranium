@@ -41,16 +41,23 @@ function startMessageRefresh(client, player) {
   messageRefreshIntervals.set(player.guildId, timer);
 }
 
-async function setVoiceChannelStatus(client, guildId, track, isPlaying = true) {
+async function setVoiceChannelStatus(client, player, track, isPlaying = true) {
   try {
-    const guild = await client.guilds.fetch(guildId).catch(() => null);
-    if (!guild) return;
+    if (!player?.voiceId || !player?.guildId) {
+      console.log('[VC Status] Missing voiceId or guildId');
+      return;
+    }
     
-    const voiceChannel = guild.channels.cache.find(ch => 
-      ch.type === 2 && ch.members?.has(client.user?.id)
-    );
+    const voiceChannel = client.channels.cache.get(player.voiceId);
+    if (!voiceChannel) {
+      console.log('[VC Status] Voice channel not found in cache:', player.voiceId);
+      return;
+    }
     
-    if (!voiceChannel || typeof voiceChannel.setStatus !== 'function') return;
+    if (typeof voiceChannel.setStatus !== 'function') {
+      console.log('[VC Status] setStatus not available on channel type:', voiceChannel.type);
+      return;
+    }
     
     if (isPlaying && track) {
       const title = track.title || 'Unknown Track';
@@ -58,14 +65,14 @@ async function setVoiceChannelStatus(client, guildId, track, isPlaying = true) {
       const status = author 
         ? `🎤 Playing ${title} - ${author}` 
         : `🎤 Playing ${title}`;
-      await voiceChannel.setStatus(status).catch(() => {});
+      await voiceChannel.setStatus(status);
+      console.log('[VC Status] Set status:', status);
     } else {
-      try {
-        await voiceChannel.setStatus(null).catch(() => {});
-      } catch (_) {}
+      await voiceChannel.setStatus(null);
+      console.log('[VC Status] Cleared status');
     }
   } catch (e) {
-    // Silently fail - voice channel status is optional
+    console.error('[VC Status] Error:', e.message);
   }
 }
 
@@ -92,7 +99,7 @@ module.exports.registerPlayerEvents = function registerPlayerEvents(client) {
         startMessageRefresh(client, player);
       }
       // Set voice channel status with now playing info
-      await setVoiceChannelStatus(client, player.guildId, track, true);
+      await setVoiceChannelStatus(client, player, track, true);
       // Emit to web dashboard
       client.dashboardBridge?.emitPlayerUpdate(player);
     } catch (err) {
@@ -104,7 +111,7 @@ module.exports.registerPlayerEvents = function registerPlayerEvents(client) {
     try {
       stopMessageRefresh(player.guildId);
       // Clear voice channel status when song ends
-      await setVoiceChannelStatus(client, player.guildId, null, false);
+      await setVoiceChannelStatus(client, player, null, false);
       await disableOldMessage(player);
       client.dashboardBridge?.emitPlayerUpdate(player);
     } catch (err) {
@@ -117,7 +124,7 @@ kazagumo.on('playerEmpty', async (player) => {
       stopMessageRefresh(player.guildId);
       const guildId = player.guildId;
       // Clear voice channel status when bot leaves
-      await setVoiceChannelStatus(client, guildId, null, false);
+      await setVoiceChannelStatus(client, player, null, false);
       await disableOldMessage(player);
       await sendToPlayerChannel(client, player, { embeds: [simpleEmbed('The queue is empty. Add more songs.')] });
       await player.destroy().catch(() => null);
