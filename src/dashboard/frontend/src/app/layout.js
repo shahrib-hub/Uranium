@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import { useSearchParams, usePathname } from 'next/navigation';
 import { useEffect, Suspense } from 'react';
 import { connectSocket } from '@/socket';
+import { useStore } from '@/store';
 
 function LayoutContent({ children }) {
   const searchParams = useSearchParams();
