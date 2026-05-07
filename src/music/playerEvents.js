@@ -43,34 +43,65 @@ function startMessageRefresh(client, player) {
 
 async function updateVoiceChannelStatus(client, player, track, isPlaying = true) {
   try {
-    if (!player?.voiceId) return;
+    if (!player?.voiceId) {
+      console.log("[music:status] No voiceId found for player.");
+      return;
+    }
     
-    const voiceChannel = client.channels.cache.get(player.voiceId);
-    if (!voiceChannel || voiceChannel.type !== 2 || !voiceChannel.setStatus) return; 
+    // Fetch if not in cache
+    let voiceChannel = client.channels.cache.get(player.voiceId);
+    if (!voiceChannel) {
+      voiceChannel = await client.channels.fetch(player.voiceId).catch(() => null);
+    }
 
-    // Check for permissions (SetVoiceChannelStatus is 1n << 48n)
+    if (!voiceChannel) {
+      console.log(`[music:status] Channel ${player.voiceId} not found.`);
+      return;
+    }
+
+    console.log(`[music:status] Checking channel: ${voiceChannel.name} (Type: ${voiceChannel.type})`);
+
+    // Channel types: 2 = Voice, 13 = Stage
+    const isVoice = voiceChannel.type === 2 || voiceChannel.type === 13;
+    if (!isVoice) {
+      console.log(`[music:status] Channel ${voiceChannel.name} is not a voice/stage channel.`);
+      return;
+    }
+
+    if (!voiceChannel.setStatus) {
+      console.log(`[music:status] Channel ${voiceChannel.name} does not support setStatus.`);
+      return;
+    }
+
+    // Check for permissions
     const me = voiceChannel.guild.members.me;
-    if (!voiceChannel.permissionsFor(me).has('SetVoiceChannelStatus')) {
-      console.warn(`[music] Missing 'SetVoiceChannelStatus' permission in ${voiceChannel.guild.name}`);
+    if (!me) {
+      console.log("[music:status] Could not find 'me' in guild members.");
+      return;
+    }
+
+    const perms = voiceChannel.permissionsFor(me);
+    if (!perms || !perms.has('SetVoiceChannelStatus')) {
+      console.warn(`[music:status] Missing 'SetVoiceChannelStatus' permission in ${voiceChannel.guild.name}`);
       return;
     }
     
     if (isPlaying && track) {
       const title = track.title || 'Unknown Track';
       const author = track.author || track.info?.author || '';
-      const status = author 
-        ? `🎤 Playing ${title} - ${author}` 
-        : `🎤 Playing ${title}`;
+      const status = `🎤 Playing ${title}${author ? ` - ${author}` : ''}`;
       
-      console.log(`[music] Updating VC Status: ${status}`);
+      console.log(`[music:status] ATTEMPTING UPDATE: ${status}`);
       await voiceChannel.setStatus(status).catch(err => {
-        console.error(`[music] Failed to set VC status: ${err.message}`);
+        console.error(`[music:status] Discord API Error: ${err.message}`);
       });
+      console.log(`[music:status] COMPLETED: Request sent for ${voiceChannel.name}`);
     } else {
       await voiceChannel.setStatus("").catch(() => {});
+      console.log(`[music:status] CLEARED status for ${voiceChannel.name}`);
     }
   } catch (e) {
-    console.error(`[music] VC Status error:`, e.message);
+    console.error(`[music:status] CRITICAL ERROR:`, e.message);
   }
 }
 
