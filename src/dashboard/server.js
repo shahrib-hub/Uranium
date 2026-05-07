@@ -116,8 +116,9 @@ function startDashboard(client) {
   client.dashboardIO = io;
 
   // Start server
-  server.listen(PORT, () => {
-    console.log(`🌐 Dashboard running at http://localhost:${PORT}`);
+  const HOST = process.env.DASHBOARD_HOST || '0.0.0.0';
+  server.listen(PORT, HOST, () => {
+    console.log(`🌐 Dashboard running at http://${HOST}:${PORT}`);
   });
 
   return { app, server, io, bridge };
