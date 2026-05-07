@@ -66,7 +66,8 @@ module.exports.createMusicManager = function createMusicManager(client) {
       reconnectTries: Infinity, // Reconnect indefinitely
       reconnectInterval: 10000, // 10 seconds between attempts
       restTimeout: numberEnv('LAVALINK_REST_TIMEOUT', 10000),
-      resumable: false
+      resumable: false,
+      userAgent: 'UraniumBot/1.0.0 (DiscordBot)'
     }
   );
 
@@ -80,48 +81,61 @@ module.exports.createMusicManager = function createMusicManager(client) {
   };
 
   let secondaryAdded = false;
+  let mainFailures = 0;
 
   kazagumo.shoukaku.on('ready', (name) => {
     console.log(`[music] Lavalink node ready: ${name}`);
     
-    // Fallback logic: If main node is back and secondary was active, move players back
-    if (name === 'Main' && secondaryAdded) {
-      console.log(`[music] Main node restored. Falling back from secondary node...`);
+    if (name === 'Main') {
+      mainFailures = 0; // Reset on success
       
-      const players = Array.from(kazagumo.players.values());
-      players.forEach(player => {
-        if (player.node.name === 'Secondary') {
-          player.moveNode('Main').catch(e => console.error(`[music] Failed to move player to Main:`, e));
-        }
-      });
+      if (secondaryAdded) {
+        console.log(`[music] Main node restored. Falling back from secondary node...`);
+        
+        const players = Array.from(kazagumo.players.values());
+        players.forEach(player => {
+          if (player.node.name === 'Secondary') {
+            player.moveNode('Main').catch(e => console.error(`[music] Failed to move player to Main:`, e));
+          }
+        });
 
-      // Cleanup: Remove secondary node after a short delay to ensure players moved
-      setTimeout(() => {
-        if (secondaryAdded) {
-          console.log(`[music] Deactivating secondary node.`);
-          kazagumo.shoukaku.removeNode('Secondary');
-          secondaryAdded = false;
-        }
-      }, 5000);
+        setTimeout(() => {
+          if (secondaryAdded) {
+            console.log(`[music] Deactivating secondary node.`);
+            kazagumo.shoukaku.removeNode('Secondary');
+            secondaryAdded = false;
+          }
+        }, 5000);
+      }
     }
   });
 
-  kazagumo.shoukaku.on('reconnecting', (name, tries) => {
-    console.log(`[music] Lavalink node ${name} reconnecting (Attempt ${tries})...`);
+  kazagumo.shoukaku.on('close', (name, code, reason) => {
+    console.warn(`[music] Lavalink node ${name} closed. Code: ${code}, Reason: ${reason || 'None'}`);
     
-    // Failover logic: After 5 failed attempts on Main, activate Secondary if available
-    if (name === 'Main' && tries >= 5 && secondaryNode && !secondaryAdded) {
-      console.log(`[music] Main node failed 5 times. Activating secondary node: ${secondaryNode.name}`);
-      kazagumo.shoukaku.addNode(secondaryNode);
-      secondaryAdded = true;
+    if (name === 'Main') {
+      mainFailures++;
+      console.log(`[music] Main node failure count: ${mainFailures}`);
+
+      // Failover logic: After 5 failed attempts on Main, activate Secondary if available
+      if (mainFailures >= 5 && secondaryNode && !secondaryAdded) {
+        console.log(`[music] Main node failed 5 times. Activating secondary node: ${secondaryNode.name}`);
+        kazagumo.shoukaku.addNode(secondaryNode);
+        secondaryAdded = true;
+      }
     }
   });
 
-  kazagumo.shoukaku.on('error', (name, error) => console.error(`[music] Lavalink node error (${name}):`, error?.message || error));
-  kazagumo.shoukaku.on('close', (name, code, reason) => console.warn(`[music] Lavalink node closed: ${name}`, { code, reason }));
+  kazagumo.shoukaku.on('error', (name, error) => {
+    console.error(`[music] Lavalink node error (${name}):`, error?.message || error);
+  });
+
+  kazagumo.shoukaku.on('debug', (name, info) => {
+    if (boolEnv('MUSIC_DEBUG', false)) console.log(`[music:shoukaku:debug] [${name}] ${info}`);
+  });
   
   kazagumo.on('debug', (message) => {
-    if (boolEnv('MUSIC_DEBUG', false)) console.log(`[music:debug] ${message}`);
+    if (boolEnv('MUSIC_DEBUG', false)) console.log(`[music:kazagumo:debug] ${message}`);
   });
 
   return kazagumo;
