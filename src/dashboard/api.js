@@ -150,6 +150,42 @@ function createApiRouter(client) {
     if (!player) return res.json({ current: null, tracks: [], size: 0 });
     res.json({ current: serializeTrack(player.queue.current), tracks: Array.from(player.queue || []).map((t, i) => ({ ...serializeTrack(t), position: i })), size: player.queue.size });
   });
+  
+  router.post('/guild/:guildId/queue/clear', requireGuildAccess(client), (req, res) => {
+    const player = client.music?.players?.get(req.params.guildId);
+    if (!player) return res.status(404).json({ error: 'No player' });
+    player.queue.clear();
+    res.json({ success: true });
+    client.dashboardBridge?.emitPlayerUpdate(player);
+  });
+
+  router.post('/guild/:guildId/queue/remove', requireGuildAccess(client), (req, res) => {
+    const { position } = req.body;
+    const player = client.music?.players?.get(req.params.guildId);
+    if (!player) return res.status(404).json({ error: 'No player' });
+    if (typeof position !== 'number') return res.status(400).json({ error: 'Invalid position' });
+    
+    player.queue.remove(position);
+    res.json({ success: true });
+    client.dashboardBridge?.emitPlayerUpdate(player);
+  });
+
+  router.post('/guild/:guildId/queue/reorder', requireGuildAccess(client), (req, res) => {
+    const { from, to } = req.body;
+    const player = client.music?.players?.get(req.params.guildId);
+    if (!player) return res.status(404).json({ error: 'No player' });
+    
+    // Kazagumo queue doesn't have a direct 'move' method usually, but we can splice
+    const tracks = Array.from(player.queue);
+    const [moved] = tracks.splice(from, 1);
+    tracks.splice(to, 0, moved);
+    
+    player.queue.clear();
+    player.queue.add(tracks);
+    
+    res.json({ success: true });
+    client.dashboardBridge?.emitPlayerUpdate(player);
+  });
 
   router.get('/guild/:guildId/search', requireGuildAccess(client), async (req, res) => {
     const { query } = req.query;

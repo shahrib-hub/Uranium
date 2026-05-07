@@ -27,10 +27,31 @@ export default function QueueManager() {
   };
 
   const handleReorder = (newQueue) => {
-    // In a real app, we'd send the diff to the backend.
-    // For now, we'll just update local state and maybe send the whole thing if small.
+    // Find what moved
+    const oldQueue = queue;
+    let from = -1;
+    let to = -1;
+
+    // This is a simplified check for a single item move
+    for (let i = 0; i < newQueue.length; i++) {
+      if (newQueue[i].uri !== oldQueue[i]?.uri) {
+        // Find where the item at i in newQueue was in oldQueue
+        const item = newQueue[i];
+        from = oldQueue.findIndex(t => t.uri === item.uri && t.title === item.title);
+        to = i;
+        break;
+      }
+    }
+
+    if (from !== -1 && to !== -1 && from !== to) {
+      fetch(`/api/guild/${player.guildId}/queue/reorder`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from, to })
+      });
+    }
+    
     setQueue(newQueue);
-    // Note: Reordering in Discord is complex via API, usually we just emit the new order.
   };
 
   const formatTime = (ms) => {
@@ -67,15 +88,23 @@ export default function QueueManager() {
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+      <Reorder.Group 
+        axis="y" 
+        values={queue} 
+        onReorder={handleReorder}
+        className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar"
+      >
         {queue.map((track, i) => (
-          <motion.div
-            key={`${track.uri}-${i}`}
+          <Reorder.Item
+            key={`${track.uri}-${track.position}-${i}`}
+            value={track}
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
-            className="group flex items-center gap-4 p-3 rounded-2xl hover:bg-white/5 border border-transparent hover:border-white/5 transition-all"
+            className="group flex items-center gap-4 p-3 rounded-2xl hover:bg-white/5 border border-transparent hover:border-white/5 transition-all cursor-grab active:cursor-grabbing bg-transparent"
           >
-            <div className="text-xs font-mono text-white/10 w-4">{i + 1}</div>
+            <div className="text-xs font-mono text-white/10 w-4 flex items-center justify-center">
+              <GripVertical size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
             <div className="w-12 h-12 rounded-xl overflow-hidden bg-white/5 flex-shrink-0">
               <img src={track.thumbnail} className="w-full h-full object-cover" alt="" />
             </div>
@@ -86,15 +115,15 @@ export default function QueueManager() {
             <div className="flex items-center gap-2 sm:gap-4">
               <span className="hidden sm:block text-[10px] font-mono text-white/20">{formatTime(track.duration)}</span>
               <button 
-                onClick={() => handleRemove(track.position)}
+                onClick={(e) => { e.stopPropagation(); handleRemove(track.position); }}
                 className="p-2 text-white/20 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all md:opacity-0 md:group-hover:opacity-100"
               >
                 <Trash2 size={14} />
               </button>
             </div>
-          </motion.div>
+          </Reorder.Item>
         ))}
-      </div>
+      </Reorder.Group>
 
       <div className="pt-4 border-t border-white/5 flex items-center justify-between text-white/20">
         <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">

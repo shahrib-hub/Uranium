@@ -55,11 +55,17 @@ async function fetchRelatedTracks(client, track, count = 5) {
   try {
     if (!client.music) return [];
     
-    const query = `${track.author || track.info?.author || ''} ${track.title || ''}`;
-    const result = await client.music.search({ query: `ytsearch:${query}` });
+    // Improve query for better relevance (e.g. Hindi -> Hindi)
+    // Using YouTube Music search (ytmsearch:) is usually better for finding similar artists/genres
+    const query = `${track.title} ${track.author} related`;
+    const result = await client.music.search({ 
+      query: `ytmsearch:${query}` 
+    });
     const tracks = result.tracks || [];
     
-    return tracks.slice(0, count).filter(t => t.identifier !== track.identifier);
+    return tracks
+      .filter(t => t.identifier !== track.identifier && t.uri !== track.uri)
+      .slice(0, count);
   } catch (e) {
     console.error('[Autoplay] Failed to fetch related tracks:', e.message);
     return [];
