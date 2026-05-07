@@ -343,22 +343,28 @@ function serializeTrack(track) {
 
 function serializePlayer(player, guildId) {
   if (!player) return { active: false, guildId: guildId || null };
+  
+  // Try to get channel name from client cache
+  const guild = player.shoukaku?.connector?.client?.guilds?.cache?.get(player.guildId);
+  const channel = guild?.channels?.cache?.get(player.voiceId);
+
   return { 
     active: true, 
     guildId: player.guildId, 
     voiceId: player.voiceId, 
+    channelName: channel?.name || 'Voice Channel',
     textId: player.textId, 
     playing: player.playing || false, 
     paused: player.paused || false, 
-    pausedByEmptyVC: !!player.data.get('pausedByEmptyVC'),
+    pausedByEmptyVC: !!player.data?.get?.('pausedByEmptyVC'),
     position: player.position || 0, 
     volume: player.volume ?? 100, 
     loop: player.loop || 'none', 
-    filter: player.data?.get('filter') || 'clear', 
-    autoplay: player.data?.get('autoplay') || false, 
+    filter: player.data?.get?.('filter') || 'clear', 
+    autoplay: player.data?.get?.('autoplay') || false, 
     current: serializeTrack(player.queue?.current), 
     queueSize: player.queue?.size || 0, 
-    queue: Array.from(player.queue || []).slice(0, 50).map((t, i) => ({ ...serializeTrack(t), position: i })) 
+    queue: (Array.from(player.queue || [])).slice(0, 50).map((t, i) => ({ ...serializeTrack(t), position: i })) 
   };
 }
 
