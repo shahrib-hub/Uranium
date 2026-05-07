@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useStore } from '@/store';
+import { useSearchParams } from 'next/navigation';
 import MusicControls from '@/components/MusicControls';
 import SearchPicker from '@/components/SearchPicker';
 
@@ -11,17 +12,20 @@ import VoiceSelector from '@/components/VoiceSelector';
 import { Code, LayoutGrid, Terminal, Shield, Calendar, Zap, Activity, Users, Globe } from 'lucide-react';
 
 export default function DashboardPage() {
+  const searchParams = useSearchParams();
   const { player } = useStore();
+  const effectiveGuildId = player.guildId || searchParams.get('guild');
+  
   const [guildInfo, setGuildInfo] = useState(null);
   const [botStats, setBotStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchData = async () => {
-    if (!player.guildId) return;
+    if (!effectiveGuildId) return;
     
     // Fetch Guild Info
-    fetch(`/api/guild/${player.guildId}/info`)
+    fetch(`/api/guild/${effectiveGuildId}/info`)
       .then(r => r.json())
       .then(data => setGuildInfo(data))
       .catch(console.error);
@@ -34,11 +38,11 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    if (player.guildId) {
+    if (effectiveGuildId) {
       setLoading(true);
       fetchData().finally(() => setLoading(false));
     }
-  }, [player.guildId]);
+  }, [effectiveGuildId]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -46,7 +50,7 @@ export default function DashboardPage() {
     setTimeout(() => setRefreshing(false), 600);
   };
 
-  if (!player.guildId) return (
+  if (!effectiveGuildId) return (
     <div className="flex items-center justify-center h-[80vh] text-white/20 font-black uppercase tracking-[10px]">
       Select a server to initialize
     </div>

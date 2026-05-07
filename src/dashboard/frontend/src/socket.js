@@ -6,11 +6,19 @@ let socket = null;
 export const connectSocket = (guildId) => {
   if (socket) socket.disconnect();
 
-  socket = io({ withCredentials: true });
+  // Force WebSocket for better reliability through proxies/Vercel
+  socket = io({ 
+    withCredentials: true,
+    transports: ['websocket'] 
+  });
 
   socket.on('connect', () => {
     console.log('[socket] connected');
-    if (guildId) socket.emit('join-guild', guildId);
+    if (guildId) {
+      socket.emit('join-guild', guildId);
+      // Immediately set the guildId in the store so the UI doesn't say "Select a server"
+      useStore.getState().setPlayerGuildId(guildId);
+    }
   });
 
   socket.on('playerUpdate', (data) => {

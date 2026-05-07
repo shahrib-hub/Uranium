@@ -14,4 +14,7 @@ export const useStore = create((set) => ({
   updatePlayer: (updates) => set((state) => ({ 
     player: { ...state.player, ...updates } 
   })),
+  setPlayerGuildId: (guildId) => set((state) => ({
+    player: { ...state.player, guildId }
+  })),
 }));
