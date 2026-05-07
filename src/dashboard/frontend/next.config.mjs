@@ -6,24 +6,25 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Local development rewrites (Next.js Dev Server -> Bot Server)
-  async rewrites() {
-    if (process.env.EXPORT) return [];
-    return [
-      {
-        source: '/api/:path*',
-        destination: 'http://localhost:3000/api/:path*',
-      },
-      {
-        source: '/auth/:path*',
-        destination: 'http://localhost:3000/auth/:path*',
-      },
-      {
-        source: '/socket.io/:path*',
-        destination: 'http://localhost:3000/socket.io/:path*',
-      },
-    ];
-  },
+  // Only include rewrites for local dev; Next.js errors if they exist during 'export'
+  ...(process.env.EXPORT ? {} : {
+    async rewrites() {
+      return [
+        {
+          source: '/api/:path*',
+          destination: 'http://localhost:3000/api/:path*',
+        },
+        {
+          source: '/auth/:path*',
+          destination: 'http://localhost:3000/auth/:path*',
+        },
+        {
+          source: '/socket.io/:path*',
+          destination: 'http://localhost:3000/socket.io/:path*',
+        },
+      ];
+    },
+  }),
 };
 
 export default nextConfig;
