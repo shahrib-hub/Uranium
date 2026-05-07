@@ -1,0 +1,417 @@
+{
+  "bot": {
+    "name": "Uranium",
+    "version": "2.0.0",
+    "developer": "SHM",
+    "invite_url": "https://discord.com/oauth2/authorize?client_id=932136827605905489&scope=bot%20applications.commands&permissions=8",
+    "support_url": "https://discord.gg/26ThFyckFX"
+  },
+  "quick_update": "We are in urgent need of staff for our new support server\n\n[+] Actively fixing button based errors.",
+
+  "categories": [
+    {
+      "id": "Moderation",
+      "emoji": "<:mb_mod:1448297559905927270>",
+      "commands": [
+        "/mod user warn — warn a user",
+        "/mod punish kick — kick a user",
+        "/mod punish ban — ban a user",
+        "/mod punish tempban — temporarily ban",
+        "/mod punish unban — unban a user",
+        "/mod punish mute — mute a user",
+        "/mod punish unmute — unmute user",
+        "/mod punish timeout — apply timeout",
+        "/mod punish softban — softban user",
+        "/mod tools purge — delete messages",
+        "/mod tools lockdown — lock a channel",
+        "/mod tools unlock — unlock channel",
+        "/mod tools slowmode — set slowmode",
+        "/mod tools nick — change nickname",
+        "/mod force-role — force a role onto user",
+        "/mod clear-roles — remove roles",
+        "/mod unwarn — remove a warning",
+        "/mod infractions — view infractions",
+        "/mod notes-add — add note to user",
+        "/mod notes-list — list notes",
+        "/mod history — view mod history"
+      ]
+    },
+    {
+      "id": "Automod",
+      "emoji": "<:mb_shield:1448297837136707706>",
+      "commands": [
+        "/automod anti-spam — anti-spam settings",
+        "/automod anti-link — block links",
+        "/automod anti-caps — limit caps",
+        "/automod anti-invite — block invites",
+        "/automod anti-mention-spam — prevent mention spam",
+        "/automod banned-words — set banned words",
+        "/automod anti-raid — anti-raid tools",
+        "/automod ignore-channel — ignore a channel",
+        "/automod ignore-role — ignore a role",
+        "/automod whitelist-domain — allow domain",
+        "/automod status — view automod status"
+      ]
+    },
+    {
+      "id": "Fun",
+      "emoji": "<:mb_fun:1448298159313780778>",
+      "commands": [
+        "/facts fact — general fact",
+        "/facts bird — bird facts",
+        "/facts cat — cat facts",
+        "/facts dog — dog facts",
+        "/facts panda — panda facts",
+        "/facts koala — koala facts",
+        "/fun nom — nom action",
+        "/fun poke — poke action",
+        "/fun cry — cry action",
+        "/fun kiss — kiss action",
+        "/fun pat — pat action",
+        "/fun hug — hug action",
+        "/fun wink — wink action",
+        "/fun facepalm — facepalm action",
+        "/fun quote — show a quote",
+        "/fun ascii — ascii art",
+        "/fun cleverrate — rate cleverness",
+        "/fun confused — confused action",
+        "/fun dinochrome — dinochrome",
+        "/fun epicgamerrate — epic gamer rate",
+        "/fun gif — send a gif",
+        "/fun hack — fun hack message",
+        "/fun kill — playfully kill",
+        "/fun lovemeter — love meter",
+        "/fun reverse — reverse text",
+        "/fun rickroll — rickroll",
+        "/fun roast — roast text",
+        "/fun sudo — sudo message",
+        "/fun token — fake token",
+        "/fun xmas — xmas special",
+        "/meme — post meme"
+      ]
+    },
+    {
+      "id": "Games",
+      "emoji": "<:mb_games:1448298235427819521>",
+      "commands": [
+        "/games tictactoe — play tic tac toe",
+        "/games hangman — hangman game",
+        "/games memory — memory game",
+        "/games rps — rock paper scissors",
+        "/games guessthenumber — guess the number",
+        "/games trivia — trivia game",
+        "/games 8ball — magic 8 ball",
+        "/games fasttype — typing challenge"
+      ]
+    },
+    {
+      "id": "Economy",
+      "emoji": "<:mb_economy:1448764015919497400>",
+      "commands": [
+        "/economy help — full economy help menu",
+        "/eco info balance — view balance & net worth",
+        "/eco info profile — rich profile with level & stats",
+        "/eco info inventory — view & use items",
+        "/eco info stats — detailed statistics",
+        "/eco info leaderboard — global leaderboard",
+        "/eco info level — XP & level progress",
+        "/eco bank deposit — deposit coins to bank",
+        "/eco bank withdraw — withdraw from bank",
+        "/eco bank transfer — transfer coins (2% tax)",
+        "/eco bank rob — rob someone's wallet",
+        "/eco earn daily — daily reward (streak bonus!)",
+        "/eco earn work — work level-gated jobs",
+        "/eco earn crime — risky crime for big payouts",
+        "/eco earn beg — beg for spare change",
+        "/eco earn search — search locations for coins",
+        "/eco earn quest — view & claim quests",
+        "/eco fun slots — slot machine",
+        "/eco fun coinflip — heads or tails",
+        "/eco fun blackjack — full blackjack game",
+        "/eco fun dice — dice roll vs dealer",
+        "/eco fun crash — crash multiplier game",
+        "/eco shop browse — browse 55+ items",
+        "/eco shop sell — sell items for coins",
+        "/eco adventure start — choose adventure zone",
+        "/eco adventure hunt — hunt animals for coins",
+        "/eco adventure fish — catch fish for coins",
+        "/eco adventure explore — explore for loot",
+        "/eco progress level — view level & XP",
+        "/eco progress prestige — prestige for bonuses",
+        "/eco progress streaks — daily streak info"
+      ]
+    },
+    {
+      "id": "Social",
+      "emoji": "<:mb_social:1448763992871931965>",
+      "commands": [
+        "/family adopt — adopt user",
+        "/family children — view children",
+        "/family divorce — divorce partner",
+        "/family marry — marry user",
+        "/family partner — partner actions",
+        "/family runaway — runaway action",
+        "/family toggle — toggle family settings",
+        "/family view — view family"
+      ]
+    },
+    {
+      "id": "AI",
+      "emoji": "<:mb_ai:1448298308014571541>",
+      "commands": [
+        "/ai chat — chat with AI",
+        "/ai setup — set AI channel",
+        "/ai disable — disable AI",
+        "/ai status — AI status",
+        "/ai style — set style",
+        "/ai settings — AI settings",
+        "/ai stats — usage stats",
+        "/ai reset — reset AI",
+        "/ai help — AI help"
+      ]
+    },
+    {
+      "id": "Giveaways",
+      "emoji": "<:mb_giveaway:1448298127093272648>",
+      "commands": [
+        "/giveaway start — start a giveaway",
+        "/giveaway edit — edit giveaway",
+        "/giveaway end — end giveaway",
+        "/giveaway reroll — reroll winners",
+        "/giveaway list — list giveaways"
+      ]
+    },
+    {
+      "id": "Information",
+      "emoji": "<:mb_info:1448298008910495774>",
+      "commands": [
+        "/info emoji-list — list emojis",
+        "/info avatar — show avatar",
+        "/info user — user info",
+        "/info server — server info",
+        "/info channel — channel info",
+        "/info role — role info",
+        "/bot uptime — uptime",
+        "/bot ping — ping",
+        "/bot stats — stats",
+        "/bot info — bot info",
+        "/bot version — version",
+        "/bot developer — show developer",
+        "/bot invite — invite link",
+        "/help — open this help"
+      ]
+    },
+    {
+      "id": "Logging",
+      "emoji": "<:mb_track:1448297790198513734>",
+      "commands": [
+        "/log set-channel — set log channel",
+        "/log create-webhook — create webhook",
+        "/log remove-webhook — remove webhook",
+        "/log enable — enable logs",
+        "/log disable — disable logs",
+        "/log list-events — list log events",
+        "/log ignore-add — ignore an event",
+        "/log ignore-remove — remove ignore",
+        "/log ignore-list — list ignores",
+        "/log status — logging status"
+      ]
+    },
+    {
+      "id": "Music",
+      "emoji": "<:mb_music:1448297428649381958>",
+      "commands": [
+        "/music play — play track",
+        "/music search — search track",
+        "/music join — join voice",
+        "/music leave — leave voice",
+        "/music pause — pause",
+        "/music resume — resume",
+        "/music skip — skip track",
+        "/music previous — previous track",
+        "/music stop — stop music",
+        "/music nowplaying — now playing",
+        "/music queue — show queue",
+        "/music clear — clear queue",
+        "/music shuffle — shuffle queue",
+        "/music remove — remove track",
+        "/music seek — seek in track",
+        "/music volume — volume control",
+        "/music loop — loop mode",
+        "/music filter — audio filter",
+        "/music help — music help menu"
+      ]
+    },
+    {
+      "id": "Premium",
+      "emoji": "<:mb_premium:1448298200589926450>",
+      "commands": [
+        "/premium help — premium help",
+        "/premium buy — buy premium",
+        "/premium redeem — redeem a code",
+        "/premium support — premium support",
+        "/premium status — view status"
+      ]
+    },
+    {
+      "id": "Ranking",
+      "emoji": "<:mb_rank:1448297877112750165>",
+      "commands": [
+        "/rank user xp — xp info",
+        "/rank user rank — rank info",
+        "/rank user card — rank card",
+        "/rank user leaderboard — leaderboard",
+        "/rank config enable — enable rank",
+        "/rank config disable — disable rank",
+        "/rank config setcooldown — set cooldown",
+        "/rank config blacklist — blacklist user",
+        "/rank config roles — set roles",
+        "/rank config roles-list — list roles",
+        "/rank admin recalc — recalc ranks",
+        "/rank admin give — give xp",
+        "/rank admin set — set xp",
+        "/rank admin reset — reset user",
+        "/rank admin resetall — reset all"
+      ]
+    },
+    {
+      "id": "Setup",
+      "emoji": "<:mb_setup:1448298046587932733>",
+      "commands": [
+        "/anti-ghostping setup — setup anti-ghostping",
+        "/anti-ghostping disable — disable",
+        "/anti-ghostping number-reset — reset number",
+        "/anti-ghostping config — configure",
+        "/autoresponse add — add autoresponse",
+        "/autoresponse remove — remove autoresponse",
+        "/autoresponse list — list autoresponses",
+        "/autorole add — add autorole",
+        "/autorole create — create autorole",
+        "/autorole delete — delete autorole",
+        "/autorole list — list autoroles",
+        "/autorole assign-now — assign now",
+        "/autorole disable — disable autorole",
+        "/autorole enable — enable autorole",
+        "/autorole remove — remove autorole",
+        "/autorole set-default — set default",
+        "/autorole view — view autorole",
+        "/join-ping add — add join ping",
+        "/join-ping remove — remove join ping",
+        "/join-ping disable — disable",
+        "/join-ping list — list join pings",
+        "/join-to-create setup — setup jtc",
+        "/join-to-create disable — disable jtc",
+        "/verify setup — setup verification",
+        "/verify bypass — bypass verify",
+        "/verify remove — remove verify",
+        "/verify disable — disable verify",
+        "/verify status — verify status",
+        "/rr add — add reaction role",
+        "/rr create — create rr",
+        "/rr delete — delete rr",
+        "/rr list — list rr",
+        "/rr rehen — rehen command",
+        "/rr view — view rr",
+        "/rr remove — remove rr",
+        "/welcome channel set — set welcome channel",
+        "/welcome channel remove — remove welcome channel",
+        "/welcome config — config welcome"
+      ]
+    },
+    {
+      "id": "Tickets",
+      "emoji": "<:mb_tickets:1448297943303061726>",
+      "commands": [
+        "/ticket setup — setup tickets",
+        "/ticket panel — ticket panel",
+        "/ticket delete — delete ticket",
+        "/ticket archive — archive ticket",
+        "/ticket add-user — add user",
+        "/ticket remove-user — remove user",
+        "/ticket close — close ticket",
+        "/ticket claim — claim ticket",
+        "/ticket unclaim — unclaim ticket",
+        "/ticket information — ticket info"
+      ]
+    },
+    {
+      "id": "Tools",
+      "emoji": "<:mb_tools:1448297911459909752>",
+      "commands": [
+        "/tools decode — decode text",
+        "/tools encode — encode text",
+        "/tools emojify — make emoji text",
+        "/tools enlarge — enlarge emoji",
+        "/tools mcskin — minecraft skin",
+        "/tools mcstatus — minecraft server status",
+        "/tools passwordgen — generate password",
+        "/tools qrcode — make QR code",
+        "/tools shortenurl — shorten url"
+      ]
+    },
+    {
+      "id": "Utility",
+      "emoji": "<:mb_utility:1448298269334704180>",
+      "commands": [
+        "/afk set — set AFK",
+        "/afk remove — remove AFK",
+        "/afk info — AFK info",
+        "/afk list — AFK list",
+        "/afk config enable — enable AFK config",
+        "/afk config disable — disable AFK config",
+        "/afk config cooldown — set AFK cooldown",
+        "/afk config ignore-channel — ignore channel",
+        "/countdown aprilfools — countdown",
+        "/countdown birthday — countdown",
+        "/countdown christmas — countdown",
+        "/countdown easter — countdown",
+        "/countdown halloween — countdown",
+        "/countdown newyear — countdown",
+        "/countdown thanksgiving — countdown",
+        "/countdown valentines — countdown",
+        "/country set — set country",
+        "/country view — view country",
+        "/country list — list countries",
+        "/country matches — matches",
+        "/country remove — remove country",
+        "/embedbuilder create — create embed",
+        "/embedbuilder template load — load template",
+        "/embedbuilder template list — list templates",
+        "/embedbuilder template delete — delete template",
+        "/pokedex — pokemon lookup",
+        "/stickymessage create — create sticky",
+        "/stickymessage edit — edit sticky",
+        "/stickymessage remove — remove sticky",
+        "/stickymessage list — list sticky",
+        "/stickymessage toggle — toggle sticky",
+        "/stickymessage setchannel — set channel",
+        "/stickymessage reorder — reorder",
+        "/stickymessage config — sticky config",
+        "/birthday set — set birthday",
+        "/birthday view — view birthday",
+        "/birthday list — birthday list",
+        "/birthday matches — birthday matches",
+        "/birthday remove — remove birthday"
+      ]
+    },
+    {
+      "id": "Backup",
+      "emoji": "<:mb_pkg:1448297649760374804>",
+      "commands": [
+        "/backup info — backup info",
+        "/backup create — create backup",
+        "/backup restore — restore backup",
+        "/backup delete — delete backup"
+      ]
+    },
+    {
+      "id": "Youtube Verification",
+      "emoji": "<:mb_youtube:1448297975334830162>",
+      "commands": [
+        "/ytverify setup — setup youtube verification",
+        "/ytverify disable — disable",
+        "/ytverify status — status"
+      ]
+    }
+  ]
+}

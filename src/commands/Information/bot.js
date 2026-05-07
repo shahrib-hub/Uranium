@@ -1,0 +1,280 @@
+// src/commands/Utility/bot.js
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle
+} = require('discord.js');
+
+const os = require('os');
+const moment = require('moment'); // keep; install if you don't have it
+const pkg = require('../../../package.json'); // adjust path if needed
+
+const START_TIME = Date.now();
+
+function formatBytes(bytes) {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
+}
+
+function formatDuration(ms) {
+  const d = moment.duration(ms);
+  const parts = [];
+  if (d.years()) parts.push(`${d.years()}y`);
+  if (d.months()) parts.push(`${d.months()}mo`);
+  if (d.days()) parts.push(`${d.days()}d`);
+  if (d.hours()) parts.push(`${d.hours()}h`);
+  if (d.minutes()) parts.push(`${d.minutes()}m`);
+  parts.push(`${d.seconds()}s`);
+  return parts.join(' ');
+}
+
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('bot')
+    .setDescription('Bot-related commands and info (uptime, stats, invite, etc.)')
+    .addSubcommand(sub =>
+      sub.setName('uptime').setDescription('Check how long the bot has been running')
+    )
+    .addSubcommand(sub =>
+      sub.setName('ping').setDescription('Check the bot\'s latency')
+    )
+    .addSubcommand(sub =>
+      sub.setName('stats').setDescription('View bot performance and usage stats')
+    )
+    .addSubcommand(sub =>
+      sub.setName('info').setDescription('Get general information about the bot')
+    )
+    .addSubcommand(sub =>
+      sub.setName('version').setDescription('Show the current bot version and environment')
+    )
+    .addSubcommand(sub =>
+      sub.setName('developer').setDescription('Show info about the bot developer')
+    )
+    .addSubcommand(sub =>
+      sub.setName('invite').setDescription('Get the bot\'s invite link')
+    ),
+
+  async execute(interaction) {
+    const sub = interaction.options.getSubcommand();
+    const client = interaction.client;
+
+    // small safe helpers
+    const botAvatar = client.user?.displayAvatarURL?.({ size: 1024 }) || null;
+    const developerCredit = 'Made by SHM'; // per your preference for footers
+
+    // UPTIME
+    if (sub === 'uptime') {
+      // prefer client's uptime if available
+      const msUptime = (client.uptime != null && client.uptime > 0) ? client.uptime : (Date.now() - START_TIME);
+      const pretty = formatDuration(msUptime);
+      const startedAt = new Date(Date.now() - msUptime);
+
+      const embed = new EmbedBuilder()
+        .setTitle('🕒 Bot Uptime')
+        .setDescription(`I have been online for **${pretty}**`)
+        .addFields(
+          { name: 'Started', value: `<t:${Math.floor(startedAt.getTime() / 1000)}:F>`, inline: true },
+          { name: 'Since (relative)', value: `<t:${Math.floor(startedAt.getTime() / 1000)}:R>`, inline: true }
+        )
+        .setColor(0x57F287) // Green
+        .setThumbnail(botAvatar)
+        .setFooter({ text: developerCredit });
+
+      return interaction.reply({ embeds: [embed] });
+    }
+
+    // PING
+    if (sub === 'ping') {
+      const websocket = Math.round(client.ws?.ping ?? 0);
+      const apiLatency = Date.now() - interaction.createdTimestamp;
+      const cpu = os.loadavg()[0].toFixed(2);
+
+      const embed = new EmbedBuilder()
+        .setTitle('🏓 Pong!')
+        .setDescription('Latency & responsiveness snapshot')
+        .addFields(
+          { name: 'WebSocket Latency', value: `\`${websocket} ms\``, inline: true },
+          { name: 'API / Interaction Latency', value: `\`${apiLatency} ms\``, inline: true },
+          { name: 'CPU Load (1m)', value: `${cpu}`, inline: true }
+        )
+        .setColor(0x5865F2) // Blurple-ish
+        .setThumbnail(botAvatar)
+        .setFooter({ text: developerCredit });
+
+      return interaction.reply({ embeds: [embed] });
+    }
+
+    // STATS
+    if (sub === 'stats') {
+      const mem = process.memoryUsage();
+      const heapUsed = formatBytes(mem.heapUsed);
+      const heapTotal = formatBytes(mem.heapTotal);
+      const rss = formatBytes(mem.rss);
+      const nodeVer = process.version;
+      const cpuModel = os.cpus()[0]?.model || 'Unknown';
+      const cpuCount = os.cpus().length;
+      const up = formatDuration(process.uptime() * 1000);
+
+      // attempt to read some client counts (may not exist depending on your loader)
+      const guildCount = client.guilds?.cache?.size ?? 'N/A';
+      const userCount = client.users?.cache?.size ?? 'N/A';
+      const commandCount = (client.commands && typeof client.commands.size === 'number') ? client.commands.size : 'N/A';
+
+      const embed = new EmbedBuilder()
+        .setTitle('📊 Bot Stats')
+        .setDescription('Live performance metrics & usage')
+        .addFields(
+          { name: 'Servers', value: `${guildCount}`, inline: true },
+          { name: 'Cached Users', value: `${userCount}`, inline: true },
+          { name: 'Commands Loaded', value: `${commandCount}`, inline: true },
+
+          { name: 'Memory (heap used / total)', value: `${heapUsed} / ${heapTotal}`, inline: true },
+          { name: 'RSS', value: `${rss}`, inline: true },
+          { name: 'Process Uptime', value: `${up}`, inline: true },
+
+          { name: 'Node.js', value: `${nodeVer}`, inline: true },
+          { name: 'CPU', value: `${cpuModel} (${cpuCount} cores)`, inline: false }
+        )
+        .setColor(0xF1C40F) // Yellow
+        .setThumbnail(botAvatar)
+        .setFooter({ text: developerCredit })
+        .setTimestamp();
+
+      // add a small action row: invite & support server (if envs are set)
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setLabel('Invite')
+          .setStyle(ButtonStyle.Link)
+          .setURL(`https://discord.com/oauth2/authorize?client_id=${client.user.id}&permissions=8&scope=bot%20applications.commands`),
+        new ButtonBuilder()
+          .setLabel('Support')
+          .setStyle(ButtonStyle.Link)
+          .setURL(process.env.SUPPORT_SERVER_URL || 'https://discord.gg/26ThFyckFX') // set SUPPORT_SERVER_URL in .env
+      );
+
+      return interaction.reply({ embeds: [embed], components: [row] });
+    }
+
+    // INFO
+    if (sub === 'info') {
+      const cmdCount = (client.commands && typeof client.commands.size === 'number') ? client.commands.size : 'N/A';
+      const uptimePretty = formatDuration(client.uptime ?? (Date.now() - START_TIME));
+
+      const embed = new EmbedBuilder()
+        .setTitle('🤖 Multi-Bot Overview')
+        .setDescription([
+          'Multi-Bot is your all-in-one Discord assistant — packed with moderation tools, fun commands, utilities, and real-time features.',
+          '',
+          'Use `/help` to see a full command list, or click the buttons below for invites and support.'
+        ].join('\n'))
+        .addFields(
+          { name: 'Prefix', value: '`/` (slash commands)', inline: true },
+          { name: 'Commands', value: `${cmdCount}`, inline: true },
+          { name: 'Framework', value: 'discord.js v14', inline: true },
+          { name: 'Uptime', value: `${uptimePretty}`, inline: true },
+          { name: 'Developer', value: 'SHM', inline: true }
+        )
+        .setColor(0x0099FF)
+        .setThumbnail(botAvatar)
+        .setFooter({ text: developerCredit });
+
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setLabel('Invite Me')
+          .setStyle(ButtonStyle.Link)
+          .setURL(`https://discord.com/oauth2/authorize?client_id=${client.user.id}&permissions=8&scope=bot%20applications.commands`),
+        new ButtonBuilder()
+          .setLabel('Support Server')
+          .setStyle(ButtonStyle.Link)
+          .setURL(process.env.SUPPORT_SERVER_URL || 'https://discord.gg/26ThFyckFX'),
+        new ButtonBuilder()
+          .setLabel('Docs / Help')
+          .setStyle(ButtonStyle.Link)
+          .setURL(process.env.DOCS_URL || 'https://discord.gg/26ThFyckFX')
+      );
+
+      return interaction.reply({ embeds: [embed], components: [row] });
+    }
+
+    // VERSION
+    if (sub === 'version') {
+      // discord.js version accessible via package or require
+      let discordJsVersion = 'v14';
+      try {
+        discordJsVersion = require('discord.js').version || discordJsVersion;
+      } catch { /* ignore */ }
+
+      const embed = new EmbedBuilder()
+        .setTitle('🧩 Version & Environment')
+        .addFields(
+          { name: 'Bot Version', value: `v${pkg.version || 'v2.x'}`, inline: true },
+          { name: 'Node.js', value: process.version, inline: true },
+          { name: 'discord.js', value: discordJsVersion, inline: true },
+          { name: 'Platform', value: `${os.type()} ${os.release()} (${os.arch()})`, inline: false },
+          { name: 'Process ID', value: `${process.pid}`, inline: true },
+        )
+        .setColor(0x1ABC9C)
+        .setThumbnail(botAvatar)
+        .setFooter({ text: developerCredit })
+        .setTimestamp();
+
+      return interaction.reply({ embeds: [embed] });
+    }
+
+    // DEVELOPER
+    if (sub === 'developer') {
+      const embed = new EmbedBuilder()
+        .setTitle('👨‍💻 Developer Info')
+        .setDescription('This bot was crafted with ❤️ by **SHM**.')
+        .addFields(
+          { name: 'Support / Feedback', value: process.env.SUPPORT_CONTACT || 'Use the support server link', inline: false },
+          { name: 'Source', value: process.env.SOURCE_REPO || 'Not published', inline: true },
+          { name: 'Contributions', value: 'If you want to contribute, open a PR or reach out!', inline: true }
+        )
+        .setColor(0xFFD700)
+        .setFooter({ text: developerCredit });
+
+      return interaction.reply({ embeds: [embed] });
+    }
+
+    // INVITE
+    if (sub === 'invite') {
+      const inviteLink = `https://discord.com/oauth2/authorize?client_id=${client.user.id}&permissions=8&scope=bot%20applications.commands`;
+      const supportUrl = process.env.SUPPORT_SERVER_URL || 'https://discord.gg/26ThFyckFX';
+      const docsUrl = process.env.DOCS_URL || null;
+
+      const embed = new EmbedBuilder()
+        .setTitle('🔗 Invite Multi-Bot')
+        .setDescription('Add Multi-Bot to your server. Click the button(s) below.')
+        .setColor(0x8E44AD)
+        .setThumbnail(botAvatar)
+        .setFooter({ text: developerCredit });
+
+      const row = new ActionRowBuilder()
+        .addComponents(
+          new ButtonBuilder()
+            .setLabel('➕ Invite Me')
+            .setStyle(ButtonStyle.Link)
+            .setURL(inviteLink)
+        );
+
+      // optionally add Support / Docs if configured
+      if (supportUrl) {
+        row.addComponents(new ButtonBuilder().setLabel('Support Server').setStyle(ButtonStyle.Link).setURL(supportUrl));
+      }
+      if (docsUrl) {
+        row.addComponents(new ButtonBuilder().setLabel('Docs').setStyle(ButtonStyle.Link).setURL(docsUrl));
+      }
+
+      return interaction.reply({ embeds: [embed], components: [row], flags: 64 });
+    }
+
+    // fallback (shouldn't happen)
+    return interaction.reply({ content: 'Unknown subcommand.', flags: 64 });
+  }
+};

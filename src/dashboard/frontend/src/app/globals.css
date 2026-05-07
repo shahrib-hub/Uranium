@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+:root {
+  --background: #050505;
+  --foreground: #ffffff;
+  --accent-red: #ff3e3e;
+  --accent-red-glow: rgba(255, 62, 62, 0.4);
+  --card-bg: rgba(20, 20, 20, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.05);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+}
+
+@theme {
+  --color-accent-red: #ff3e3e;
+}
+
+/* Base Utility Classes */
+@layer components {
+  .glass {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10;
+  }
+  
+  .ambient-red-border {
+    @apply border border-red-500/20 transition-all duration-500 hover:border-red-500/60 hover:shadow-[0_0_20px_rgba(239,68,68,0.3)];
+  }
+
+  .btn-premium {
+    @apply relative px-6 py-3 bg-black/40 border border-white/10 rounded-xl overflow-hidden transition-all duration-300 active:scale-95 hover:bg-white/5;
+  }
+
+  .btn-premium-red {
+    @apply relative px-6 py-3 bg-red-500/10 border border-red-500/40 rounded-xl overflow-hidden transition-all duration-300 hover:bg-red-500/20 hover:shadow-[0_0_15px_rgba(239,68,68,0.4)];
+  }
+
+  .slider-red {
+    @apply h-1.5 bg-white/10 rounded-full overflow-hidden relative cursor-pointer;
+  }
+
+  .slider-red-fill {
+    @apply h-full bg-red-500 shadow-[0_0_10px_#ef4444] transition-all duration-300;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 62, 62, 0.3);
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}

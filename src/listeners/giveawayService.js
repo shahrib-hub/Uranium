@@ -1,0 +1,136 @@
+const db = require('../utils/giveaway');
+const { EmbedBuilder } = require('discord.js');
+
+// ✅ Create a new giveaway
+function createGiveaway(data) {
+  return new Promise((resolve, reject) => {
+    const {
+      messageId, guildId, channelId, prize,
+      winners, endAt, createdBy
+    } = data;
+
+    db.run(
+      `INSERT INTO giveaways (message_id, guild_id, channel_id, prize, winners, end_at, created_by, ended, participants)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)`,
+      [messageId, guildId, channelId, prize, winners, endAt, createdBy, JSON.stringify([])],
+      err => (err ? reject(err) : resolve())
+    );
+  });
+}
+
+// ✅ Get giveaway by message ID
+function getGiveawayByMessageId(messageId) {
+  return new Promise((resolve, reject) => {
+    db.get(
+      `SELECT * FROM giveaways WHERE message_id = ?`,
+      [messageId],
+      (err, row) => (err ? reject(err) : resolve(row || null))
+    );
+  });
+}
+
+// ✅ Update giveaway details (dynamic fields)
+function updateGiveaway(messageId, updates) {
+  return new Promise((resolve, reject) => {
+    const fields = Object.keys(updates);
+    const values = Object.values(updates);
+
+    if (!fields.length) return resolve();
+
+    const setClause = fields.map(field => `${field} = ?`).join(', ');
+    values.push(messageId);
+
+    db.run(
+      `UPDATE giveaways SET ${setClause} WHERE message_id = ?`,
+      values,
+      err => (err ? reject(err) : resolve())
+    );
+  });
+}
+
+// ✅ End giveaway
+function endGiveaway(messageId) {
+  return new Promise((resolve, reject) => {
+    db.run(
+      `UPDATE giveaways SET ended = 1 WHERE message_id = ?`,
+      [messageId],
+      err => (err ? reject(err) : resolve())
+    );
+  });
+}
+
+// ✅ Reroll giveaway (update participants list)
+function rerollGiveaway(messageId, newParticipants) {
+  return new Promise((resolve, reject) => {
+    db.run(
+      `UPDATE giveaways SET participants = ? WHERE message_id = ?`,
+      [JSON.stringify(newParticipants), messageId],
+      err => (err ? reject(err) : resolve())
+    );
+  });
+}
+
+// ✅ List all active giveaways (guildId optional)
+function listActiveGiveaways(guildId = null) {
+  return new Promise((resolve, reject) => {
+    const query = guildId
+      ? `SELECT * FROM giveaways WHERE guild_id = ? AND ended = 0`
+      : `SELECT * FROM giveaways WHERE ended = 0`;
+    const params = guildId ? [guildId] : [];
+
+    db.all(query, params, (err, rows) => (err ? reject(err) : resolve(rows)));
+  });
+}
+
+// ✅ Finalize giveaway: end, update embed, announce winners
+async function finalizeGiveaway(messageId, client) {
+  const giveaway = await getGiveawayByMessageId(messageId);
+  if (!giveaway || giveaway.ended) return;
+
+  await endGiveaway(messageId);
+
+  const channel = await client.channels.fetch(giveaway.channel_id).catch(() => null);
+  if (!channel) return;
+
+  const msg = await channel.messages.fetch(messageId).catch(() => null);
+  if (!msg) return;
+
+  const embed = msg.embeds[0];
+  if (embed) {
+    const endedEmbed = EmbedBuilder.from(embed)
+      .setColor('Red')
+      .setTitle('🎉 Giveaway Ended')
+      .setFooter({ text: 'Giveaway ended' });
+    await msg.edit({ embeds: [endedEmbed], components: [] });
+  }
+
+  const participants = JSON.parse(giveaway.participants || '[]');
+  if (participants.length === 0) {
+    await channel.send(`😢 No valid entries for the giveaway **${giveaway.prize}**.`);
+  } else {
+    const shuffled = participants.sort(() => 0.5 - Math.random());
+    const winners = shuffled.slice(0, giveaway.winners);
+    const winnerMentions = winners.map(id => `<@${id}>`).join(', ');
+    await channel.send(`🎉 Congratulations ${winnerMentions}! You won **${giveaway.prize}**!`);
+  }
+}
+
+// ✅ Schedule giveaway to end automatically
+function scheduleGiveawayEnd(client, giveaway) {
+  const timeLeft = giveaway.endAt - Date.now();
+  if (timeLeft <= 0) return finalizeGiveaway(giveaway.messageId, client);
+
+  const timer = setTimeout(() => finalizeGiveaway(giveaway.messageId, client), timeLeft);
+  client.giveawayTimers.set(giveaway.messageId, timer);
+}
+
+module.exports = {
+  createGiveaway,
+  getGiveawayByMessageId,
+  updateGiveaway,
+  endGiveaway,
+  rerollGiveaway,
+  listActiveGiveaways,
+  finalizeGiveaway,
+  scheduleGiveawayEnd
+};
