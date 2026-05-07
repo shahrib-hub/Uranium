@@ -93,6 +93,19 @@ function createApiRouter(client) {
     const guildId = req.params.guildId;
     const player = client.music?.players?.get(guildId);
     if (!player) return res.status(404).json({ error: 'No player' });
+
+    // Check if user is in the same VC as the bot
+    if (player.voiceId) {
+      if (!req.member.voice.channel || req.member.voice.channel.id !== player.voiceId) {
+        return res.status(403).json({ error: 'You must be in the same voice channel as the bot to use controls.' });
+      }
+    }
+
+    // Check if paused by empty VC
+    if (player.data.get('pausedByEmptyVC')) {
+      return res.status(403).json({ error: 'Playback is paused because the voice channel is empty. Join the channel to resume and use controls.' });
+    }
+
     try {
       const { applyFilter, updatePlayerMessage } = require('../music/service');
       switch (action) {
@@ -326,7 +339,23 @@ function serializeTrack(track) {
 
 function serializePlayer(player, guildId) {
   if (!player) return { active: false, guildId: guildId || null };
-  return { active: true, guildId: player.guildId, voiceId: player.voiceId, textId: player.textId, playing: player.playing || false, paused: player.paused || false, position: player.position || 0, volume: player.volume ?? 100, loop: player.loop || 'none', filter: player.data?.get('filter') || 'clear', autoplay: player.autoplay || false, current: serializeTrack(player.queue?.current), queueSize: player.queue?.size || 0, queue: Array.from(player.queue || []).slice(0, 50).map((t, i) => ({ ...serializeTrack(t), position: i })) };
+  return { 
+    active: true, 
+    guildId: player.guildId, 
+    voiceId: player.voiceId, 
+    textId: player.textId, 
+    playing: player.playing || false, 
+    paused: player.paused || false, 
+    pausedByEmptyVC: !!player.data.get('pausedByEmptyVC'),
+    position: player.position || 0, 
+    volume: player.volume ?? 100, 
+    loop: player.loop || 'none', 
+    filter: player.data?.get('filter') || 'clear', 
+    autoplay: player.autoplay || false, 
+    current: serializeTrack(player.queue?.current), 
+    queueSize: player.queue?.size || 0, 
+    queue: Array.from(player.queue || []).slice(0, 50).map((t, i) => ({ ...serializeTrack(t), position: i })) 
+  };
 }
 
 module.exports = { createApiRouter, serializePlayer, serializeTrack };

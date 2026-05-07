@@ -179,111 +179,204 @@ async function executeMusicAction(interaction) {
     switch (sub) {
       case 'play': {
         const query = options.getString('query');
-        if (!member.voice.channelId) return interaction.editReply('❌ Join a voice channel first.');
-        if (player && player.voiceId !== member.voice.channelId) return interaction.editReply('❌ You must be in the same voice channel.');
+        if (!member.voice.channelId) return interaction.editReply({ embeds: [errorEmbed('Join a voice channel first.')] });
+        if (player && player.voiceId !== member.voice.channelId) return interaction.editReply({ embeds: [errorEmbed('You must be in the same voice channel.')] });
         
         player = await createPlayer(client, guildId, member.voice.channelId, interaction.channelId);
         const res = await searchTracks(client, query, member);
-        if (!res.tracks?.length) return interaction.editReply('❌ No results found.');
+        if (!res.tracks?.length) return interaction.editReply({ embeds: [errorEmbed('No results found for your query.')] });
         
         await addTracksAndPlay(player, res.type === 'PLAYLIST' ? res.tracks : res.tracks[0]);
-        await interaction.editReply(`✅ Added **${res.type === 'PLAYLIST' ? `${res.tracks.length} tracks` : res.tracks[0].title}** to queue.`);
+        await interaction.editReply({ embeds: [successEmbed(`Added **${res.type === 'PLAYLIST' ? `${res.tracks.length} tracks` : res.tracks[0].title}** to queue.`)] });
         break;
       }
 
       case 'join': {
-        if (!member.voice.channelId) return interaction.editReply('❌ Join a voice channel first.');
+        if (!member.voice.channelId) return interaction.editReply({ embeds: [errorEmbed('Join a voice channel first.')] });
         player = await createPlayer(client, guildId, member.voice.channelId, interaction.channelId);
-        await interaction.editReply(`✅ Joined <#${member.voice.channelId}>`);
+        await interaction.editReply({ embeds: [successEmbed(`Joined <#${member.voice.channelId}>`)] });
         break;
       }
 
       case 'leave': {
-        if (!player) return interaction.editReply('❌ No player active.');
+        if (!player) return interaction.editReply({ embeds: [errorEmbed('No player active.')] });
         await player.destroy();
-        await interaction.editReply('✅ Disconnected from voice.');
+        await interaction.editReply({ embeds: [successEmbed('Disconnected from voice.')] });
         break;
       }
 
       case 'pause': {
-        if (!player) return interaction.editReply('❌ No player active.');
+        if (!player) return interaction.editReply({ embeds: [errorEmbed('No player active.')] });
         await player.pause(true);
-        await interaction.editReply('✅ Paused playback.');
+        await interaction.editReply({ embeds: [successEmbed('Paused playback.')] });
         break;
       }
 
       case 'resume': {
-        if (!player) return interaction.editReply('❌ No player active.');
+        if (!player) return interaction.editReply({ embeds: [errorEmbed('No player active.')] });
         await player.pause(false);
-        await interaction.editReply('✅ Resumed playback.');
+        await interaction.editReply({ embeds: [successEmbed('Resumed playback.')] });
         break;
       }
 
       case 'skip': {
-        if (!player) return interaction.editReply('❌ No player active.');
+        if (!player) return interaction.editReply({ embeds: [errorEmbed('No player active.')] });
         await player.skip();
-        await interaction.editReply('✅ Skipped to next track.');
+        await interaction.editReply({ embeds: [successEmbed('Skipped to next track.')] });
         break;
       }
 
       case 'stop': {
-        if (!player) return interaction.editReply('❌ No player active.');
+        if (!player) return interaction.editReply({ embeds: [errorEmbed('No player active.')] });
         await player.destroy();
-        await interaction.editReply('✅ Stopped and cleared queue.');
+        await interaction.editReply({ embeds: [successEmbed('Stopped and cleared queue.')] });
         break;
       }
 
       case 'volume': {
-        if (!player) return interaction.editReply('❌ No player active.');
+        if (!player) return interaction.editReply({ embeds: [errorEmbed('No player active.')] });
         const vol = options.getInteger('value');
-        if (vol === null) return interaction.editReply(`🔊 Current volume: \`${player.volume}%\``);
+        if (vol === null) return interaction.editReply({ embeds: [simpleEmbed(`🔊 Current volume: \`${player.volume}%\``)] });
         player.setVolume(vol);
-        await interaction.editReply(`✅ Volume set to \`${vol}%\``);
+        await interaction.editReply({ embeds: [successEmbed(`Volume set to \`${vol}%\``)] });
         break;
       }
 
       case 'queue': {
-        if (!player) return interaction.editReply('❌ No player active.');
-        await interaction.editReply({ embeds: [buildQueueEmbed(player)] });
-        return; 
+        if (!player) return interaction.editReply({ embeds: [errorEmbed('No player active.')] });
+        
+        const upcoming = Array.from(player.queue || []);
+        const pageSize = 10;
+        const totalPages = Math.max(1, Math.ceil(upcoming.length / pageSize));
+        let currentPage = 1;
+        
+        const buildQueuePage = (page) => {
+          const start = (page - 1) * pageSize;
+          const end = start + pageSize;
+          const pageTracks = upcoming.slice(start, end);
+          
+          const lines = pageTracks.map((track, index) => {
+            const url = track?.uri;
+            const display = trackDisplay(track, 42, 24);
+            const linked = url ? `[${display}](${url})` : display;
+            return `**${start + index + 1}.** ${linked} • \`${trackDuration(track)}\``;
+          });
+          
+          const current = player.queue?.current;
+          const currentLine = current ? `▶️ **Now Playing:** ${trackDisplay(current, 45, 25)}` : '⏹️ Nothing playing';
+          
+          return buildQueueEmbed(player, client)
+            .setDescription(`${currentLine}\n\n${lines.length ? lines.join('\n') : '*No upcoming tracks.*'}`)
+            .setFooter({
+              text: `Page ${page}/${totalPages} | Total: ${upcoming.length} songs | Duration: ${formatTimeMs(player.queue?.durationLength || 0)}`
+            });
+        };
+        
+        const paginationRow = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId(`music_queue_prev:${guildId}`)
+            .setLabel('◀ Prev')
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(currentPage === 1),
+          new ButtonBuilder()
+            .setCustomId(`music_queue_page:${guildId}`)
+            .setLabel(`Page 1/${totalPages}`)
+            .setStyle(ButtonStyle.Primary)
+            .setDisabled(true),
+          new ButtonBuilder()
+            .setCustomId(`music_queue_next:${guildId}`)
+            .setLabel('Next ▶')
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(currentPage === totalPages)
+        );
+        
+        await interaction.editReply({
+          embeds: [buildQueuePage(currentPage)],
+          components: [paginationRow]
+        });
+        
+        const collector = interaction.channel.createMessageComponentCollector({
+          time: 120000,
+          filter: i => i.user.id === member.id && i.customId.startsWith('music_queue_')
+        });
+        
+        collector.on('collect', async i => {
+          const customId = i.customId;
+          
+          if (customId === `music_queue_next:${guildId}` && currentPage < totalPages) {
+            currentPage++;
+          } else if (customId === `music_queue_prev:${guildId}` && currentPage > 1) {
+            currentPage--;
+          }
+          
+          const newPaginationRow = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+              .setCustomId(`music_queue_prev:${guildId}`)
+              .setLabel('◀ Prev')
+              .setStyle(ButtonStyle.Secondary)
+              .setDisabled(currentPage === 1),
+            new ButtonBuilder()
+              .setCustomId(`music_queue_page:${guildId}`)
+              .setLabel(`Page ${currentPage}/${totalPages}`)
+              .setStyle(ButtonStyle.Primary)
+              .setDisabled(true),
+            new ButtonBuilder()
+              .setCustomId(`music_queue_next:${guildId}`)
+              .setLabel('Next ▶')
+              .setStyle(ButtonStyle.Secondary)
+              .setDisabled(currentPage === totalPages)
+          );
+          
+          await i.update({
+            embeds: [buildQueuePage(currentPage)],
+            components: [newPaginationRow]
+          });
+        });
+        
+        collector.on('end', async (_, reason) => {
+          if (reason !== 'messageDelete') {
+            await interaction.editReply({ components: [] }).catch(() => {});
+          }
+        });
+        return;
       }
 
       case 'nowplaying': {
-        if (!player?.queue?.current) return interaction.editReply('❌ Nothing playing.');
+        if (!player?.queue?.current) return interaction.editReply({ embeds: [errorEmbed('Nothing playing.')] });
         await interaction.editReply({ embeds: [buildNowPlayingEmbed(player.queue.current, player, client)] });
         return;
       }
 
       case 'filter': {
-        if (!player) return interaction.editReply('❌ No player active.');
+        if (!player) return interaction.editReply({ embeds: [errorEmbed('No player active.')] });
         const f = options.getString('mode');
         await applyFilter(player, f);
-        await interaction.editReply(`✅ Applied filter: \`${f}\``);
+        await interaction.editReply({ embeds: [successEmbed(`Applied filter: \`${f}\``)] });
         break;
       }
 
       case 'shuffle': {
-        if (!player) return interaction.editReply('❌ No player active.');
+        if (!player) return interaction.editReply({ embeds: [errorEmbed('No player active.')] });
         player.queue.shuffle();
-        await interaction.editReply('✅ Shuffled the queue.');
+        await interaction.editReply({ embeds: [successEmbed('Shuffled the queue.')] });
         break;
       }
 
       case 'clear': {
-        if (!player) return interaction.editReply('❌ No player active.');
+        if (!player) return interaction.editReply({ embeds: [errorEmbed('No player active.')] });
         player.queue.clear();
-        await interaction.editReply('✅ Cleared the queue.');
-        break;
+        await interaction.editReply({ embeds: [successEmbed('Cleared the queue.')] });
+break;
       }
 
       case 'search': {
         const query = options.getString('query');
-        if (!member.voice.channelId) return interaction.editReply('❌ Join a voice channel first.');
-        if (player && player.voiceId !== member.voice.channelId) return interaction.editReply('❌ You must be in the same voice channel.');
+        if (!member.voice.channelId) return interaction.editReply({ embeds: [errorEmbed('❌ Join a voice channel first.')] });
+        if (player && player.voiceId !== member.voice.channelId) return interaction.editReply({ embeds: [errorEmbed('❌ You must be in the same voice channel.')] });
         
         player = await createPlayer(client, guildId, member.voice.channelId, interaction.channelId);
         const res = await searchTracks(client, query, member);
-        if (!res.tracks?.length) return interaction.editReply('❌ No results found.');
+        if (!res.tracks?.length) return interaction.editReply({ embeds: [errorEmbed('❌ No results found.')] });
         
         const tracks = res.tracks.slice(0, 10);
         const selectMenu = new StringSelectMenuBuilder()
@@ -295,29 +388,77 @@ async function executeMusicAction(interaction) {
             value: String(i)
           })));
         
+        const buttonRow = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId(`music_search_play:${guildId}`)
+            .setLabel('Play #1')
+            .setStyle(ButtonStyle.Success),
+          new ButtonBuilder()
+            .setCustomId(`music_search_addall:${guildId}`)
+            .setLabel('Add All')
+            .setStyle(ButtonStyle.Primary),
+          new ButtonBuilder()
+            .setCustomId(`music_search_cancel:${guildId}`)
+            .setLabel('Cancel')
+            .setStyle(ButtonStyle.Danger)
+        );
+        
+        const components = [
+          new ActionRowBuilder().addComponents(selectMenu),
+          buttonRow
+        ];
+        
         await interaction.editReply({
           embeds: [buildSearchEmbed(query, tracks)],
-          components: [new ActionRowBuilder().addComponents(selectMenu)]
+          components
         });
         
         const collector = interaction.channel.createMessageComponentCollector({
           time: 60000,
-          filter: i => i.user.id === member.id && i.customId.startsWith('music_search_select:')
+          filter: i => i.user.id === member.id && i.customId.startsWith(`music_search_`)
         });
         
         collector.on('collect', async i => {
-          const idx = Number(i.values[0]);
-          const selected = tracks[idx];
-          if (!selected) return i.reply({ content: '❌ Invalid selection.', flags: 64 });
+          const customId = i.customId;
           
-          await i.deferUpdate();
-          await addTracksAndPlay(player, selected);
-          await i.editReply({
-            content: `✅ Added **${selected.title}** to queue.`,
-            embeds: [],
-            components: []
-          });
-          collector.stop();
+          if (customId === `music_search_play:${guildId}`) {
+            const selected = tracks[0];
+            if (!selected) return i.reply({ embeds: [errorEmbed('No track available.')], flags: 64 });
+            await i.deferUpdate();
+            await addTracksAndPlay(player, selected);
+            await i.editReply({ embeds: [successEmbed(`▶️ Now playing **${selected.title}**`)], components: [] });
+            collector.stop();
+            return;
+          }
+          
+          if (customId === `music_search_addall:${guildId}`) {
+            await i.deferUpdate();
+            player.queue.add(tracks);
+            if (!player.playing && !player.paused) await player.play();
+            await i.editReply({ embeds: [successEmbed(`➕ Added ${tracks.length} tracks to queue.`)], components: [] });
+            collector.stop();
+            return;
+          }
+          
+          if (customId === `music_search_cancel:${guildId}`) {
+            await i.update({ embeds: [simpleEmbed('🛑 Search cancelled.')], components: [] });
+            collector.stop();
+            return;
+          }
+          
+          if (customId.startsWith('music_search_select:')) {
+            const idx = Number(i.values[0]);
+            const selected = tracks[idx];
+            if (!selected) return i.reply({ embeds: [errorEmbed('Invalid selection.')], flags: 64 });
+            
+            await i.deferUpdate();
+            await addTracksAndPlay(player, selected);
+            await i.editReply({
+              embeds: [successEmbed(`▶️ Added **${selected.title}** to queue.`)],
+              components: []
+            });
+            collector.stop();
+          }
         });
         
         collector.on('end', async (_, reason) => {
@@ -329,16 +470,16 @@ async function executeMusicAction(interaction) {
       }
 
       case 'loop': {
-        if (!player) return interaction.editReply('❌ No player active.');
+        if (!player) return interaction.editReply({ embeds: [errorEmbed('No player active.')] });
         const mode = options.getString('mode');
         if (!mode) {
            const modes = ['none', 'track', 'queue'];
            const next = modes[(modes.indexOf(player.loop || 'none') + 1) % 3];
            player.setLoop(next);
-           await interaction.editReply(`✅ Loop mode set to \`${next}\``);
+           await interaction.editReply({ embeds: [successEmbed(`Loop mode set to \`${next}\``)] });
         } else {
            player.setLoop(mode);
-           await interaction.editReply(`✅ Loop mode set to \`${mode}\``);
+           await interaction.editReply({ embeds: [successEmbed(`Loop mode set to \`${mode}\``)] });
         }
         break;
       }
@@ -352,7 +493,7 @@ async function executeMusicAction(interaction) {
 
   } catch (err) {
     console.error('[MusicAction] Error:', err);
-    await interaction.editReply(`❌ Error: ${err.message}`).catch(() => null);
+    await interaction.editReply({ embeds: [errorEmbed(`An error occurred: ${err.message}`)] }).catch(() => null);
   }
 }
 

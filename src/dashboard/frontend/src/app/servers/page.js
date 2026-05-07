@@ -30,7 +30,7 @@ export default function ServersPage() {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white selection:bg-red-500/30">
-      <div className="p-12 max-w-7xl mx-auto space-y-12">
+      <div className="p-6 sm:p-12 max-w-7xl mx-auto space-y-8 sm:space-y-12">
         <header className="space-y-4 text-center md:text-left">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -38,16 +38,16 @@ export default function ServersPage() {
             className="flex items-center justify-center md:justify-start gap-4 mb-2"
           >
             <div className="h-px w-12 bg-red-500" />
-            <span className="text-xs font-black uppercase tracking-[4px] text-red-500">Infrastructure</span>
+            <span className="text-[10px] sm:text-xs font-black uppercase tracking-[4px] text-red-500">Infrastructure</span>
           </motion.div>
           <motion.h1 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="text-7xl font-black tracking-tighter uppercase italic"
+            className="text-4xl sm:text-7xl font-black tracking-tighter uppercase italic"
           >
             Node <span className="text-red-500">Selector</span>
           </motion.h1>
-          <p className="text-white/40 text-xl max-w-2xl font-medium leading-relaxed mx-auto md:mx-0">
+          <p className="text-white/40 text-sm sm:text-xl max-w-2xl font-medium leading-relaxed mx-auto md:mx-0">
             Connect to a server node to begin real-time management. Only authorized domains are visible.
           </p>
         </header>
@@ -107,7 +107,7 @@ function GuildCard({ guild, onClick, clientId }) {
     <motion.div
       whileHover={guild.isBotAdded ? { y: -8, scale: 1.02 } : {}}
       onClick={onClick}
-      className={`glass rounded-[40px] p-10 border transition-all relative overflow-hidden group ${
+      className={`glass rounded-[32px] sm:rounded-[40px] p-6 sm:p-10 border transition-all relative overflow-hidden group ${
         guild.isBotAdded 
           ? 'cursor-pointer border-red-500/20 hover:border-red-500/50 ambient-red-border bg-gradient-to-br from-red-500/[0.03] to-transparent shadow-[0_0_40px_rgba(239,68,68,0.02)]' 
           : 'border-white/5 bg-white/[0.01]'
@@ -118,9 +118,9 @@ function GuildCard({ guild, onClick, clientId }) {
         <div className="absolute -top-12 -right-12 w-48 h-48 bg-red-500/5 blur-[80px] rounded-full group-hover:bg-red-500/10 transition-colors duration-700" />
       )}
 
-      <div className="flex flex-col h-full gap-8">
+      <div className="flex flex-col h-full gap-6 sm:gap-8">
         <div className="flex justify-between items-start">
-          <div className="w-24 h-24 rounded-[32px] overflow-hidden bg-white/5 border border-white/10 shadow-2xl relative">
+          <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-[24px] sm:rounded-[32px] overflow-hidden bg-white/5 border border-white/10 shadow-2xl relative">
             {iconUrl ? (
               <img src={iconUrl} className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-700" alt="" />
             ) : (
@@ -153,7 +153,7 @@ function GuildCard({ guild, onClick, clientId }) {
         </div>
 
         <div className="flex-1 space-y-2">
-          <h3 className="text-3xl font-black tracking-tight truncate group-hover:text-red-500 transition-colors uppercase italic">{guild.name}</h3>
+          <h3 className="text-2xl sm:text-3xl font-black tracking-tight truncate group-hover:text-red-500 transition-colors uppercase italic">{guild.name}</h3>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 text-xs font-bold text-white/20 bg-white/5 px-3 py-1 rounded-lg border border-white/5">
               <Shield size={12} className="text-red-500/40" />

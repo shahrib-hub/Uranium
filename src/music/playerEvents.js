@@ -4,6 +4,15 @@ const { getCurrentFilter } = require('./service');
 
 const registeredClients = new WeakSet();
 const messageRefreshIntervals = new Map();
+const leaveTimers = new Map(); // guildId -> Timeout
+
+function clearLeaveTimer(guildId) {
+  const timer = leaveTimers.get(guildId);
+  if (timer) {
+    clearTimeout(timer);
+    leaveTimers.delete(guildId);
+  }
+}
 
 function isYouTubeAuthError(message) {
   const text = String(message || '').toLowerCase();
@@ -116,6 +125,7 @@ module.exports.registerPlayerEvents = function registerPlayerEvents(client) {
 
   kazagumo.on('playerStart', async (player, track) => {
     try {
+      clearLeaveTimer(player.guildId);
       if (!player.data.get('filter')) player.data.set('filter', getCurrentFilter(player));
       await disableOldMessage(player);
       const msg = await sendToPlayerChannel(client, player, {
@@ -158,9 +168,23 @@ module.exports.registerPlayerEvents = function registerPlayerEvents(client) {
       await updateVoiceChannelStatus(client, player, null, false);
       await updateBotPresence(client, null, false);
       await disableOldMessage(player);
-      await sendToPlayerChannel(client, player, { embeds: [simpleEmbed('The queue is empty. Add more songs.')] });
-      await player.destroy().catch(() => null);
-      client.dashboardIO?.to(`guild:${guildId}`).emit('playerUpdate', { active: false });
+
+      const timeoutMs = client.musicConfig?.leaveTimeout || 120000;
+      await sendToPlayerChannel(client, player, { 
+        embeds: [simpleEmbed(`The queue is empty. I will leave the channel in <t:${Math.floor((Date.now() + timeoutMs) / 1000)}:R> if no new songs are added.`)] 
+      });
+
+      clearLeaveTimer(guildId);
+      const timer = setTimeout(async () => {
+        const p = kazagumo.players.get(guildId);
+        if (p && (!p.queue.current)) {
+          await p.destroy().catch(() => null);
+          client.dashboardIO?.to(`guild:${guildId}`).emit('playerUpdate', { active: false });
+        }
+        leaveTimers.delete(guildId);
+      }, timeoutMs);
+      
+      leaveTimers.set(guildId, timer);
     } catch (err) {
       console.error('[music] playerEmpty failed:', err);
     }

@@ -83,11 +83,11 @@ export default function QueueManager() {
               <h4 className="font-bold text-sm truncate group-hover:text-red-500 transition-colors">{track.title}</h4>
               <p className="text-[10px] text-white/40 truncate">{track.author}</p>
             </div>
-            <div className="flex items-center gap-4">
-              <span className="text-[10px] font-mono text-white/20">{formatTime(track.duration)}</span>
+            <div className="flex items-center gap-2 sm:gap-4">
+              <span className="hidden sm:block text-[10px] font-mono text-white/20">{formatTime(track.duration)}</span>
               <button 
                 onClick={() => handleRemove(track.position)}
-                className="p-2 text-white/10 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                className="p-2 text-white/20 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all md:opacity-0 md:group-hover:opacity-100"
               >
                 <Trash2 size={14} />
               </button>

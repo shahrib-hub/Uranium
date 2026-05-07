@@ -21,7 +21,10 @@ export default function Sidebar() {
   const { player } = useStore();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
+  useEffect(() => {
+    if (window.innerWidth > 1024) setIsOpen(true);
+  }, []);
   const [guildInfo, setGuildInfo] = useState(null);
   
   const guildId = player.guildId || searchParams.get('guild');
@@ -58,16 +61,25 @@ export default function Sidebar() {
 
   return (
     <>
+      {/* Backdrop for mobile */}
+      {isOpen && (
+        <div 
+          onClick={() => setIsOpen(false)}
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[45] lg:hidden animate-in fade-in duration-300"
+        />
+      )}
+
       {/* Mobile Toggle */}
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-6 left-6 z-[60] p-3 rounded-xl bg-red-500 text-black shadow-lg shadow-red-500/20 lg:hidden"
+        className="fixed top-6 left-6 z-[60] p-3 rounded-xl bg-red-500 text-black shadow-lg shadow-red-500/20 lg:hidden hover:scale-105 active:scale-95 transition-all"
       >
         {isOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
 
       {/* Sidebar Container */}
-      <div className={`fixed top-0 left-0 bottom-0 bg-[#050505] border-r border-white/5 flex flex-col z-50 transition-all duration-500 ${isOpen ? 'w-80' : 'w-20'}`}>
+      <div className={`fixed top-0 bottom-0 bg-[#050505] border-r border-white/5 flex flex-col z-50 transition-all duration-500 
+        ${isOpen ? 'translate-x-0 w-80' : '-translate-x-full lg:translate-x-0 w-80 lg:w-20'}`}>
         
         {/* Toggle Button (Desktop) */}
         <button 
@@ -198,12 +210,20 @@ export default function Sidebar() {
 
       <style jsx global>{`
         main {
-          padding-left: ${isOpen ? '20rem' : '5rem'} !important;
+          padding-left: 0 !important;
           transition: padding-left 0.5s ease-in-out;
         }
         header {
-          left: ${isOpen ? '20rem' : '5rem'} !important;
+          left: 0 !important;
           transition: left 0.5s ease-in-out;
+        }
+        @media (min-width: 1024px) {
+          main {
+            padding-left: ${isOpen ? '20rem' : '5rem'} !important;
+          }
+          header {
+            left: ${isOpen ? '20rem' : '5rem'} !important;
+          }
         }
       `}</style>
     </>

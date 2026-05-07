@@ -68,7 +68,7 @@ module.exports.createMusicManager = function createMusicManager(client) {
     defaultSource,
     lavaSrc: boolEnv('LAVASRC', false),
     lavaSrcSource: process.env.LAVASRC_SOURCE || 'spsearch:',
-    leaveTimeout: numberEnv('LEAVE_TIMEOUT', 60000),
+    leaveTimeout: numberEnv('LEAVE_TIMEOUT', 120000),
     minVolume: numberEnv('MIN_VOLUME', 1),
     maxVolume: numberEnv('MAX_VOLUME', 100)
   };

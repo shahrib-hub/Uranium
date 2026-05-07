@@ -10,7 +10,7 @@ import { Music, Terminal, Settings } from 'lucide-react';
 
 export default function MusicPage() {
   return (
-    <div className="p-8 lg:p-12 space-y-12 max-w-[1800px] mx-auto animate-in fade-in duration-500">
+    <div className="p-6 lg:p-12 space-y-8 md:space-y-12 max-w-[1800px] mx-auto animate-in fade-in duration-500">
       <header>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -18,12 +18,12 @@ export default function MusicPage() {
           className="flex items-center gap-4 mb-2"
         >
           <div className="h-px w-12 bg-red-500" />
-          <span className="text-xs font-black uppercase tracking-[4px] text-red-500">Acoustic Command Center</span>
+          <span className="text-[10px] sm:text-xs font-black uppercase tracking-[4px] text-red-500">Acoustic Command Center</span>
         </motion.div>
         <motion.h1 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="text-6xl font-black tracking-tighter uppercase italic"
+          className="text-4xl sm:text-6xl font-black tracking-tighter uppercase italic"
         >
           Uranium <span className="text-red-500">Music</span>
         </motion.h1>

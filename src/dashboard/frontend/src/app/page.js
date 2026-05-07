@@ -1,11 +1,12 @@
 'use client';
 import { motion } from 'framer-motion';
-import { Zap, Music, Shield, ChevronRight, Activity, Globe } from 'lucide-react';
+import { Zap, Music, Shield, ChevronRight, Activity, Globe, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
 export default function LandingPage() {
   const [user, setUser] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     fetch('/api/me')
@@ -34,6 +35,32 @@ export default function LandingPage() {
             <Link href="/auth/login" className="px-6 py-2 bg-white/5 rounded-full border border-white/10 hover:bg-white/10 transition-all text-white">Login</Link>
           )}
         </div>
+
+        {/* Mobile Menu Toggle */}
+        <button 
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="md:hidden p-3 rounded-xl bg-white/5 border border-white/10 text-white"
+        >
+          {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
+
+        {/* Mobile Menu Overlay */}
+        {isMobileMenuOpen && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="absolute top-full left-0 right-0 bg-[#050505] border-b border-white/5 p-8 flex flex-col gap-6 md:hidden z-50 shadow-2xl"
+          >
+            <a href="#features" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-black uppercase tracking-widest text-white/40 hover:text-red-500 transition-colors">Features</a>
+            <a href="#stats" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-black uppercase tracking-widest text-white/40 hover:text-red-500 transition-colors">Intelligence</a>
+            <div className="h-px bg-white/5" />
+            {user ? (
+              <Link href="/servers" className="px-6 py-4 bg-red-500 rounded-2xl text-black text-center font-black uppercase tracking-widest text-sm">Dashboard</Link>
+            ) : (
+              <Link href="/auth/login" className="px-6 py-4 bg-white/5 rounded-2xl border border-white/10 text-white text-center font-black uppercase tracking-widest text-sm">Login</Link>
+            )}
+          </motion.div>
+        )}
       </nav>
 
       {/* Hero Section */}
@@ -55,7 +82,7 @@ export default function LandingPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="text-7xl md:text-8xl font-black tracking-tight leading-[0.9]"
+                className="text-5xl sm:text-7xl md:text-8xl font-black tracking-tight leading-[0.9]"
               >
                 The Future of <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">Bot Management.</span>

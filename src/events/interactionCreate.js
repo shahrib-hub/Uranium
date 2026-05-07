@@ -131,7 +131,8 @@ module.exports = {
           id === 'cancel_reset' ||
           id === 'confirm_verify_setup' ||
           id?.startsWith('calc_') ||
-          id?.startsWith('music_search_')
+          id?.startsWith('music_search_') ||
+          id?.startsWith('music_queue_')
         ) {
           return;
         }

@@ -116,27 +116,27 @@ export default function SearchPicker() {
                 <div className="text-sm text-white/40 line-clamp-1">by {track.author}</div>
               </div>
               
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+              <div className="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-all">
                 <button 
                   onClick={() => performAction(track, 'play')}
-                  className="p-3 rounded-xl bg-red-500 text-black hover:scale-110 transition-all shadow-lg shadow-red-500/20"
+                  className="p-2 sm:p-3 rounded-xl bg-red-500 text-black hover:scale-110 transition-all shadow-lg shadow-red-500/20"
                   title="Play Now"
                 >
-                  <Play size={16} fill="currentColor" />
+                  <Play size={14} sm:size={16} fill="currentColor" />
                 </button>
                 <button 
                   onClick={() => performAction(track, 'next')}
-                  className="p-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all"
+                  className="hidden sm:block p-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all"
                   title="Play Next"
                 >
                   <FastForward size={16} />
                 </button>
                 <button 
                   onClick={() => performAction(track, 'queue')}
-                  className="p-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all"
+                  className="p-2 sm:p-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all"
                   title="Add to Queue"
                 >
-                  <ListPlus size={16} />
+                  <ListPlus size={14} sm:size={16} />
                 </button>
               </div>
 
