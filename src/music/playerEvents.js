@@ -59,19 +59,23 @@ async function updateVoiceChannelStatus(client, player, track, isPlaying = true)
       return;
     }
 
-    console.log(`[music:status] Checking channel: ${voiceChannel.name} (Type: ${voiceChannel.type})`);
-
-    // Channel types: 2 = Voice, 13 = Stage
-    const isVoice = voiceChannel.type === 2 || voiceChannel.type === 13;
-    if (!isVoice) {
-      console.log(`[music:status] Channel ${voiceChannel.name} is not a voice/stage channel.`);
-      return;
-    }
-
-    if (!voiceChannel.setStatus) {
-      console.log(`[music:status] Channel ${voiceChannel.name} does not support setStatus.`);
-      return;
-    }
+    // Use Raw API Fallback if setStatus is missing
+    const updateStatus = async (status) => {
+      try {
+        if (voiceChannel.setStatus) {
+          await voiceChannel.setStatus(status);
+        } else {
+          // Raw Discord API PUT request for Voice Status
+          await client.rest.put(`/channels/${voiceChannel.id}/voice-status`, {
+            body: { status: status || "" }
+          });
+        }
+        return true;
+      } catch (err) {
+        console.error(`[music:status] Discord API Error: ${err.message}`);
+        return false;
+      }
+    };
 
     // Check for permissions
     const me = voiceChannel.guild.members.me;
@@ -92,12 +96,10 @@ async function updateVoiceChannelStatus(client, player, track, isPlaying = true)
       const status = `🎤 Playing ${title}${author ? ` - ${author}` : ''}`;
       
       console.log(`[music:status] ATTEMPTING UPDATE: ${status}`);
-      await voiceChannel.setStatus(status).catch(err => {
-        console.error(`[music:status] Discord API Error: ${err.message}`);
-      });
-      console.log(`[music:status] COMPLETED: Request sent for ${voiceChannel.name}`);
+      const success = await updateStatus(status);
+      if (success) console.log(`[music:status] SUCCESS: Updated status for ${voiceChannel.name}`);
     } else {
-      await voiceChannel.setStatus("").catch(() => {});
+      await updateStatus("");
       console.log(`[music:status] CLEARED status for ${voiceChannel.name}`);
     }
   } catch (e) {
