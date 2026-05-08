@@ -6,8 +6,6 @@ const logger = require('./logger');
 const chalk = require('chalk');
 const now = () => Math.floor(Date.now() / 1000);
 
-const now = () => Math.floor(Date.now() / 1000);
-
 // ========== In-memory caches (survive restarts via persistence layer) ==========
 const cache = {
   setups: new Map(),           // setupId -> setup doc
