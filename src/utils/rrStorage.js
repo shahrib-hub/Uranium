@@ -72,7 +72,9 @@ async function validateRoleAssignment(member, item, setup) {
   }
   // Check required roles (prerequisites)
   if (config.requiredRoles) {
-    for (const [group, requiredRoleIds] of Object.entries(config.requiredRoles)) {
+    const reqEntries = config.requiredRoles.entries ? config.requiredRoles.entries() : Object.entries(config.requiredRoles);
+    for (const [group, requiredRoleIds] of reqEntries) {
+      if (!Array.isArray(requiredRoleIds)) continue;
       const hasAll = requiredRoleIds.every(id => member.roles.cache.has(id));
       if (!hasAll) {
         return { allowed: false, reason: 'MISSING_PREREQUISITES', group };
@@ -82,9 +84,11 @@ async function validateRoleAssignment(member, item, setup) {
   
   // Check exclusive groups (mutual exclusivity)
   if (config.exclusiveGroups) {
-    for (const [group, roleIds] of Object.entries(config.exclusiveGroups)) {
+    const excEntries = config.exclusiveGroups.entries ? config.exclusiveGroups.entries() : Object.entries(config.exclusiveGroups);
+    for (const [group, roleIds] of excEntries) {
+      if (!Array.isArray(roleIds)) continue;
       const userHasFromGroup = member.roles.cache.some(r => roleIds.includes(r.id));
-      const requestingIsInGroup = roleIds.includes(item.roleId);
+      const requestingIsInGroup = roleIds.includes(item.role_id);
       
       if (userHasFromGroup && !requestingIsInGroup) {
         return { allowed: false, reason: 'EXCLUSIVE_GROUP_CONFLICT', group };
@@ -118,7 +122,7 @@ async function createSetup({ guildId, channelId, mode = 'buttons', title = '', d
     const counter = await RRCounter.findOneAndUpdate(
       { guildId },
       { $inc: { nextId: 1 } },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
     const integerId = String(counter.nextId);
 
@@ -276,7 +280,7 @@ async function addItem({ setupId, emoji, emojiIdentifier, label = null, roleId, 
     const counter = await RRCounter.findOneAndUpdate(
       { guildId: 'GLOBAL_ITEMS' }, // Special key for global item counter
       { $inc: { nextId: 1 } },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
     const integerId = String(counter.nextId);
 
