@@ -145,7 +145,7 @@ function buildNowPlayingEmbed(track, player, client) {
   const loopLabel = String(player?.loop || 'none');
   const filterLabel = currentFilterLabel(player);
   const isPaused = player?.paused;
-  const statusEmoji = isPaused ? '<:u_pause:1502240276813709342>' : '<:u_resume:1502240481818443896>';
+  const statusEmoji = isPaused ? '⏸️' : '▶️';
   const accentColor = isPaused ? COLORS.PAUSED : COLORS.PLAYING;
 
   const embed = baseEmbed(accentColor)
@@ -189,7 +189,7 @@ function buildQueueEmbed(player, client) {
 
   return baseEmbed(COLORS.ACCENT)
     .setAuthor({
-      name: '<:u_queue:1502243141867143299> Queue List',
+      name: '📋 Queue List',
       iconURL: client?.user?.displayAvatarURL?.() || undefined
     })
     .setDescription(`${currentLine}\n\n${lines.length ? lines.join('\n') : '*No upcoming tracks.*'}`)
@@ -254,13 +254,13 @@ function buildFilterMenu(guildId, currentFilter = 'clear') {
     new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId(`music_filter_select:${guildId}`)
-        .setPlaceholder(`<:u_filters:1502243103774474240> Filter: ${currentFilterLabel({ data: new Map([['filter', currentFilter]]) })}`)
+        .setPlaceholder(`🎛️ Filter: ${currentFilterLabel({ data: new Map([['filter', currentFilter]]) })}`)
         .addOptions([
           { label: '✨ Off', description: 'Clear all audio filters', value: 'clear', default: currentFilter === 'clear' || currentFilter === 'none' },
           { label: '⚡ Nightcore', description: 'Faster tempo with higher pitch', value: 'nightcore', default: currentFilter === 'nightcore' },
-          { label: '<:u_highvol:1502241896507117638> Bassboost', description: 'Enhanced low frequencies', value: 'bassboost', default: currentFilter === 'bassboost' },
+          { label: 'Bassboost', emoji: { name: 'u_highvol', id: '1502241896507117638' }, description: 'Enhanced low frequencies', value: 'bassboost', default: currentFilter === 'bassboost' },
           { label: '🌊 Vaporwave', description: 'Slowed down dreamy vibe', value: 'vaporwave', default: currentFilter === 'vaporwave' },
-          { label: '<:u_lowvol:1502241804228231228> Soft', description: 'Smooth mellow sound', value: 'soft', default: currentFilter === 'soft' },
+          { label: 'Soft', emoji: { name: 'u_lowvol', id: '1502241804228231228' }, description: 'Smooth mellow sound', value: 'soft', default: currentFilter === 'soft' },
           { label: '🎤 Karaoke', description: 'Vocal reduction effect', value: 'karaoke', default: currentFilter === 'karaoke' },
           { label: '🌀 8D Rotation', description: 'Immersive spatial audio', value: 'rotation', default: currentFilter === 'rotation' },
           { label: '🐿️ Chipmunk', description: 'High-pitched squeaky sound', value: 'chipmunk', default: currentFilter === 'chipmunk' },

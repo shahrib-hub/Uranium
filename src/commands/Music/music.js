@@ -89,9 +89,9 @@ module.exports = {
         .setCustomId('music_help_nav')
         .setPlaceholder('🎵 Choose a music category...')
         .addOptions([
-          { label: '<:u_resume:1502240481818443896> Playback', value: 'playback', description: 'Play, pause, skip, stop, seek', emoji: '<:u_resume:1502240481818443896>' },
+          { label: 'Playback', value: 'playback', description: 'Play, pause, skip, stop, seek', emoji: { name: 'u_resume', id: '1502240481818443896' } },
           { label: '🎒 Queue', value: 'queue', description: 'Queue management commands', emoji: '🎒' },
-          { label: '<:u_filters:1502243103774474240> Audio', value: 'audio', description: 'Volume, filters, loop', emoji: '<:u_filters:1502243103774474240>' },
+          { label: 'Audio', value: 'audio', description: 'Volume, filters, loop', emoji: { name: 'u_filters', id: '1502243103774474240' } },
           { label: '🔗 Connection', value: 'connection', description: 'Join and leave voice', emoji: '🔗' },
           { label: 'ℹ️ Now Playing', value: 'nowplaying', description: 'Display current track & player info', emoji: 'ℹ️' }
         ]);
