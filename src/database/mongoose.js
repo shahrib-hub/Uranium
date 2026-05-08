@@ -316,7 +316,8 @@ const TicketPanelSchema = new mongoose.Schema({
   guildId: { type: String, required: true },
   channelId: { type: String, required: true },
   name: { type: String, required: true },
-  premiumOnly: { type: Boolean, default: false }
+  premiumOnly: { type: Boolean, default: false },
+  types: { type: [String], default: [] }
 });
 
 const TicketCategorySchema = new mongoose.Schema({

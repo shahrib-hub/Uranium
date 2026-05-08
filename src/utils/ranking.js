@@ -1,7 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
-const { useMongoDB } = require('../config/database');
+const { isMongoReady } = require('../database/dbUtils');
 const { RankConfig, RankUser, RankRoleReward } = require('../database/mongoose');
 
 const dbPath = path.join(__dirname, '../data/ranking_data.db');
@@ -74,7 +74,7 @@ db.serialize(() => {
 
 // Core functions
 async function getConfig(guildId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const doc = await RankConfig.findOne({ guildId });
     if (doc) {
       return {
@@ -116,7 +116,7 @@ async function getConfig(guildId) {
 }
 
 async function setConfig(guildId, patch) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const cur = await getConfig(guildId);
     const merged = {
       ...cur,
@@ -166,7 +166,7 @@ async function setConfig(guildId, patch) {
 }
 
 async function getUser(guildId, userId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const doc = await RankUser.findOne({ guildId, userId });
     return doc ? {
       guild_id: doc.guildId,
@@ -200,7 +200,7 @@ async function getUser(guildId, userId) {
 }
 
 async function upsertUser(data) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await RankUser.findOneAndUpdate(
       { guildId: data.guild_id, userId: data.user_id },
       {
@@ -236,7 +236,7 @@ async function upsertUser(data) {
 }
 
 async function addXp(guildId, userId, amount) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await RankUser.findOneAndUpdate({ guildId, userId }, { $inc: { xp: amount } }, { upsert: true });
     return;
   }
@@ -244,7 +244,7 @@ async function addXp(guildId, userId, amount) {
 }
 
 async function setLevel(guildId, userId, level) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await RankUser.findOneAndUpdate({ guildId, userId }, { level }, { upsert: true });
     return;
   }
@@ -252,7 +252,7 @@ async function setLevel(guildId, userId, level) {
 }
 
 async function setXp(guildId, userId, xp) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await RankUser.findOneAndUpdate({ guildId, userId }, { xp }, { upsert: true });
     return;
   }
@@ -260,7 +260,7 @@ async function setXp(guildId, userId, xp) {
 }
 
 async function resetUser(guildId, userId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await RankUser.deleteOne({ guildId, userId });
     return;
   }
@@ -268,7 +268,7 @@ async function resetUser(guildId, userId) {
 }
 
 async function resetAll(guildId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await RankUser.deleteMany({ guildId });
     return;
   }
@@ -277,7 +277,7 @@ async function resetAll(guildId) {
 
 async function topUsers(guildId, page = 1, pageSize = 10) {
   const offset = (page - 1) * pageSize;
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const docs = await RankUser.find({ guildId }).sort({ xp: -1 }).skip(offset).limit(pageSize);
     return docs.map(d => ({ user_id: d.userId, xp: d.xp, level: d.level }));
   }
@@ -292,7 +292,7 @@ async function topUsers(guildId, page = 1, pageSize = 10) {
 }
 
 async function getRankPosition(guildId, userId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const docs = await RankUser.find({ guildId }).sort({ xp: -1 }).select('userId');
     const index = docs.findIndex(d => d.userId === userId);
     return index >= 0 ? index + 1 : null;
@@ -304,7 +304,7 @@ async function getRankPosition(guildId, userId) {
 }
 
 async function setRoleReward(guildId, level, roleId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await RankRoleReward.findOneAndUpdate({ guildId, level }, { roleId }, { upsert: true });
     return;
   }
@@ -317,7 +317,7 @@ async function setRoleReward(guildId, level, roleId) {
 }
 
 async function removeRoleReward(guildId, level) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await RankRoleReward.deleteOne({ guildId, level });
     return;
   }
@@ -326,7 +326,7 @@ async function removeRoleReward(guildId, level) {
 }
 
 async function listRoleRewards(guildId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const docs = await RankRoleReward.find({ guildId }).sort({ level: 1 });
     return docs.map(d => ({ level: d.level, role_id: d.roleId }));
   }

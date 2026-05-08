@@ -13,7 +13,6 @@ const {
 } = require('discord.js');
 
 const {
-  getConfig,
   getPanel,
   getPanelsForGuild,
   isTicketChannel,
@@ -22,7 +21,12 @@ const {
   createOrUpdatePanel
 } = require('../utils/ticketHelpers');
 
-const { run, get } = require('../utils/ticketDb');
+const { 
+  getTicketByChannel, 
+  updateTicket, 
+  deleteTicket,
+  getConfig
+} = require('../utils/ticketDb');
 const { createTicket, closeTicket } = require('../utils/ticketService');
 const { ticketPanelEmbed, ticketCreatedEmbed, ticketClosedEmbed, ticketInfoEmbed } = require('../components/ticketEmbeds');
 const { generateTranscriptBuffer } = require('../listeners/transcript');
@@ -84,10 +88,10 @@ module.exports = async function handleTicketInteraction(interaction) {
       // Claim
       if (id === 'ticket_claim') {
         const { guild, channel, user } = interaction;
-        const ticket = await get(`SELECT * FROM tickets WHERE guild_id = ? AND channel_id = ?`, [guild.id, channel.id]);
+        const ticket = await getTicketByChannel(guild.id, channel.id);
         if (!ticket) return interaction.reply({ content: '❌ Ticket not found.', flags: 64 });
 
-        await run(`UPDATE tickets SET status = 'claimed', claim_user_id = ? WHERE guild_id = ? AND id = ?`, [user.id, guild.id, ticket.id]);
+        await updateTicket(guild.id, ticket.id, { status: 'claimed', claim_user_id: user.id });
         await interaction.reply({ content: `✅ Ticket claimed by <@${user.id}>.`, flags: 64 });
         return;
       }
@@ -95,10 +99,10 @@ module.exports = async function handleTicketInteraction(interaction) {
       // Unclaim
       if (id === 'ticket_unclaim') {
         const { guild, channel } = interaction;
-        const ticket = await get(`SELECT * FROM tickets WHERE guild_id = ? AND channel_id = ?`, [guild.id, channel.id]);
+        const ticket = await getTicketByChannel(guild.id, channel.id);
         if (!ticket) return interaction.reply({ content: '❌ Ticket not found.', flags: 64 });
 
-        await run(`UPDATE tickets SET status = 'open', claim_user_id = NULL WHERE guild_id = ? AND id = ?`, [guild.id, ticket.id]);
+        await updateTicket(guild.id, ticket.id, { status: 'open', claim_user_id: null });
         await interaction.reply({ content: `❎ Ticket unclaimed.`, flags: 64 });
         return;
       }
@@ -107,7 +111,7 @@ module.exports = async function handleTicketInteraction(interaction) {
       if (id === 'ticket_close') {
         await interaction.deferReply({ flags: 64 });
         const { guild, channel, user } = interaction;
-        const ticket = await get(`SELECT * FROM tickets WHERE guild_id = ? AND channel_id = ?`, [guild.id, channel.id]);
+        const ticket = await getTicketByChannel(guild.id, channel.id);
         if (!ticket) {
           await safeInteractionReply(interaction, { content: '❌ Ticket record not found.' });
           return;
@@ -117,7 +121,7 @@ module.exports = async function handleTicketInteraction(interaction) {
         const buffer = await generateTranscriptBuffer(channel);
         const file = new AttachmentBuilder(buffer, { name: `ticket-${ticket.id}.html` });
 
-        await run(`UPDATE tickets SET status = 'closed', closed_at = ? WHERE guild_id = ? AND id = ?`, [Date.now(), guild.id, ticket.id]);
+        await updateTicket(guild.id, ticket.id, { status: 'closed', closed_at: Date.now() });
 
         const embed = ticketClosedEmbed({
           ticketId: ticket.id,
@@ -152,7 +156,7 @@ module.exports = async function handleTicketInteraction(interaction) {
       // Info
       if (id === 'ticket_info') {
         const { guild, channel } = interaction;
-        const ticket = await get(`SELECT * FROM tickets WHERE guild_id = ? AND channel_id = ?`, [guild.id, channel.id]);
+        const ticket = await getTicketByChannel(guild.id, channel.id);
         if (!ticket) return interaction.reply({ content: '❌ Ticket not found.', flags: 64 });
 
         const embed = ticketInfoEmbed({

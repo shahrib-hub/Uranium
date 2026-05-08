@@ -1,9 +1,9 @@
 // src/listeners/ticketWatchdog.js
-const { run, get } = require('../utils/ticketDb');
+const { getTicket, updateTicket, getConfig } = require('../utils/ticketDb');
 const { generateTranscriptBuffer } = require('./transcript');
 const { AttachmentBuilder } = require('discord.js');
 const { ticketClosedEmbed } = require('../components/ticketEmbeds');
-const { getConfig } = require('../utils/ticketHelpers');
+const { ticketClosedEmbed } = require('../components/ticketEmbeds');
 
 const watchdogs = new Map();
 
@@ -26,7 +26,7 @@ function startTicketWatchdog(client, guildId, ticketId, channelId, openerId, tim
       const channel = await client.channels.fetch(channelId).catch(() => null);
       if (!channel) return;
 
-      const ticket = await get(`SELECT * FROM tickets WHERE guild_id = ? AND id = ?`, [guildId, ticketId]);
+      const ticket = await getTicket(guildId, ticketId);
       if (!ticket || ticket.status !== 'open') return;
 
       const config = await getConfig(guildId);
@@ -38,11 +38,7 @@ function startTicketWatchdog(client, guildId, ticketId, channelId, openerId, tim
       const buffer = await generateTranscriptBuffer(channel);
       const file = new AttachmentBuilder(buffer, { name: `ticket-${ticket.id}.html` });
 
-      await run(`UPDATE tickets SET status = 'closed', closed_at = ? WHERE guild_id = ? AND id = ?`, [
-        Date.now(),
-        guildId,
-        ticketId
-      ]);
+      await updateTicket(guildId, ticketId, { status: 'closed', closed_at: Date.now() });
 
       const embed = ticketClosedEmbed({
         ticketId,
@@ -68,11 +64,9 @@ function startTicketWatchdog(client, guildId, ticketId, channelId, openerId, tim
     if (msg.author.id !== openerId) return;
 
     try {
-      await run(`UPDATE tickets SET description = ? WHERE guild_id = ? AND id = ?`, [
-        msg.content ? msg.content.slice(0, 1000) : '',
-        guildId,
-        ticketId
-      ]);
+      await updateTicket(guildId, ticketId, { 
+        description: msg.content ? msg.content.slice(0, 1000) : '' 
+      });
     } catch (e) {
       console.error('[ticketWatchdog] save description error', e);
     } finally {

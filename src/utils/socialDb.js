@@ -1,6 +1,6 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
-const { useMongoDB } = require('../config/database');
+const { isMongoReady } = require('../database/dbUtils');
 const { SocialConfig } = require('../database/mongoose');
 
 const db = new sqlite3.Database(
@@ -26,7 +26,7 @@ module.exports = {
   db,
 
   add(data) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       return SocialConfig.create({
         guildId: data.guildId,
         platform: data.platform,
@@ -56,7 +56,7 @@ module.exports = {
   },
 
   list(guildId) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       return SocialConfig.find({ guildId }).then(docs => 
         docs.map(doc => ({
           id: doc._id.toString(),
@@ -81,7 +81,7 @@ module.exports = {
   },
 
   all() {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       return SocialConfig.find({}).then(docs => 
         docs.map(doc => ({
           id: doc._id.toString(),
@@ -104,7 +104,7 @@ module.exports = {
   },
 
   updateLast(id, value) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       SocialConfig.findByIdAndUpdate(id, { lastPost: value }).catch(() => null);
       return;
     }
@@ -116,7 +116,7 @@ module.exports = {
   },
 
   remove(id, guildId) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       SocialConfig.findOneAndDelete({ _id: id, guildId }).catch(() => null);
       return;
     }

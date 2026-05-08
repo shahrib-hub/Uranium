@@ -2,12 +2,8 @@
 const fs = require('fs');
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
-const { useMongoDB } = require('../config/database');
-const { EcoUser, EcoStat, EcoInventory, EcoCooldown, EcoCosmetic, EcoMeta, getDbStatus } = require('../database/mongoose');
-
-function isMongoReady() {
-  return useMongoDB && getDbStatus();
-}
+const { isMongoReady } = require('../database/dbUtils');
+const { EcoUser, EcoStat, EcoInventory, EcoCooldown, EcoCosmetic, EcoMeta } = require('../database/mongoose');
 
 const DATA_DIR = path.join(__dirname, '..', '..', 'data');
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -301,7 +297,7 @@ async function getStat(userId, key) {
 // --- inventory ---
 
 async function getInventory(userId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const docs = await EcoInventory.find({ userId, quantity: { $gt: 0 } });
     return docs.map(d => ({ itemId: d.itemId, quantity: d.quantity }));
   }
@@ -317,7 +313,7 @@ async function getInventory(userId) {
 async function addInventoryItem(userId, itemId, qty = 1) {
   if (qty === 0) return;
 
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await EcoInventory.findOneAndUpdate(
       { userId, itemId },
       { $inc: { quantity: qty } },
@@ -345,7 +341,7 @@ async function addInventoryItem(userId, itemId, qty = 1) {
 }
 
 async function consumeInventoryItem(userId, itemId, qty = 1) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const doc = await EcoInventory.findOne({ userId, itemId });
     if (!doc || doc.quantity < qty) return false;
     const newQty = doc.quantity - qty;
@@ -384,7 +380,7 @@ async function consumeInventoryItem(userId, itemId, qty = 1) {
 // --- cooldowns ---
 
 async function getCooldown(userId, key) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const doc = await EcoCooldown.findOne({ userId, key });
     return doc ? doc.lastUsed : null;
   }
@@ -398,7 +394,7 @@ async function getCooldown(userId, key) {
 }
 
 async function setCooldown(userId, key, timestampMs) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await EcoCooldown.findOneAndUpdate({ userId, key }, { lastUsed: timestampMs }, { upsert: true });
     return;
   }
@@ -418,7 +414,7 @@ async function setCooldown(userId, key, timestampMs) {
 // --- leaderboard ---
 
 async function getLeaderboard(type = 'net', limit = 10) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     let sortObj = {};
     if (type === 'wallet') sortObj = { wallet: -1 };
     else if (type === 'bank') sortObj = { bank: -1 };
@@ -464,7 +460,7 @@ async function getLeaderboard(type = 'net', limit = 10) {
 // --- cosmetics ---
 
 async function getCosmetics(userId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const doc = await EcoCosmetic.findOne({ userId });
     return doc ? { title: doc.title, badge: doc.badge, frame: doc.frame, color: doc.color } : {};
   }
@@ -486,7 +482,7 @@ async function setCosmetics(userId, patch = {}) {
     color: patch.color !== undefined ? patch.color : existing.color || null
   };
 
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await EcoCosmetic.findOneAndUpdate({ userId }, merged, { upsert: true });
     return merged;
   }
@@ -511,7 +507,7 @@ async function setCosmetics(userId, patch = {}) {
 // --- meta / global flags ---
 
 async function getMeta(key) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const doc = await EcoMeta.findOne({ key });
     return doc ? doc.value : null;
   }
@@ -522,7 +518,7 @@ async function getMeta(key) {
 }
 
 async function setMeta(key, value) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await EcoMeta.findOneAndUpdate({ key }, { value: String(value) }, { upsert: true });
     return;
   }
@@ -551,7 +547,7 @@ async function setGlobalEconomyDisabled(disabled) {
 // --- admin ops ---
 
 async function resetUserEconomy(userId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await EcoStat.deleteMany({ userId });
     await EcoInventory.deleteMany({ userId });
     await EcoCooldown.deleteMany({ userId });
@@ -573,7 +569,7 @@ async function resetUserEconomy(userId) {
 }
 
 async function wipeEverything() {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await EcoStat.deleteMany({});
     await EcoInventory.deleteMany({});
     await EcoCooldown.deleteMany({});

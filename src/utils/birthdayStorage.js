@@ -1,6 +1,6 @@
 // src/utils/birthdayStorage.js
 const rrdb = require('./rrdb'); // reuse existing sqlite helper
-const { useMongoDB } = require('../config/database');
+const { isMongoReady } = require('../database/dbUtils');
 const { Birthday } = require('../database/mongoose');
 const now = () => Math.floor(Date.now() / 1000);
 
@@ -27,7 +27,7 @@ async function initBirthdayStorage() {
 async function setBirthday({ guildId, userId, year = null, month, day, note = null }) {
   const ts = now();
 
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const doc = await Birthday.findOneAndUpdate(
       { guildId, userId },
       { year, month, day, note, createdAt: ts },
@@ -58,7 +58,7 @@ async function setBirthday({ guildId, userId, year = null, month, day, note = nu
 }
 
 async function removeBirthday(guildId, userId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     return Birthday.findOneAndDelete({ guildId, userId });
   }
 
@@ -66,7 +66,7 @@ async function removeBirthday(guildId, userId) {
 }
 
 async function getBirthday(guildId, userId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const doc = await Birthday.findOne({ guildId, userId });
     if (!doc) return null;
     return {
@@ -85,7 +85,7 @@ async function getBirthday(guildId, userId) {
 }
 
 async function listBirthdaysForGuild(guildId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const docs = await Birthday.find({ guildId }).sort({ month: 1, day: 1 });
     return docs.map(doc => ({
       id: doc._id.toString(),

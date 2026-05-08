@@ -1,6 +1,6 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
-const { useMongoDB } = require('../config/database');
+const { isMongoReady } = require('../database/dbUtils');
 const { VerificationConfig, VerifiedUser, OtpCode } = require('../database/mongoose');
 const dbPath = path.join(__dirname, '..', 'data', 'verification.db');
 
@@ -34,7 +34,7 @@ db.serialize(() => {
 
 // ✅ Config functions
 async function getVerificationConfig(guildId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const doc = await VerificationConfig.findOne({ guildId });
     if (!doc) return undefined;
     return {
@@ -55,7 +55,7 @@ async function getVerificationConfig(guildId) {
 }
 
 async function saveVerificationConfig(guildId, config) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await VerificationConfig.findOneAndUpdate(
       { guildId },
       {
@@ -79,7 +79,7 @@ async function saveVerificationConfig(guildId, config) {
 }
 
 async function deleteVerificationConfig(guildId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await VerificationConfig.findOneAndDelete({ guildId });
     return;
   }
@@ -92,7 +92,7 @@ async function deleteVerificationConfig(guildId) {
 // ✅ Verification tracking
 async function markUserVerified(guildId, userId) {
   const verifiedAt = new Date().toISOString();
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await VerifiedUser.findOneAndUpdate({ guildId, userId }, { verifiedAt }, { upsert: true });
     return;
   }
@@ -107,7 +107,7 @@ async function markUserVerified(guildId, userId) {
 }
 
 async function getVerifiedUser(guildId, userId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const doc = await VerifiedUser.findOne({ guildId, userId });
     if (!doc) return undefined;
     return {
@@ -126,7 +126,7 @@ async function getVerifiedUser(guildId, userId) {
 }
 
 async function removeUserVerification(guildId, userId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await VerifiedUser.findOneAndDelete({ guildId, userId });
     return;
   }
@@ -151,7 +151,7 @@ function generateOTP() {
 
 async function setOTPCooldown(guildId, userId, code) {
   const expiresAt = Date.now() + 30000; // 30 seconds
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await OtpCode.findOneAndUpdate(
       { guildId, userId },
       { code, expiresAt },
@@ -170,7 +170,7 @@ async function setOTPCooldown(guildId, userId, code) {
 }
 
 async function isOTPCooldownActive(guildId, userId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const doc = await OtpCode.findOne({ guildId, userId });
     if (!doc) return false;
     return Date.now() < doc.expiresAt;
@@ -189,7 +189,7 @@ async function isOTPCooldownActive(guildId, userId) {
 }
 
 async function validateOTP(guildId, userId, inputCode) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const doc = await OtpCode.findOne({ guildId, userId });
     if (!doc || doc.code !== inputCode) return false;
     await OtpCode.deleteOne({ guildId, userId });

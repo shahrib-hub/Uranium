@@ -2,7 +2,7 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
-const { useMongoDB } = require('../config/database');
+const { isMongoReady } = require('../database/dbUtils');
 const mongooseModels = require('../database/mongoose');
 
 const dataDir = path.join(__dirname, '..', '..', 'data');
@@ -74,7 +74,7 @@ async function init() {
 
 // public API
 async function setLogChannel(guildId, channelId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await mongooseModels.LogConfig.findOneAndUpdate({ guildId }, { logChannel: channelId }, { upsert: true });
     return;
   }
@@ -87,7 +87,7 @@ async function setLogChannel(guildId, channelId) {
   );
 }
 async function getLogChannel(guildId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const doc = await mongooseModels.LogConfig.findOne({ guildId });
     return doc ? doc.logChannel : null;
   }
@@ -98,7 +98,7 @@ async function getLogChannel(guildId) {
 }
 
 async function setWebhook(guildId, webhookId, webhookToken) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await mongooseModels.LogConfig.findOneAndUpdate({ guildId }, { webhookId, webhookToken }, { upsert: true });
     return;
   }
@@ -111,7 +111,7 @@ async function setWebhook(guildId, webhookId, webhookToken) {
   );
 }
 async function getWebhook(guildId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const doc = await mongooseModels.LogConfig.findOne({ guildId });
     if (!doc || !doc.webhookId || !doc.webhookToken) return null;
     return { id: doc.webhookId, token: doc.webhookToken };
@@ -124,7 +124,7 @@ async function getWebhook(guildId) {
 }
 
 async function setEventEnabled(guildId, eventName, enabled = true) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await mongooseModels.LogEvent.findOneAndUpdate(
       { guildId, eventName },
       { enabled: !!enabled },
@@ -141,7 +141,7 @@ async function setEventEnabled(guildId, eventName, enabled = true) {
   );
 }
 async function isEventEnabled(guildId, eventName) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const doc = await mongooseModels.LogEvent.findOne({ guildId, eventName });
     return doc ? doc.enabled : false;
   }
@@ -152,7 +152,7 @@ async function isEventEnabled(guildId, eventName) {
   return !!(row && row.enabled === 1);
 }
 async function listEvents(guildId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const docs = await mongooseModels.LogEvent.find({ guildId });
     return docs.map(e => ({ eventName: e.eventName, enabled: e.enabled ? 1 : 0 }));
   }
@@ -162,7 +162,7 @@ async function listEvents(guildId) {
 }
 
 async function addIgnoredChannel(guildId, channelId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await mongooseModels.LogIgnoredChannel.findOneAndUpdate({ guildId, channelId }, {}, { upsert: true });
     return;
   }
@@ -171,7 +171,7 @@ async function addIgnoredChannel(guildId, channelId) {
   return runAsync(`INSERT INTO log_ignored_channels (guildId, channelId) VALUES (?, ?)`, [guildId, channelId]);
 }
 async function removeIgnoredChannel(guildId, channelId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await mongooseModels.LogIgnoredChannel.findOneAndDelete({ guildId, channelId });
     return;
   }
@@ -180,7 +180,7 @@ async function removeIgnoredChannel(guildId, channelId) {
   return runAsync(`DELETE FROM log_ignored_channels WHERE guildId = ? AND channelId = ?`, [guildId, channelId]);
 }
 async function listIgnoredChannels(guildId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const docs = await mongooseModels.LogIgnoredChannel.find({ guildId });
     return docs.map(d => d.channelId);
   }

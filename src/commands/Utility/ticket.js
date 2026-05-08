@@ -7,9 +7,20 @@ const {
   ChannelType
 } = require('discord.js');
 
+const { 
+  setConfig, 
+  getConfig, 
+  getTicketByChannel, 
+  updateTicket, 
+  deleteTicket, 
+  addTicketMember, 
+  removeTicketMember, 
+  deleteGuildConfig, 
+  deleteGuildCounter, 
+  deleteAllGuildTickets,
+  run, get, all
+} = require('../../utils/ticketDb');
 const {
-  setConfig,
-  getConfig,
   isTicketChannel,
   getPanelsForGuild,
   createOrUpdatePanel,
@@ -18,8 +29,6 @@ const {
   isPremiumGuild,
   isSupport
 } = require('../../utils/ticketHelpers');
-
-const { run, get, all } = require('../../utils/ticketDb');
 const { ticketPanelEmbed, ticketInfoEmbed, ticketClosedEmbed } = require('../../components/ticketEmbeds');
 const { generateTranscriptBuffer } = require('../../listeners/transcript');
 const { premiumRequiredEmbed } = require('../../components/ticketUI');
@@ -240,26 +249,24 @@ module.exports = {
       const target = interaction.options.getString('target');
 
       if (target === 'setup') {
-        await run(`DELETE FROM guild_config WHERE guild_id = ?`, [guild.id]);
+        await deleteGuildConfig(guild.id);
         return interaction.reply({ content: '🗑️ Ticket setup deleted.', flags: 64 });
       }
 
       if (target === 'count') {
-        await run(`DELETE FROM counters WHERE guild_id = ?`, [guild.id]);
+        await deleteGuildCounter(guild.id);
         return interaction.reply({ content: '🗑️ Ticket counter reset.', flags: 64 });
       }
 
       if (target === 'tickets') {
-        await run(`DELETE FROM tickets WHERE guild_id = ?`, [guild.id]);
-        await run(`DELETE FROM ticket_members WHERE guild_id = ?`, [guild.id]);
+        await deleteAllGuildTickets(guild.id);
         return interaction.reply({ content: '🗑️ All ticket records deleted.', flags: 64 });
       }
 
       if (target === 'channel') {
-        const ticket = await get(`SELECT * FROM tickets WHERE guild_id = ? AND channel_id = ?`, [guild.id, channel.id]);
+        const ticket = await getTicketByChannel(guild.id, channel.id);
         if (ticket) {
-          await run(`DELETE FROM tickets WHERE guild_id = ? AND id = ?`, [guild.id, ticket.id]);
-          await run(`DELETE FROM ticket_members WHERE guild_id = ? AND ticket_id = ?`, [guild.id, ticket.id]);
+          await deleteTicket(guild.id, ticket.id);
         }
         await interaction.reply({ content: '🗑️ Ticket will be deleted in 5 seconds.', flags: 64 });
         setTimeout(() => channel.delete().catch(() => {}), 5000);
@@ -276,7 +283,7 @@ module.exports = {
       });
     }
 
-    const ticket = await get(`SELECT * FROM tickets WHERE guild_id = ? AND channel_id = ?`, [guild.id, channel.id]);
+    const ticket = await getTicketByChannel(guild.id, channel.id);
     if (!ticket) {
       return interaction.reply({ content: '❌ Ticket not found in database.', flags: 64 });
     }
@@ -289,17 +296,14 @@ module.exports = {
     // /ticket archive
     if (sub === 'archive') {
       await channel.setParent(config.archive_category_id).catch(() => {});
-      await run(`UPDATE tickets SET status = 'archived' WHERE guild_id = ? AND id = ?`, [guild.id, ticket.id]);
+      await updateTicket(guild.id, ticket.id, { status: 'archived' });
       return interaction.reply({ content: '📦 Ticket archived.', flags: 64 });
     }
 
     // /ticket add-user
     if (sub === 'add-user') {
       const target = interaction.options.getUser('user');
-      await run(
-        `INSERT OR IGNORE INTO ticket_members (guild_id, ticket_id, user_id) VALUES (?, ?, ?)`,
-        [guild.id, ticket.id, target.id]
-      );
+      await addTicketMember(guild.id, ticket.id, target.id);
 
       await channel.permissionOverwrites.edit(target.id, {
         ViewChannel: true,
@@ -313,10 +317,7 @@ module.exports = {
     // /ticket remove-user
     if (sub === 'remove-user') {
       const target = interaction.options.getUser('user');
-      await run(
-        `DELETE FROM ticket_members WHERE guild_id = ? AND ticket_id = ? AND user_id = ?`,
-        [guild.id, ticket.id, target.id]
-      );
+      await removeTicketMember(guild.id, ticket.id, target.id);
 
       await channel.permissionOverwrites.delete(target.id).catch(() => {});
       return interaction.reply({ content: `✅ <@${target.id}> removed from the ticket.`, flags: 64 });
@@ -324,19 +325,13 @@ module.exports = {
 
     // /ticket claim
     if (sub === 'claim') {
-      await run(
-        `UPDATE tickets SET status = 'claimed', claim_user_id = ? WHERE guild_id = ? AND id = ?`,
-        [user.id, guild.id, ticket.id]
-      );
+      await updateTicket(guild.id, ticket.id, { status: 'claimed', claim_user_id: user.id });
       return interaction.reply({ content: `🛠️ Ticket claimed by <@${user.id}>.`, flags: 64 });
     }
 
     // /ticket unclaim
     if (sub === 'unclaim') {
-      await run(
-        `UPDATE tickets SET status = 'open', claim_user_id = NULL WHERE guild_id = ? AND id = ?`,
-        [guild.id, ticket.id]
-      );
+      await updateTicket(guild.id, ticket.id, { status: 'open', claim_user_id: null });
       return interaction.reply({ content: `❎ Ticket unclaimed.`, flags: 64 });
     }
 
@@ -345,10 +340,7 @@ module.exports = {
       const buffer = await generateTranscriptBuffer(channel);
       const file = { attachment: buffer, name: `ticket-${ticket.id}.html` };
 
-      await run(
-        `UPDATE tickets SET status = 'closed', closed_at = ? WHERE guild_id = ? AND id = ?`,
-        [Date.now(), guild.id, ticket.id]
-      );
+      await updateTicket(guild.id, ticket.id, { status: 'closed', closed_at: Date.now() });
 
       const embed = ticketClosedEmbed({
         ticketId: ticket.id,

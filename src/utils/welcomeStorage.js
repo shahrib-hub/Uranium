@@ -2,7 +2,7 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
-const { useMongoDB } = require('../config/database');
+const { isMongoReady } = require('../database/dbUtils');
 const { WelcomeConfig } = require('../database/mongoose');
 
 const dataDir = path.join(__dirname, '..', '..', 'data');
@@ -116,7 +116,7 @@ const storage = {
   _ready: ensureSchema(),
 
   async getSettings(guildId) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       const doc = await WelcomeConfig.findOne({ guildId });
       if (!doc) {
         return {
@@ -188,7 +188,7 @@ const storage = {
       updatedAt: now
     };
 
-    if (useMongoDB) {
+    if (isMongoReady()) {
       await WelcomeConfig.findOneAndUpdate(
         { guildId },
         {
@@ -224,7 +224,7 @@ const storage = {
 
   async setWelcomeChannel(guildId, channelId) {
     const now = Date.now();
-    if (useMongoDB) {
+    if (isMongoReady()) {
       await WelcomeConfig.findOneAndUpdate(
         { guildId },
         {
@@ -252,7 +252,7 @@ const storage = {
 
   async removeWelcomeChannel(guildId) {
     const now = Date.now();
-    if (useMongoDB) {
+    if (isMongoReady()) {
       await WelcomeConfig.findOneAndUpdate(
         { guildId },
         {
@@ -285,7 +285,7 @@ const storage = {
    * This is the function that was missing in your module.
    */
   async ensureDefaults(guildId) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       const doc = await WelcomeConfig.findOne({ guildId });
       if (!doc) {
         await storage.setConfig(guildId, { templates: getDefaultTemplates(), enabled: false });
@@ -314,7 +314,7 @@ const storage = {
   },
 
   async setTemplates(guildId, templatesArray) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       await WelcomeConfig.findOneAndUpdate({ guildId }, { templatesJson: serializeTemplates(templatesArray), updatedAt: Date.now() }, { upsert: true });
       return;
     }
@@ -324,7 +324,7 @@ const storage = {
   },
 
   async checkTables(verbose = false) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       return { welcome_settings: { exists: true, count: await WelcomeConfig.countDocuments(), cols: [] } };
     }
 

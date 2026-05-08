@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const { useMongoDB } = require('../config/database');
 const mongooseModels = require('../database/mongoose');
+const { isMongoReady } = require('../database/dbUtils');
 
 const dataDir = path.join(__dirname, '..', '..', 'data');
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
@@ -130,7 +131,7 @@ const storage = {
 
   // CASE LOGGING
   async saveCase(data) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       await mongooseModels.ModCase.create({
         guildId: data.guildId,
         caseId: data.caseId,
@@ -166,7 +167,7 @@ const storage = {
   },
 
   async getCasesByUser(guildId, userId) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       const docs = await mongooseModels.ModCase.find({ guildId, targetId: userId }).sort({ timestamp: -1 }).lean();
       return docs.map(doc => ({
         ...doc,
@@ -188,7 +189,7 @@ const storage = {
   },
 
   async getCaseById(guildId, caseId) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       const doc = await mongooseModels.ModCase.findOne({ guildId, caseId }).lean();
       if (!doc) return null;
       return {
@@ -211,7 +212,7 @@ const storage = {
   },
 
   async updateCase(guildId, caseId, updates) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       const mappedUpdates = { ...updates };
       if (mappedUpdates.references) {
         mappedUpdates.references_list = mappedUpdates.references;
@@ -233,7 +234,7 @@ const storage = {
 
   // SCHEDULED TASKS
   async saveScheduledTask(task) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       await mongooseModels.ModScheduled.create({
         guildId: task.guildId,
         userId: task.userId,
@@ -253,7 +254,7 @@ const storage = {
   },
 
   async getDueScheduledTasks(beforeTimestamp) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       const docs = await mongooseModels.ModScheduled.find({ expiresAt: { $lte: beforeTimestamp } }).lean();
       return docs.map(doc => ({ ...doc, id: doc._id.toString() })); // Mock ID
     }
@@ -263,7 +264,7 @@ const storage = {
   },
 
   async markTaskComplete(taskId) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       await mongooseModels.ModScheduled.findByIdAndDelete(taskId).catch(() => null);
       return;
     }
@@ -274,7 +275,7 @@ const storage = {
 
   // MOD ROLES
   async getModRoles(guildId) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       const docs = await mongooseModels.ModRole.find({ guildId });
       return docs.map(d => d.roleId);
     }
@@ -285,7 +286,7 @@ const storage = {
   },
 
   async addModRole(guildId, roleId) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       try {
         await mongooseModels.ModRole.create({ guildId, roleId });
       } catch (e) {
@@ -299,7 +300,7 @@ const storage = {
   },
 
   async removeModRole(guildId, roleId) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       await mongooseModels.ModRole.deleteOne({ guildId, roleId });
       return;
     }
@@ -310,7 +311,7 @@ const storage = {
 
   // SETTINGS
   async getLogChannel(guildId) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       const doc = await mongooseModels.ModSetting.findOne({ guildId });
       return doc?.logChannel || null;
     }
@@ -321,7 +322,7 @@ const storage = {
   },
 
   async setLogChannel(guildId, channelId) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       await mongooseModels.ModSetting.findOneAndUpdate({ guildId }, { logChannel: channelId }, { upsert: true });
       return;
     }
@@ -336,7 +337,7 @@ const storage = {
   },
 
   async getMutedRoleId(guildId) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       const doc = await mongooseModels.ModSetting.findOne({ guildId });
       return doc?.mutedRole || null;
     }
@@ -347,7 +348,7 @@ const storage = {
   },
 
   async setMutedRoleId(guildId, roleId) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       await mongooseModels.ModSetting.findOneAndUpdate({ guildId }, { mutedRole: roleId }, { upsert: true });
       return;
     }
@@ -363,7 +364,7 @@ const storage = {
 
   // Debug helper
   async checkTables(verbose = false) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       const info = {
         cases: { exists: true, count: await mongooseModels.ModCase.countDocuments() },
         scheduled_tasks: { exists: true, count: await mongooseModels.ModScheduled.countDocuments() },

@@ -1,7 +1,14 @@
 // src/utils/ticketHelpers.js
-const { get, run, all, getConfig: getDbConfig, setConfig: setDbConfig } = require('./ticketDb');
+const { 
+  getConfig: getDbConfig, 
+  setConfig: setDbConfig,
+  getPanels,
+  getPanelById,
+  createPanel,
+  removePanel: removeDbPanel,
+  getTicketByChannel: getDbTicket
+} = require('./ticketDb');
 const { useMongoDB } = require('../config/database');
-const { TicketPanel } = require('../database/mongoose');
 
 async function getConfig(guildId) {
   return await getDbConfig(guildId);
@@ -12,63 +19,30 @@ async function setConfig(guildId, config) {
 }
 
 async function getPanelsForGuild(guildId) {
-  if (useMongoDB) {
-    const docs = await TicketPanel.find({ guildId });
-    return docs.map(doc => ({
-      panel_id: doc.panelId,
-      guild_id: doc.guildId,
-      channel_id: doc.channelId,
-      name: doc.name,
-      is_premium_only: doc.isPremiumOnly ? 1 : 0,
-      types: JSON.stringify(doc.types || [])
-    }));
-  }
-
-  return await all(`SELECT * FROM ticket_panels WHERE guild_id = ?`, [guildId]);
+  const panels = await getPanels(guildId);
+  return panels.map(p => ({
+    ...p,
+    types: p.types || '[]' // Ensure types is a string if it's not already
+  }));
 }
 
 async function getPanel(panelId) {
-  if (useMongoDB) {
-    const doc = await TicketPanel.findOne({ panelId });
-    if (!doc) return undefined;
-    return {
-      panel_id: doc.panelId,
-      guild_id: doc.guildId,
-      channel_id: doc.channelId,
-      name: doc.name,
-      is_premium_only: doc.isPremiumOnly ? 1 : 0,
-      types: JSON.stringify(doc.types || [])
-    };
-  }
-
-  return await get(`SELECT * FROM ticket_panels WHERE panel_id = ?`, [panelId]);
+  return await getPanelById(panelId);
 }
 
 async function createOrUpdatePanel(panelId, guildId, channelId, name, types = [], premiumOnly = false) {
-  if (useMongoDB) {
-    await TicketPanel.findOneAndUpdate(
-      { panelId },
-      { guildId, channelId, name, types: types || [], isPremiumOnly: premiumOnly },
-      { upsert: true }
-    );
-    return;
-  }
-
-  const typesStr = JSON.stringify(types || []);
-  return await run(
-    `INSERT OR REPLACE INTO ticket_panels (panel_id, guild_id, channel_id, name, is_premium_only, types)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [panelId, guildId, channelId, name, premiumOnly ? 1 : 0, typesStr]
-  );
+  return await createPanel({
+    panel_id: panelId,
+    guild_id: guildId,
+    channel_id: channelId,
+    name: name,
+    is_premium_only: premiumOnly ? 1 : 0,
+    types: JSON.stringify(types || [])
+  });
 }
 
 async function removePanel(panelId) {
-  if (useMongoDB) {
-    await TicketPanel.deleteOne({ panelId });
-    return;
-  }
-
-  return await run(`DELETE FROM ticket_panels WHERE panel_id = ?`, [panelId]);
+  return await removeDbPanel(panelId);
 }
 
 function isTicketChannel(channelName) {

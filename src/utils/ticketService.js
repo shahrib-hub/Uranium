@@ -1,7 +1,6 @@
 // src/utils/ticketService.js
-const { run, get, nextTicketId } = require('./ticketDb');
-const { useMongoDB } = require('../config/database');
-const { Ticket, getDbStatus } = require('../database/mongoose');
+const { updateTicket, nextTicketId, isMongoReady } = require('./ticketDb');
+const { Ticket } = require('../database/mongoose');
 const { ticketCreatedEmbed } = require('../components/ticketEmbeds');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
@@ -24,9 +23,8 @@ async function createTicket({ client, guild, openerId, type = 'Support', form = 
   const formResponsesStr = form ? JSON.stringify(form) : null;
   const createdAt = Date.now();
 
-  if (useMongoDB) {
-    if (getDbStatus()) {
-      await Ticket.create({
+  if (isMongoReady()) {
+    await Ticket.create({
       guildId: guild.id,
       ticketId,
       openerId,
@@ -36,10 +34,8 @@ async function createTicket({ client, guild, openerId, type = 'Support', form = 
       createdAt,
       formResponses: formResponsesStr
     });
-    } else {
-      console.warn('[ticketService] Skipping Ticket creation in MongoDB as it is disconnected.');
-    }
   } else {
+    const { run } = require('./ticketDb'); // Fallback if needed, though better to use a unified createTicket in ticketDb
     await run(
       `INSERT INTO tickets (id, guild_id, opener_id, channel_id, type, status, created_at, form_responses)
        VALUES (?, ?, ?, ?, ?, 'open', ?, ?)`,
@@ -71,13 +67,7 @@ async function createTicket({ client, guild, openerId, type = 'Support', form = 
 async function closeTicket({ guild, ticket, closerId, channel, config }) {
   const closedAt = Date.now();
 
-  if (useMongoDB) {
-    if (getDbStatus()) {
-      await Ticket.findOneAndUpdate({ guildId: guild.id, ticketId: ticket.id }, { status: 'closed', closedAt });
-    }
-  } else {
-    await run(`UPDATE tickets SET status = 'closed', closed_at = ? WHERE guild_id = ? AND id = ?`, [closedAt, guild.id, ticket.id]);
-  }
+  await updateTicket(guild.id, ticket.id, { status: 'closed', closed_at: closedAt });
 
   const embed = require('../components/ticketEmbeds').ticketClosedEmbed({
     ticketId: ticket.id,

@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const { useMongoDB } = require('../config/database');
 const mongooseModels = require('../database/mongoose');
+const { isMongoReady } = require('../database/dbUtils');
 
 const dataDir = path.join(__dirname, '..', '..', 'data');
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
@@ -74,7 +75,7 @@ function defaultConfig() {
 
 module.exports = {
   async getConfig(guildId) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       const doc = await mongooseModels.AutomodSettings.findOne({ guildId });
       if (!doc) {
         const def = defaultConfig();
@@ -103,7 +104,7 @@ module.exports = {
 
   async setConfig(guildId, newSettings) {
     const json = JSON.stringify(newSettings);
-    if (useMongoDB) {
+    if (isMongoReady()) {
       await mongooseModels.AutomodSettings.findOneAndUpdate(
         { guildId },
         { settings: json },
