@@ -191,18 +191,6 @@ async function executeMusicAction(interaction) {
 break;
       }
 
-      case 'autoplay': {
-        if (!player) return interaction.editReply({ embeds: [errorEmbed('No player active.')] });
-        
-        const currentAutoplay = player.data.get('autoplay') || false;
-        const newAutoplay = !currentAutoplay;
-        player.data.set('autoplay', newAutoplay);
-        
-        await interaction.editReply({
-          embeds: [successEmbed(newAutoplay ? '🎵 Autoplay enabled! Related tracks will be added automatically.' : '❌ Autoplay disabled.')]
-        });
-        break;
-      }
 
       case 'loop': {
         if (!player) return interaction.editReply({ embeds: [errorEmbed('No player active.')] });

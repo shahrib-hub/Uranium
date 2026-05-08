@@ -57,30 +57,35 @@ function createApiRouter(client) {
   });
 
   router.get('/commands', (req, res) => {
-    const categories = [];
-    const commandsPath = path.join(__dirname, '..', 'commands');
-    const dirs = fs.readdirSync(commandsPath).filter(f => fs.statSync(path.join(commandsPath, f)).isDirectory());
-    
-    for (const cat of dirs) {
-      const catPath = path.join(commandsPath, cat);
-      const files = fs.readdirSync(catPath).filter(f => f.endsWith('.js'));
-      const cmds = [];
-      for (const file of files) {
-        try {
-          const cmd = require(path.join(catPath, file));
-          if (cmd.data) {
-            const data = cmd.data.toJSON ? cmd.data.toJSON() : cmd.data;
-            const commandEntry = { name: data.name, description: data.description, premium: cmd.premium || false, subcommands: [] };
-            if (data.options) {
-              data.options.forEach(opt => { if (opt.type === 1 || opt.type === 2) commandEntry.subcommands.push({ name: opt.name, description: opt.description }); });
-            }
-            cmds.push(commandEntry);
-          }
-        } catch (e) {}
-      }
-      if (cmds.length > 0) categories.push({ name: cat, commands: cmds });
+    try {
+      const helpPath = path.join(__dirname, '..', 'components', 'help.json');
+      if (!fs.existsSync(helpPath)) return res.json([]);
+      
+      const helpData = JSON.parse(fs.readFileSync(helpPath, 'utf8'));
+      
+      // SPECIFIC DEV COMMAND BLACKLIST
+      const devBlacklist = ['/ecoconfig', '/premiumadmin', '/notificationtesting', '/dbmigrate'];
+      
+      const publicCategories = (helpData.categories || [])
+        .map(cat => ({
+          name: cat.id,
+          emoji: cat.emoji,
+          commands: (cat.commands || [])
+            .filter(cmdStr => {
+              const cmdName = cmdStr.split(' — ')[0].trim().toLowerCase();
+              return !devBlacklist.some(dev => cmdName.includes(dev.toLowerCase()));
+            })
+            .map(cmdStr => {
+              const [name, desc] = cmdStr.split(' — ');
+              return { name: (name || '').trim(), description: (desc || '').trim() };
+            })
+        }))
+        .filter(cat => cat.commands.length > 0);
+        
+      res.json(publicCategories);
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to load command list' });
     }
-    res.json(categories);
   });
 
   router.get('/guild/:guildId/player', requireGuildAccess(client), (req, res) => {
@@ -118,11 +123,6 @@ function createApiRouter(client) {
           const modes = ['none', 'track', 'queue'];
           player.setLoop(modes[(modes.indexOf(player.loop || 'none') + 1) % modes.length]);
           break;
-        case 'autoplay': {
-          const current = player.data.get('autoplay') || false;
-          player.data.set('autoplay', !current);
-          break;
-        }
         case 'volume': 
           const vol = Math.min(100, Math.max(0, parseInt(value)));
           player.setVolume(vol); 
@@ -397,7 +397,6 @@ function serializePlayer(player, client, guildId) {
     volume: player.volume ?? 100, 
     loop: player.loop || 'none', 
     filter: player.data?.get?.('filter') || 'clear', 
-    autoplay: player.data?.get?.('autoplay') || false, 
     current: serializeTrack(player.queue?.current), 
     queueSize: player.queue?.size || 0, 
     queue: (Array.from(player.queue || [])).slice(0, 50).map((t, i) => ({ ...serializeTrack(t), position: i })) 

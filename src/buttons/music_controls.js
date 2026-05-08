@@ -1,4 +1,4 @@
-const { buildFilterMenu, currentFilterLabel, errorEmbed, simpleEmbed } = require('../music/ui');
+const { buildFilterMenu, currentFilterLabel, errorEmbed, simpleEmbed, buildQueueEmbed } = require('../music/ui');
 const {
   applyFilter,
   getCurrentFilter,
@@ -105,13 +105,9 @@ module.exports = async (interaction) => {
       });
     }
 
-    if (action === 'autoplay') {
-      const currentAutoplay = player.data.get('autoplay') || false;
-      const newAutoplay = !currentAutoplay;
-      player.data.set('autoplay', newAutoplay);
-      await updatePlayerMessage(interaction.client, player);
+    if (action === 'queue') {
       return interaction.reply({ 
-        embeds: [simpleEmbed(newAutoplay ? '🎵 Autoplay enabled! Related tracks will play after queue ends.' : '❌ Autoplay disabled.')], 
+        embeds: [buildQueueEmbed(player.queue, player)], 
         flags: 64 
       });
     }

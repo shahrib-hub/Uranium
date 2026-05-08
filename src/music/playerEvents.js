@@ -42,51 +42,14 @@ function startMessageRefresh(client, player) {
   stopMessageRefresh(player.guildId);
   const timer = setInterval(async () => {
     if (!player?.message || !player?.queue?.current || player.paused) return;
-    const autoplay = player.data.get('autoplay') || false;
     await player.message.edit({
       embeds: [buildNowPlayingEmbed(player.queue.current, player, client)],
-      components: buildControlButtons(player.guildId, player.paused, autoplay)
+      components: buildControlButtons(player.guildId, player.paused)
     }).catch(() => null);
   }, 15000);
   messageRefreshIntervals.set(player.guildId, timer);
 }
 
-async function fetchRelatedTracks(client, track, count = 5) {
-  try {
-    if (!client.music) return [];
-    
-    const { searchTracks } = require('./service');
-    
-    // Get a variety of candidates from a mix search
-    const query = `${track.title} ${track.author} mix`;
-    const result = await client.music.search({ query: `ytsearch:${query}` });
-    const rawTracks = result.tracks || [];
-
-    const resolvedTracks = [];
-    for (const rawTrack of rawTracks) {
-      if (resolvedTracks.length >= count) break;
-      
-      // Basic sanity checks
-      if (!rawTrack.uri || String(rawTrack.uri).includes('[object')) continue;
-      if (rawTrack.identifier === track.identifier) continue;
-
-      // DEEP RESOLVE: Take the link and force the bot to fetch official metadata for it
-      // This is the only way to be 100% sure we don't get "[object Object]" names
-      const deepResult = await searchTracks(client, rawTrack.uri, client.user).catch(() => null);
-      const cleanTrack = deepResult?.tracks?.[0];
-
-      if (cleanTrack && typeof cleanTrack.title === 'string' && !cleanTrack.title.includes('[object')) {
-        cleanTrack.requester = client.user;
-        resolvedTracks.push(cleanTrack);
-      }
-    }
-    
-    return resolvedTracks;
-  } catch (e) {
-    console.error('[Autoplay] Deep Resolve failed:', e.message);
-    return [];
-  }
-}
 
 async function updateVoiceChannelStatus(client, player, track, isPlaying = true) {
   try {
@@ -167,10 +130,9 @@ module.exports.registerPlayerEvents = function registerPlayerEvents(client) {
       clearLeaveTimer(player.guildId);
       if (!player.data.get('filter')) player.data.set('filter', getCurrentFilter(player));
       await disableOldMessage(player);
-      const autoplay = player.data.get('autoplay') || false;
       const msg = await sendToPlayerChannel(client, player, {
         embeds: [buildNowPlayingEmbed(track, player, client)],
-        components: buildControlButtons(player.guildId, player.paused, autoplay)
+        components: buildControlButtons(player.guildId, player.paused)
       });
       if (msg) {
         player.message = msg;
@@ -207,29 +169,6 @@ module.exports.registerPlayerEvents = function registerPlayerEvents(client) {
       const guildId = player.guildId;
       await updateVoiceChannelStatus(client, player, null, false);
       await updateBotPresence(client, null, false);
-      
-      const autoplayEnabled = player.data.get('autoplay');
-      if (autoplayEnabled) {
-        const currentTrack = player.queue?.current || player.data.get('lastTrack');
-        if (currentTrack) {
-          const relatedTracks = await fetchRelatedTracks(client, currentTrack, 5);
-          if (relatedTracks.length > 0) {
-            // Add songs individually and mark them as Autoplay
-            for (const t of relatedTracks) {
-              t.requester = client.user;
-              player.queue.add(t);
-            }
-            
-            await player.play();
-            await sendToPlayerChannel(client, player, {
-              embeds: [simpleEmbed(`🎵 Autoplay: Added ${relatedTracks.length} related tracks to queue.`)]
-            });
-            clearLeaveTimer(guildId);
-            return;
-          }
-        }
-      }
-      
       await disableOldMessage(player);
 
       const timeoutMs = client.musicConfig?.leaveTimeout || 120000;

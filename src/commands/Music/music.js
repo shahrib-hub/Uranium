@@ -62,9 +62,6 @@ module.exports = {
             .setDescription('Filter preset')
             .setRequired(true)
             .addChoices(...filterChoices)))
-    .addSubcommand((sub) =>
-      sub.setName('autoplay')
-        .setDescription('Toggle autoplay for related tracks'))
     .addSubcommand((sub) => sub.setName('help').setDescription('Show music help menu')),
 
   async execute(interaction) {

@@ -146,14 +146,6 @@ export default function MusicControls() {
             <Shuffle size={20} />
           </PremiumButton>
 
-          <PremiumButton 
-            variant={player.autoplay ? 'red' : 'ghost'} 
-            className={`p-3 ${player.autoplay ? 'bg-red-500/10' : ''}`}
-            onClick={() => handleAction('autoplay')}
-            title="Autoplay"
-          >
-            <RefreshCw size={20} className={player.autoplay ? 'animate-spin-slow text-red-500' : ''} />
-          </PremiumButton>
         </div>
 
         <div className="w-full sm:w-auto flex items-center justify-center gap-4 bg-white/5 p-3 rounded-2xl border border-white/10">
