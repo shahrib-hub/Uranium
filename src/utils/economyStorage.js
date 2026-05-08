@@ -3,7 +3,11 @@ const fs = require('fs');
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 const { useMongoDB } = require('../config/database');
-const { EcoUser, EcoStat, EcoInventory, EcoCooldown, EcoCosmetic, EcoMeta } = require('../database/mongoose');
+const { EcoUser, EcoStat, EcoInventory, EcoCooldown, EcoCosmetic, EcoMeta, getDbStatus } = require('../database/mongoose');
+
+function isMongoReady() {
+  return useMongoDB && getDbStatus();
+}
 
 const DATA_DIR = path.join(__dirname, '..', '..', 'data');
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -107,7 +111,7 @@ async function initEconomy() {
 // --- users / balances ---
 
 async function ensureUserRow(userId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const doc = await EcoUser.findOne({ userId });
     if (!doc) {
       const now = Date.now();
@@ -128,7 +132,7 @@ async function ensureUserRow(userId) {
 
 async function getBalance(userId) {
   await ensureUserRow(userId);
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const doc = await EcoUser.findOne({ userId });
     return {
       wallet: doc?.wallet ?? 0,
@@ -152,7 +156,7 @@ async function setBalance(userId, { wallet, bank }) {
   await ensureUserRow(userId);
   const now = Date.now();
 
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const bal = await getBalance(userId);
     const newWallet = typeof wallet === 'number' ? wallet : bal.wallet;
     const newBank = typeof bank === 'number' ? bank : bal.bank;
@@ -181,7 +185,7 @@ async function addWallet(userId, delta) {
   await ensureUserRow(userId);
   const now = Date.now();
 
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await EcoUser.updateOne({ userId }, { $inc: { wallet: delta }, $set: { updatedAt: now } });
     return getBalance(userId);
   }
@@ -203,7 +207,7 @@ async function addBank(userId, delta) {
   await ensureUserRow(userId);
   const now = Date.now();
 
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await EcoUser.updateOne({ userId }, { $inc: { bank: delta }, $set: { updatedAt: now } });
     return getBalance(userId);
   }
@@ -224,7 +228,7 @@ async function addBank(userId, delta) {
 // --- stats ---
 
 async function getStats(userId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const docs = await EcoStat.find({ userId });
     const out = {};
     for (const doc of docs) out[doc.key] = doc.value;
@@ -245,7 +249,7 @@ async function getStats(userId) {
 }
 
 async function bumpStat(userId, key, delta = 1) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await EcoStat.findOneAndUpdate({ userId, key }, { $inc: { value: delta } }, { upsert: true });
     return;
   }
@@ -263,7 +267,7 @@ async function bumpStat(userId, key, delta = 1) {
 }
 
 async function setStat(userId, key, value) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await EcoStat.findOneAndUpdate({ userId, key }, { value }, { upsert: true });
     return;
   }
@@ -281,7 +285,7 @@ async function setStat(userId, key, value) {
 }
 
 async function getStat(userId, key) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const doc = await EcoStat.findOne({ userId, key });
     return doc ? doc.value : 0;
   }

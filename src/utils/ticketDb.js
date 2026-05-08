@@ -2,7 +2,7 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const { useMongoDB } = require('../config/database');
-const { TicketConfig, TicketCounter } = require('../database/mongoose');
+const { TicketConfig, TicketCounter, getDbStatus } = require('../database/mongoose');
 
 const db = new sqlite3.Database(path.join(__dirname, '../data/ticket.db'));
 
@@ -85,6 +85,7 @@ function all(sql, params = []) {
 // Convenience helpers
 async function getConfig(guildId) {
   if (useMongoDB) {
+    if (!getDbStatus()) return undefined;
     const doc = await TicketConfig.findOne({ guildId });
     if (doc) {
       return {
@@ -105,6 +106,7 @@ async function getConfig(guildId) {
 
 async function setConfig(guildId, config) {
   if (useMongoDB) {
+    if (!getDbStatus()) return;
     await TicketConfig.findOneAndUpdate(
       { guildId },
       {
@@ -139,6 +141,7 @@ async function setConfig(guildId, config) {
 
 async function nextTicketId(guildId) {
   if (useMongoDB) {
+    if (!getDbStatus()) return 1;
     const doc = await TicketCounter.findOneAndUpdate(
       { guildId },
       { $inc: { nextId: 1 } },

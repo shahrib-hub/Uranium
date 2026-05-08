@@ -77,6 +77,7 @@ module.exports = {
 
 async function runMigration() {
   console.log('[MIGRATION] Starting full SQLite to MongoDB migration...');
+  console.trace('[MIGRATION] Trace for migration call:');
   const { useMongoDB } = require('../../config/database');
   if (!useMongoDB) {
     throw new Error('USE_MONGODB is false in config. Please enable it before migrating.');

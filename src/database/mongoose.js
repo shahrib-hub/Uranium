@@ -641,13 +641,33 @@ async function connectToMongo() {
     console.error('❌ [DATABASE] Failed to connect to MongoDB:', err.message);
     if (isDnsError) {
       console.error('💡 HINT: This is a DNS error. Please ensure your host machine can resolve the MongoDB Atlas address.');
-      console.error('   If you are on a VPS, try changing your DNS servers to 8.8.8.8 or check your network whitelist.');
+    } else if (err.message.includes('Server selection timed out')) {
+      console.error('💡 HINT: Connection timed out. This often means your server\'s IP is not whitelisted in MongoDB Atlas "Network Access".');
     }
   }
+
+  mongoose.connection.on('error', err => {
+    console.error('❌ [DATABASE] MongoDB runtime error:', err.message);
+  });
+
+  mongoose.connection.on('disconnected', () => {
+    console.warn('⚠️ [DATABASE] MongoDB disconnected. Attempting to reconnect...');
+    isConnected = false;
+  });
+
+  mongoose.connection.on('reconnected', () => {
+    console.log('✅ [DATABASE] MongoDB reconnected.');
+    isConnected = true;
+  });
+}
+
+function getDbStatus() {
+  return mongoose.connection.readyState === 1;
 }
 
 // Export models incrementally to avoid circular dependency issues
 exports.connectToMongo = connectToMongo;
+exports.getDbStatus = getDbStatus;
 exports.AFKUser = mongoose.model('AFKUser', AFKSchema);
 exports.AFKGuildConfig = mongoose.model('AFKGuildConfig', AFKGuildConfigSchema);
 exports.AFKIgnoredChannel = mongoose.model('AFKIgnoredChannel', AFKIgnoredChannelSchema);

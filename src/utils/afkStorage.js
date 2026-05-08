@@ -2,7 +2,11 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 const { useMongoDB } = require('../config/database');
-const mongooseModels = require('../database/mongoose');
+const { getDbStatus, ...mongooseModels } = require('../database/mongoose');
+
+function isMongoReady() {
+  return useMongoDB && getDbStatus();
+}
 
 const dataDir = path.join(__dirname, '..', '..', 'data');
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
@@ -83,7 +87,7 @@ const afkStorage = {
   init,
 
   async setAfk(guildId, userId, reason, startTs, hideStatus) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       await mongooseModels.AFKUser.findOneAndUpdate(
         { guildId, userId },
         { reason, startTimestamp: startTs, hideStatus: !!hideStatus },
@@ -109,7 +113,7 @@ const afkStorage = {
   },
 
   async removeAfk(guildId, userId) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       await mongooseModels.AFKUser.findOneAndDelete({ guildId, userId });
       return;
     }
@@ -119,7 +123,7 @@ const afkStorage = {
   },
 
   async getAfk(guildId, userId) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       const doc = await mongooseModels.AFKUser.findOne({ guildId, userId });
       if (!doc) return null;
       return {
@@ -150,7 +154,7 @@ const afkStorage = {
   async listAfk(guildId, page = 1, perPage = 10) {
     const offset = (Math.max(page, 1) - 1) * perPage;
 
-    if (useMongoDB) {
+    if (isMongoReady()) {
       const docs = await mongooseModels.AFKUser.find({ guildId }).sort({ startTimestamp: -1 }).skip(offset).limit(perPage);
       return docs.map(doc => ({
         guildId: doc.guildId,
@@ -186,7 +190,7 @@ const afkStorage = {
       cooldownSeconds: configObj.cooldownSeconds ?? current.cooldownSeconds ?? 30,
     };
 
-    if (useMongoDB) {
+    if (isMongoReady()) {
       await mongooseModels.AFKGuildConfig.findOneAndUpdate(
         { guildId },
         { enabled: merged.enabled, cooldownSeconds: Math.max(1, Math.min(600, merged.cooldownSeconds)) },
@@ -208,7 +212,7 @@ const afkStorage = {
   },
 
   async getGuildConfig(guildId) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       let doc = await mongooseModels.AFKGuildConfig.findOne({ guildId });
       if (!doc) {
         doc = await mongooseModels.AFKGuildConfig.create({ guildId, enabled: true, cooldownSeconds: 30 });
@@ -229,7 +233,7 @@ const afkStorage = {
   },
 
   async addIgnoredChannel(guildId, channelId) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       await mongooseModels.AFKIgnoredChannel.findOneAndUpdate({ guildId, channelId }, {}, { upsert: true });
       return;
     }
@@ -244,7 +248,7 @@ const afkStorage = {
   },
 
   async removeIgnoredChannel(guildId, channelId) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       await mongooseModels.AFKIgnoredChannel.findOneAndDelete({ guildId, channelId });
       return;
     }
@@ -254,7 +258,7 @@ const afkStorage = {
   },
 
   async listIgnoredChannels(guildId) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       const docs = await mongooseModels.AFKIgnoredChannel.find({ guildId });
       return docs.map(d => d.channelId);
     }
@@ -265,7 +269,7 @@ const afkStorage = {
   },
 
   async updateLastNotified(guildId, afkUserId, notifierId, ts) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       const doc = await mongooseModels.AFKUser.findOne({ guildId, userId: afkUserId });
       if (!doc) return;
       const last = safeJsonParse(doc.lastNotifiedJson, {});
@@ -295,7 +299,7 @@ const afkStorage = {
   },
 
   async getLastNotified(guildId, afkUserId, notifierId) {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       const doc = await mongooseModels.AFKUser.findOne({ guildId, userId: afkUserId });
       if (!doc) return null;
       const map = safeJsonParse(doc.lastNotifiedJson, {});

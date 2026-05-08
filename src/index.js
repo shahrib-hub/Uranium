@@ -17,10 +17,18 @@ const { createMusicManager } = require('./music/manager');
 const { startDashboard } = require('./dashboard/server');
 
 // ---------- Initialize MongoDB ----------
-const { connectToMongo } = require('./database/mongoose');
+const { connectToMongo, getDbStatus } = require('./database/mongoose');
+const { useMongoDB } = require('./config/database');
 
 (async () => {
-  await connectToMongo();
+  if (useMongoDB) {
+    await connectToMongo();
+    if (!getDbStatus()) {
+      console.error('❌ [CRITICAL] USE_MONGODB is enabled but the connection to MongoDB failed.');
+      console.error('⚠️ Data persistence for major systems (Economy, Giveaways, Tickets, etc.) will NOT work.');
+      console.error('💡 Please check your MONGODB_URI and IP whitelist in MongoDB Atlas.');
+    }
+  }
 
   // ---------- Database Cleanup (Remove MusicHub data) ----------
   try {

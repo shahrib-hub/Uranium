@@ -3,7 +3,7 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 const { useMongoDB } = require('../config/database');
-const { Backup, BackupCooldown } = require('../database/mongoose');
+const { ServerBackup: Backup, BackupCooldown, getDbStatus } = require('../database/mongoose');
 
 // DB path: src/data/server_backups.db
 const dbFolder = path.join(__dirname, '..', '..', 'data');
@@ -49,6 +49,10 @@ function init() {
 
 function getBackupsByGuild(guildId) {
   if (useMongoDB) {
+    if (!getDbStatus()) {
+      console.error('[backupStorage] MongoDB is enabled but the connection is not ready.');
+      return Promise.resolve([]);
+    }
     return Backup.find({ guildId }).sort({ slot: 1 }).then(docs => {
       return docs.map(doc => ({
         guild_id: doc.guildId,
@@ -79,6 +83,10 @@ function getBackupsByGuild(guildId) {
 
 function getBackup(guildId, slot) {
   if (useMongoDB) {
+    if (!getDbStatus()) {
+      console.error('[backupStorage] MongoDB is enabled but the connection is not ready.');
+      return Promise.resolve(null);
+    }
     return Backup.findOne({ guildId, slot }).then(doc => {
       if (!doc) return null;
       return {
@@ -112,6 +120,7 @@ function saveBackup({ guildId, slot, name, createdBy, isPremium, data }) {
   const json = JSON.stringify(data);
 
   if (useMongoDB) {
+    if (!getDbStatus()) return Promise.resolve(false);
     return Backup.findOneAndUpdate(
       { guildId, slot },
       { name, createdAt: Date.now(), createdBy, isPremium: !!isPremium, data: json },
@@ -153,6 +162,7 @@ function saveBackup({ guildId, slot, name, createdBy, isPremium, data }) {
 
 function deleteBackup(guildId, slot) {
   if (useMongoDB) {
+    if (!getDbStatus()) return Promise.resolve(false);
     return Backup.findOneAndDelete({ guildId, slot }).then(doc => !!doc);
   }
 
@@ -173,6 +183,7 @@ function deleteBackup(guildId, slot) {
 
 function getLastCreatedAt(guildId) {
   if (useMongoDB) {
+    if (!getDbStatus()) return Promise.resolve(null);
     return BackupCooldown.findOne({ guildId }).then(doc => doc ? doc.lastCreatedAt : null);
   }
 
@@ -193,6 +204,7 @@ function getLastCreatedAt(guildId) {
 
 function setLastCreatedAt(guildId, ts) {
   if (useMongoDB) {
+    if (!getDbStatus()) return Promise.resolve(false);
     return BackupCooldown.findOneAndUpdate(
       { guildId },
       { lastCreatedAt: ts },
