@@ -129,14 +129,24 @@ module.exports.registerPlayerEvents = function registerPlayerEvents(client) {
       player.data.set('lastTrack', track);
       clearLeaveTimer(player.guildId);
       if (!player.data.get('filter')) player.data.set('filter', getCurrentFilter(player));
-      await disableOldMessage(player);
-      const msg = await sendToPlayerChannel(client, player, {
-        embeds: [buildNowPlayingEmbed(track, player, client)],
-        components: buildControlButtons(player.guildId, player.paused)
-      });
-      if (msg) {
-        player.message = msg;
+      
+      // REUSE: If looping track, update existing message. Otherwise, send new.
+      if (player.message && player.loop === 'track') {
+        await player.message.edit({
+          embeds: [buildNowPlayingEmbed(track, player, client)],
+          components: buildControlButtons(player.guildId, player.paused)
+        }).catch(() => null);
         startMessageRefresh(client, player);
+      } else {
+        await disableOldMessage(player);
+        const msg = await sendToPlayerChannel(client, player, {
+          embeds: [buildNowPlayingEmbed(track, player, client)],
+          components: buildControlButtons(player.guildId, player.paused)
+        });
+        if (msg) {
+          player.message = msg;
+          startMessageRefresh(client, player);
+        }
       }
       // Set voice channel status and bot presence
       await updateVoiceChannelStatus(client, player, track, true);
@@ -156,7 +166,12 @@ module.exports.registerPlayerEvents = function registerPlayerEvents(client) {
         await updateVoiceChannelStatus(client, player, null, false);
         await updateBotPresence(client, null, false);
       }
-      await disableOldMessage(player);
+      
+      // Only disable buttons if we aren't looping the same track
+      if (player.loop !== 'track') {
+        await disableOldMessage(player);
+      }
+      
       client.dashboardBridge?.emitPlayerUpdate(player);
     } catch (err) {
       console.error('[music] playerEnd cleanup failed:', err);
