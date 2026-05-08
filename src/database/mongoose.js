@@ -264,7 +264,7 @@ const RankConfigSchema = new mongoose.Schema({
 
 // 13. Reaction Roles (rrdb) (from rr_panels, rr_roles, rr_logs)
 const RRSetupSchema = new mongoose.Schema({
-  _id: { type: String, required: true }, // mapping from SQLite ID
+  _id: { type: String, default: () => new mongoose.Types.ObjectId().toString() }, // mapping from SQLite ID
   guildId: { type: String, required: true },
   channelId: { type: String, required: true },
   messageId: { type: String, default: null },
@@ -296,7 +296,7 @@ const RRSetupSchema = new mongoose.Schema({
 });
 
 const RRItemSchema = new mongoose.Schema({
-  _id: { type: String, required: true },
+  _id: { type: String, default: () => new mongoose.Types.ObjectId().toString() },
   setupId: { type: String, required: true },
   emoji: { type: String, required: true },
   emojiIdentifier: { type: String, required: true },
@@ -342,7 +342,7 @@ const SocialLogSchema = new mongoose.Schema({
 
 // 15. Sticky Storage (from sticky_messages)
 const StickySchema = new mongoose.Schema({
-  _id: { type: String, required: true }, // From SQLite id
+  _id: { type: String, default: () => new mongoose.Types.ObjectId().toString() }, // From SQLite id
   guildId: { type: String, required: true },
   channelId: { type: String, required: true },
   content: { type: String, required: true },
