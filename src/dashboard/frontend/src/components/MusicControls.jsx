@@ -43,7 +43,7 @@ export default function MusicControls() {
         </div>
         <div>
           <h3 className="text-2xl font-black text-white/40 uppercase">No Active Session</h3>
-          <p className="text-sm text-white/20 font-medium">Join a voice channel node to initialize the Uranium player.</p>
+          <p className="text-sm text-white/20 font-medium px-4">Join a voice channel to initialize the Uranium player.</p>
         </div>
       </div>
     );
@@ -57,7 +57,7 @@ export default function MusicControls() {
         </div>
         <div>
           <h3 className="text-2xl font-black text-green-500 uppercase italic">Uranium Standby</h3>
-          <p className="text-sm text-white/40 font-medium">Synchronized with <span className="text-white">#{player.channelName || 'Voice Node'}</span>. Search for a track to begin playback.</p>
+          <p className="text-sm text-white/40 font-medium px-4">Synchronized with <span className="text-white">#{player.channelName || 'Voice Channel'}</span>. Search for a track to begin playback.</p>
         </div>
       </div>
     );
@@ -83,7 +83,7 @@ export default function MusicControls() {
             <span className="px-2 py-0.5 rounded-md bg-red-500 text-[10px] font-black text-black uppercase">Now Playing</span>
             <span className="text-[10px] font-bold text-white/20 tracking-widest uppercase">{player.current.source}</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black truncate tracking-tight mb-1">{player.current.title}</h2>
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight mb-1 leading-tight">{player.current.title}</h2>
           <p className="text-sm sm:text-base text-white/40 font-medium">by {player.current.author}</p>
         </div>
       </div>

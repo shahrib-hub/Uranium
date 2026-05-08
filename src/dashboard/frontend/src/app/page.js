@@ -8,10 +8,17 @@ export default function LandingPage() {
   const [user, setUser] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  const [stats, setStats] = useState({ totalServers: '...', ping: '...', uptime: '...', memoryUsage: '...' });
+
   useEffect(() => {
     fetch('/api/me')
       .then(r => r.ok ? r.json() : null)
       .then(setUser)
+      .catch(() => null);
+
+    fetch('/api/bot/stats')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => data && setStats(data))
       .catch(() => null);
   }, []);
 
@@ -144,8 +151,8 @@ export default function LandingPage() {
                   className="absolute bottom-24 -right-8 glass p-6 rounded-3xl border border-white/20 shadow-2xl"
                 >
                   <Activity className="text-green-500 mb-2" />
-                  <div className="text-xs font-black uppercase tracking-widest opacity-40">System Node</div>
-                  <div className="font-bold">Sync: 12ms</div>
+                  <div className="text-xs font-black uppercase tracking-widest opacity-40">System Status</div>
+                  <div className="font-bold">Ping: {stats.ping}</div>
                 </motion.div>
               </div>
             </motion.div>
@@ -156,11 +163,11 @@ export default function LandingPage() {
       {/* Stats/Social Proof */}
       <section id="stats" className="py-24 border-y border-white/5 bg-white/[0.02]">
         <div className="max-w-7xl mx-auto px-8 grid grid-cols-2 md:grid-cols-4 gap-12">
-          {[
-            { label: 'Total Servers', val: '12,402+', icon: Globe },
-            { label: 'Active Users', val: '2.5M+', icon: Shield },
-            { label: 'Songs Streamed', val: '150M+', icon: Music },
-            { label: 'Uptime Node', val: '99.9%', icon: Zap },
+           {[
+            { label: 'Total Servers', val: stats.totalServers, icon: Globe },
+            { label: 'Latency', val: stats.ping, icon: Activity },
+            { label: 'Uptime', val: stats.uptime, icon: Zap },
+            { label: 'Memory', val: stats.memoryUsage, icon: Shield },
           ].map((s, i) => (
             <motion.div 
               key={i}

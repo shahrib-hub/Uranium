@@ -75,7 +75,7 @@ export default function DashboardPage() {
             className="text-6xl font-black tracking-tight mb-4 flex items-center gap-6"
           >
             {guildInfo?.icon && <img src={guildInfo.icon} className="w-16 h-16 rounded-3xl shadow-2xl" alt="" />}
-            {guildInfo?.name || 'Loading Node...'}
+            {guildInfo?.name || 'Loading Server...'}
           </motion.h1>
           <div className="flex items-center gap-6 text-white/40 font-medium">
              <div className="flex items-center gap-2">
@@ -119,7 +119,7 @@ export default function DashboardPage() {
           icon={<Terminal size={24} className="text-red-500" />} 
           label="Music Status" 
           value={player.active ? 'ACTIVE' : 'IDLE'} 
-          subtext={player.active ? 'Node Synchronized' : 'No active streams'}
+          subtext={player.active ? 'Server Connected' : 'No active streams'}
           color={player.active ? 'text-green-500' : 'text-white/20'}
         />
         <StatCard 

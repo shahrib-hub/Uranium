@@ -16,6 +16,9 @@ export const useStore = create((set) => ({
   updatePlayer: (updates) => set((state) => ({ 
     player: { ...state.player, ...updates, lastUpdate: Date.now() } 
   })),
+  resetPlayer: () => set({ 
+    player: { active: false, lastUpdate: Date.now() } 
+  }),
   setPlayerGuildId: (guildId) => set((state) => ({
     player: { ...state.player, guildId, lastUpdate: Date.now() }
   })),

@@ -1,32 +1,44 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, LayoutGrid, ChevronRight, Zap, Shield, Search, ExternalLink } from 'lucide-react';
+import { Plus, LayoutGrid, ChevronRight, Zap, Shield, Search, ExternalLink, RefreshCcw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useStore } from '@/store';
 
 export default function ServersPage() {
   const [guilds, setGuilds] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
+  const { resetPlayer } = useStore();
 
-  // Hardcoded Client ID to fix "undefined snowflake" error
   const CLIENT_ID = "1258671407338524672";
 
+  const fetchGuilds = async () => {
+    setRefreshing(true);
+    try {
+      const r = await fetch('/api/guilds');
+      const data = await r.json();
+      setGuilds(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
   useEffect(() => {
-    fetch('/api/guilds')
-      .then(r => r.json())
-      .then(data => {
-        setGuilds(Array.isArray(data) ? data : []);
-        setLoading(false);
-      })
-      .catch(e => {
-        console.error(e);
-        setLoading(false);
-      });
+    fetchGuilds();
   }, []);
 
   const filtered = guilds.filter(g => g.name.toLowerCase().includes(search.toLowerCase()));
+
+  const handleSelect = (guildId) => {
+    resetPlayer();
+    router.push(`/dashboard?guild=${guildId}`);
+  };
 
   return (
     <div className="min-h-screen bg-[#050505] text-white selection:bg-red-500/30">
@@ -45,14 +57,14 @@ export default function ServersPage() {
             animate={{ opacity: 1, x: 0 }}
             className="text-4xl sm:text-7xl font-black tracking-tighter uppercase italic"
           >
-            Node <span className="text-red-500">Selector</span>
+            Server <span className="text-red-500">Selector</span>
           </motion.h1>
           <p className="text-white/40 text-sm sm:text-xl max-w-2xl font-medium leading-relaxed mx-auto md:mx-0">
-            Connect to a server node to begin real-time management. Only authorized domains are visible.
+            Connect to a server to begin real-time management. All authorized domains are synced below.
           </p>
         </header>
 
-        {/* Search */}
+        {/* Search & Refresh */}
         <div className="flex flex-col md:flex-row gap-6">
           <div className="relative flex-1 group">
             <div className="absolute -inset-1 bg-gradient-to-r from-red-500 to-orange-600 rounded-[28px] blur opacity-10 group-focus-within:opacity-30 transition duration-500" />
@@ -60,13 +72,22 @@ export default function ServersPage() {
               <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-red-500 transition-colors" size={24} />
               <input 
                 type="text" 
-                placeholder="Filter available nodes..."
+                placeholder="Filter available servers..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full bg-white/5 border border-white/10 rounded-[24px] py-7 pl-16 pr-8 outline-none focus:border-red-500/50 transition-all text-xl font-bold placeholder:text-white/10"
               />
             </div>
           </div>
+          
+          <button 
+            onClick={fetchGuilds}
+            disabled={refreshing}
+            className="px-8 py-7 bg-white/5 border border-white/10 rounded-[24px] font-black uppercase tracking-widest text-xs flex items-center justify-center gap-4 hover:bg-white/10 active:scale-95 transition-all disabled:opacity-50"
+          >
+            <RefreshCcw size={20} className={refreshing ? 'animate-spin' : ''} />
+            {refreshing ? 'Syncing...' : 'Refresh List'}
+          </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -80,7 +101,7 @@ export default function ServersPage() {
                 key={guild.id} 
                 guild={guild} 
                 clientId={CLIENT_ID}
-                onClick={() => guild.isBotAdded && router.push(`/dashboard?guild=${guild.id}`)}
+                onClick={() => guild.isBotAdded && handleSelect(guild.id)}
               />
             ))
           )}
@@ -90,7 +111,7 @@ export default function ServersPage() {
           <div className="text-center py-32 space-y-6 glass rounded-[40px] border border-white/5">
             <LayoutGrid size={48} className="mx-auto text-white/10" />
             <div className="space-y-2">
-              <h3 className="text-2xl font-black uppercase tracking-tight">No Nodes Found</h3>
+              <h3 className="text-2xl font-black uppercase tracking-tight">No Servers Found</h3>
               <p className="text-white/20 font-medium">No servers match your current filter query.</p>
             </div>
           </div>
@@ -153,7 +174,7 @@ function GuildCard({ guild, onClick, clientId }) {
         </div>
 
         <div className="flex-1 space-y-2">
-          <h3 className="text-2xl sm:text-3xl font-black tracking-tight truncate group-hover:text-red-500 transition-colors uppercase italic">{guild.name}</h3>
+          <h3 className="text-2xl sm:text-3xl font-black tracking-tight group-hover:text-red-500 transition-colors uppercase italic leading-tight">{guild.name}</h3>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 text-xs font-bold text-white/20 bg-white/5 px-3 py-1 rounded-lg border border-white/5">
               <Shield size={12} className="text-red-500/40" />

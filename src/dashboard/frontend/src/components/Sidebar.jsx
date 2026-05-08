@@ -128,9 +128,9 @@ export default function Sidebar() {
                   <Server size={18} className="text-white/20" />
                 </div>
               )}
-              <div className="flex-1 overflow-hidden">
-                <p className="text-[8px] font-black uppercase text-red-500/60 tracking-widest mb-0.5">Active Node</p>
-                <h3 className="font-bold text-sm truncate">{guildInfo.name}</h3>
+              <div className="flex-1">
+                <p className="text-[8px] font-black uppercase text-red-500/60 tracking-widest mb-0.5">Active Server</p>
+                <h3 className="font-bold text-sm leading-tight">{guildInfo.name}</h3>
               </div>
             </div>
           )}

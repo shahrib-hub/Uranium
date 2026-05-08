@@ -109,8 +109,8 @@ export default function QueueManager() {
               <img src={track.thumbnail} className="w-full h-full object-cover" alt="" />
             </div>
             <div className="flex-1 min-w-0">
-              <h4 className="font-bold text-sm truncate group-hover:text-red-500 transition-colors">{track.title}</h4>
-              <p className="text-[10px] text-white/40 truncate">{track.author}</p>
+              <h4 className="font-bold text-sm group-hover:text-red-500 transition-colors leading-tight">{track.title}</h4>
+              <p className="text-[10px] text-white/40 leading-tight mt-1">{track.author}</p>
             </div>
             <div className="flex items-center gap-2 sm:gap-4">
               <span className="hidden sm:block text-[10px] font-mono text-white/20">{formatTime(track.duration)}</span>

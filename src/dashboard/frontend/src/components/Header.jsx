@@ -29,8 +29,8 @@ export default function Header() {
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-4 group">
           <div className="hidden sm:block text-right">
-            <div className="text-xs font-black tracking-tight">{user?.username || 'Resolving...'}</div>
-            <div className="text-[10px] text-white/20 font-black uppercase tracking-widest text-right">Operator Node</div>
+            <div className="text-xs font-black tracking-tight leading-none mb-1">{user?.username || 'Resolving...'}</div>
+            <div className="text-[10px] text-white/20 font-black uppercase tracking-widest text-right">System Operator</div>
           </div>
           <div className="w-12 h-12 rounded-2xl overflow-hidden bg-white/5 border border-white/10 group-hover:border-red-500/50 transition-all shadow-2xl">
             {user?.avatarUrl ? (
@@ -54,7 +54,7 @@ export default function Header() {
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:border-red-500/50 hover:bg-red-500/10 transition-all group text-[10px] font-black uppercase tracking-widest"
         >
           <LogOut size={14} className="text-white/40 group-hover:text-red-500 transition-colors" />
-          <span>Exit Node</span>
+          <span>Logout</span>
         </button>
       </div>
     </header>
