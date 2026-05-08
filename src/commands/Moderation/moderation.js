@@ -53,238 +53,220 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('mod')
     .setDescription('Moderation tools and actions')
-    // user group
-    .addSubcommandGroup((group) =>
-      group
-        .setName('user')
-        .setDescription('User moderation')
-        .addSubcommand((sc) =>
-          sc
-            .setName('warn')
-            .setDescription('Warn a user')
-            .addUserOption((o) =>
-              o.setName('user').setDescription('Target user').setRequired(true)
-            )
-            .addStringOption((o) =>
-              o.setName('reason').setDescription('Reason').setRequired(true)
-            )
+    // moderation actions - all flat subcommands
+    .addSubcommand((sc) =>
+      sc
+        .setName('warn')
+        .setDescription('Warn a user')
+        .addUserOption((o) =>
+          o.setName('user').setDescription('Target user').setRequired(true)
+        )
+        .addStringOption((o) =>
+          o.setName('reason').setDescription('Reason').setRequired(true)
         )
     )
-    // punish group
-    .addSubcommandGroup((group) =>
-      group
-        .setName('punish')
-        .setDescription('Punitive actions')
-        .addSubcommand((sc) =>
-          sc
-            .setName('kick')
-            .setDescription('Kick a user')
-            .addUserOption((o) =>
-              o.setName('user').setDescription('Target user').setRequired(true)
-            )
-            .addStringOption((o) =>
-              o.setName('reason').setDescription('Reason').setRequired(true)
-            )
+    .addSubcommand((sc) =>
+      sc
+        .setName('kick')
+        .setDescription('Kick a user')
+        .addUserOption((o) =>
+          o.setName('user').setDescription('Target user').setRequired(true)
         )
-        .addSubcommand((sc) =>
-          sc
-            .setName('ban')
-            .setDescription('Ban a user (optionally timed)')
-            .addUserOption((o) =>
-              o.setName('user').setDescription('Target user').setRequired(true)
-            )
-            .addStringOption((o) =>
-              o.setName('reason').setDescription('Reason').setRequired(true)
-            )
-            .addStringOption((o) =>
-              o
-                .setName('duration')
-                .setDescription('Optional duration (e.g. 1d6h)')
-                .setRequired(false)
-            )
-        )
-        .addSubcommand((sc) =>
-          sc
-            .setName('tempban')
-            .setDescription('Temporarily ban a user')
-            .addUserOption((o) =>
-              o.setName('user').setDescription('Target user').setRequired(true)
-            )
-            .addStringOption((o) =>
-              o
-                .setName('duration')
-                .setDescription('Duration (e.g. 1d)')
-                .setRequired(true)
-            )
-            .addStringOption((o) =>
-              o.setName('reason').setDescription('Reason').setRequired(true)
-            )
-        )
-        .addSubcommand((sc) =>
-          sc
-            .setName('unban')
-            .setDescription('Unban a user by ID')
-            .addStringOption((o) =>
-              o.setName('userid').setDescription('User ID').setRequired(true)
-            )
-            .addStringOption((o) =>
-              o.setName('reason').setDescription('Reason').setRequired(true)
-            )
-        )
-        .addSubcommand((sc) =>
-          sc
-            .setName('mute')
-            .setDescription('Timeout a user (mute)')
-            .addUserOption((o) =>
-              o.setName('user').setDescription('Target user').setRequired(true)
-            )
-            .addStringOption((o) =>
-              o
-                .setName('duration')
-                .setDescription('Duration (e.g. 30m, 1h)')
-                .setRequired(true)
-            )
-            .addStringOption((o) =>
-              o.setName('reason').setDescription('Reason').setRequired(true)
-            )
-        )
-        .addSubcommand((sc) =>
-          sc
-            .setName('unmute')
-            .setDescription('Remove timeout from a user')
-            .addUserOption((o) =>
-              o.setName('user').setDescription('Target user').setRequired(true)
-            )
-            .addStringOption((o) =>
-              o.setName('reason').setDescription('Reason').setRequired(true)
-            )
-        )
-        .addSubcommand((sc) =>
-          sc
-            .setName('timeout')
-            .setDescription('Timeout a user')
-            .addUserOption((o) =>
-              o.setName('user').setDescription('Target user').setRequired(true)
-            )
-            .addStringOption((o) =>
-              o
-                .setName('duration')
-                .setDescription('Duration (e.g. 10m, 1h)')
-                .setRequired(true)
-            )
-            .addStringOption((o) =>
-              o.setName('reason').setDescription('Reason').setRequired(true)
-            )
-        )
-        .addSubcommand((sc) =>
-          sc
-            .setName('softban')
-            .setDescription('Softban a user (ban + unban)')
-            .addUserOption((o) =>
-              o.setName('user').setDescription('Target user').setRequired(true)
-            )
-            .addStringOption((o) =>
-              o.setName('reason').setDescription('Reason').setRequired(true)
-            )
+        .addStringOption((o) =>
+          o.setName('reason').setDescription('Reason').setRequired(true)
         )
     )
-    // tools group
-    .addSubcommandGroup((group) =>
-      group
-        .setName('tools')
-        .setDescription('Utility moderation tools')
-        .addSubcommand((sc) =>
-          sc
-            .setName('purge')
-            .setDescription('Bulk delete messages')
-            .addIntegerOption((o) =>
-              o.setName('count').setDescription('Number of messages').setRequired(true)
-            )
+    .addSubcommand((sc) =>
+      sc
+        .setName('ban')
+        .setDescription('Ban a user (optionally timed)')
+        .addUserOption((o) =>
+          o.setName('user').setDescription('Target user').setRequired(true)
         )
-        .addSubcommand((sc) =>
-          sc
-            .setName('lockdown')
-            .setDescription('Lock a channel')
-            .addChannelOption((o) =>
-              o.setName('channel').setDescription('Target channel').setRequired(true)
-            )
-            .addStringOption((o) =>
-              o.setName('reason').setDescription('Reason').setRequired(true)
-            )
+        .addStringOption((o) =>
+          o.setName('reason').setDescription('Reason').setRequired(true)
         )
-        .addSubcommand((sc) =>
-          sc
-            .setName('unlock')
-            .setDescription('Unlock a channel')
-            .addChannelOption((o) =>
-              o.setName('channel').setDescription('Target channel').setRequired(true)
-            )
-            .addStringOption((o) =>
-              o.setName('reason').setDescription('Reason').setRequired(true)
-            )
-        )
-        .addSubcommand((sc) =>
-          sc
-            .setName('slowmode')
-            .setDescription('Set slowmode for a channel')
-            .addChannelOption((o) =>
-              o.setName('channel').setDescription('Target channel').setRequired(true)
-            )
-            .addIntegerOption((o) =>
-              o
-                .setName('seconds')
-                .setDescription('Slowmode duration in seconds')
-                .setRequired(true)
-            )
-        )
-        .addSubcommand((sc) =>
-          sc
-            .setName('nick')
-            .setDescription('Change a user’s nickname')
-            .addUserOption((o) =>
-              o.setName('user').setDescription('Target user').setRequired(true)
-            )
-            .addStringOption((o) =>
-              o.setName('nickname').setDescription('New nickname').setRequired(true)
-            )
-        )
-        .addSubcommand((sc) =>
-          sc
-            .setName('force-role')
-            .setDescription('Add or remove a role from a user')
-            .addStringOption((o) =>
-              o
-                .setName('action')
-                .setDescription('Add or remove')
-                .setRequired(true)
-                .addChoices(
-                  { name: 'add', value: 'add' },
-                  { name: 'remove', value: 'remove' }
-                )
-            )
-            .addUserOption((o) =>
-              o.setName('user').setDescription('Target user').setRequired(true)
-            )
-            .addRoleOption((o) =>
-              o.setName('role').setDescription('Role to modify').setRequired(true)
-            )
-        )
-        .addSubcommand((sc) =>
-          sc
-            .setName('clear-roles')
-            .setDescription('Remove all roles from a user except specified')
-            .addUserOption((o) =>
-              o.setName('user').setDescription('Target user').setRequired(true)
-            )
-            .addStringOption((o) =>
-              o
-                .setName('preserveroles')
-                .setDescription('Comma-separated role IDs to keep')
-                .setRequired(true)
-            )
+        .addStringOption((o) =>
+          o
+            .setName('duration')
+            .setDescription('Optional duration (e.g. 1d6h)')
+            .setRequired(false)
         )
     )
-    // top-level
+    .addSubcommand((sc) =>
+      sc
+        .setName('tempban')
+        .setDescription('Temporarily ban a user')
+        .addUserOption((o) =>
+          o.setName('user').setDescription('Target user').setRequired(true)
+        )
+        .addStringOption((o) =>
+          o
+            .setName('duration')
+            .setDescription('Duration (e.g. 1d)')
+            .setRequired(true)
+        )
+        .addStringOption((o) =>
+          o.setName('reason').setDescription('Reason').setRequired(true)
+        )
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName('unban')
+        .setDescription('Unban a user by ID')
+        .addStringOption((o) =>
+          o.setName('userid').setDescription('User ID').setRequired(true)
+        )
+        .addStringOption((o) =>
+          o.setName('reason').setDescription('Reason').setRequired(true)
+        )
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName('mute')
+        .setDescription('Timeout a user (mute)')
+        .addUserOption((o) =>
+          o.setName('user').setDescription('Target user').setRequired(true)
+        )
+        .addStringOption((o) =>
+          o
+            .setName('duration')
+            .setDescription('Duration (e.g. 30m, 1h)')
+            .setRequired(true)
+        )
+        .addStringOption((o) =>
+          o.setName('reason').setDescription('Reason').setRequired(true)
+        )
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName('unmute')
+        .setDescription('Remove timeout from a user')
+        .addUserOption((o) =>
+          o.setName('user').setDescription('Target user').setRequired(true)
+        )
+        .addStringOption((o) =>
+          o.setName('reason').setDescription('Reason').setRequired(true)
+        )
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName('timeout')
+        .setDescription('Timeout a user')
+        .addUserOption((o) =>
+          o.setName('user').setDescription('Target user').setRequired(true)
+        )
+        .addStringOption((o) =>
+          o
+            .setName('duration')
+            .setDescription('Duration (e.g. 10m, 1h)')
+            .setRequired(true)
+        )
+        .addStringOption((o) =>
+          o.setName('reason').setDescription('Reason').setRequired(true)
+        )
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName('softban')
+        .setDescription('Softban a user (ban + unban)')
+        .addUserOption((o) =>
+          o.setName('user').setDescription('Target user').setRequired(true)
+        )
+        .addStringOption((o) =>
+          o.setName('reason').setDescription('Reason').setRequired(true)
+        )
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName('purge')
+        .setDescription('Bulk delete messages')
+        .addIntegerOption((o) =>
+          o.setName('count').setDescription('Number of messages').setRequired(true)
+        )
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName('lockdown')
+        .setDescription('Lock a channel')
+        .addChannelOption((o) =>
+          o.setName('channel').setDescription('Target channel').setRequired(true)
+        )
+        .addStringOption((o) =>
+          o.setName('reason').setDescription('Reason').setRequired(true)
+        )
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName('unlock')
+        .setDescription('Unlock a channel')
+        .addChannelOption((o) =>
+          o.setName('channel').setDescription('Target channel').setRequired(true)
+        )
+        .addStringOption((o) =>
+          o.setName('reason').setDescription('Reason').setRequired(true)
+        )
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName('slowmode')
+        .setDescription('Set slowmode for a channel')
+        .addChannelOption((o) =>
+          o.setName('channel').setDescription('Target channel').setRequired(true)
+        )
+        .addIntegerOption((o) =>
+          o
+            .setName('seconds')
+            .setDescription('Slowmode duration in seconds')
+            .setRequired(true)
+        )
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName('nick')
+        .setDescription('Change a user's nickname')
+        .addUserOption((o) =>
+          o.setName('user').setDescription('Target user').setRequired(true)
+        )
+        .addStringOption((o) =>
+          o.setName('nickname').setDescription('New nickname').setRequired(true)
+        )
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName('force-role')
+        .setDescription('Add or remove a role from a user')
+        .addStringOption((o) =>
+          o
+            .setName('action')
+            .setDescription('Add or remove')
+            .setRequired(true)
+            .addChoices(
+              { name: 'add', value: 'add' },
+              { name: 'remove', value: 'remove' }
+            )
+        )
+        .addUserOption((o) =>
+          o.setName('user').setDescription('Target user').setRequired(true)
+        )
+        .addRoleOption((o) =>
+          o.setName('role').setDescription('Role to modify').setRequired(true)
+        )
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName('clear-roles')
+        .setDescription('Remove all roles from a user except specified')
+        .addUserOption((o) =>
+          o.setName('user').setDescription('Target user').setRequired(true)
+        )
+        .addStringOption((o) =>
+          o
+            .setName('preserveroles')
+            .setDescription('Comma-separated role IDs to keep')
+            .setRequired(true)
+        )
+    )
     .addSubcommand((sc) =>
       sc
         .setName('unwarn')
@@ -339,20 +321,12 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    let group = null;
-    let sub = null;
-    try {
-      group = interaction.options.getSubcommandGroup(false);
-    } catch {}
-    try {
-      sub = interaction.options.getSubcommand(false);
-    } catch {}
-
+    const sub = interaction.options.getSubcommand(false);
     const guildId = interaction.guild.id;
     const member = interaction.member;
 
-    // /mod user warn
-    if (group === 'user' && sub === 'warn') {
+    // /mod warn
+    if (sub === 'warn') {
       const target = interaction.options.getUser('user');
       const reason = interaction.options.getString('reason') || 'No reason provided';
 
@@ -396,8 +370,8 @@ module.exports = {
       return interaction.reply({ embeds: [embed], flags: 64 });
     }
 
-    // /mod punish kick
-    if (group === 'punish' && sub === 'kick') {
+    // /mod kick
+    if (sub === 'kick') {
       const target = interaction.options.getUser('user');
       const reason = interaction.options.getString('reason') || 'No reason provided';
 
@@ -446,8 +420,8 @@ module.exports = {
       return interaction.reply({ embeds: [embed], flags: 64 });
     }
 
-    // /mod punish ban
-    if (group === 'punish' && sub === 'ban') {
+    // /mod ban
+    if (sub === 'ban') {
       const target = interaction.options.getUser('user');
       const reason = interaction.options.getString('reason') || 'No reason provided';
       const durationStr = interaction.options.getString('duration');
@@ -515,8 +489,8 @@ module.exports = {
       return interaction.reply({ embeds: [embed], flags: 64 });
     }
 
-    // /mod punish tempban
-    if (group === 'punish' && sub === 'tempban') {
+    // /mod tempban
+    if (sub === 'tempban') {
       const target = interaction.options.getUser('user');
       const reason = interaction.options.getString('reason') || 'No reason provided';
       const durationStr = interaction.options.getString('duration');
@@ -587,8 +561,8 @@ module.exports = {
       return interaction.reply({ embeds: [embed], flags: 64 });
     }
 
-    // /mod punish unban
-    if (group === 'punish' && sub === 'unban') {
+    // /mod unban
+    if (sub === 'unban') {
       const userId = interaction.options.getString('userid');
       const reason = interaction.options.getString('reason') || 'No reason provided';
 
@@ -632,8 +606,8 @@ module.exports = {
       return interaction.reply({ embeds: [embed], flags: 64 });
     }
 
-    // /mod punish mute
-    if (group === 'punish' && sub === 'mute') {
+    // /mod mute
+    if (sub === 'mute') {
       const target = interaction.options.getUser('user');
       const reason = interaction.options.getString('reason') || 'No reason provided';
       const durationStr = interaction.options.getString('duration');
@@ -692,8 +666,8 @@ module.exports = {
       return interaction.reply({ embeds: [embed], flags: 64 });
     }
 
-    // /mod punish unmute
-    if (group === 'punish' && sub === 'unmute') {
+    // /mod unmute
+    if (sub === 'unmute') {
       const target = interaction.options.getUser('user');
       const reason = interaction.options.getString('reason') || 'No reason provided';
 
@@ -742,8 +716,119 @@ module.exports = {
       return interaction.reply({ embeds: [embed], flags: 64 });
     }
 
-    // tools: purge
-    if (group === 'tools' && sub === 'purge') {
+    // /mod timeout
+    if (sub === 'timeout') {
+      const target = interaction.options.getUser('user');
+      const reason = interaction.options.getString('reason') || 'No reason provided';
+      const durationStr = interaction.options.getString('duration');
+      const duration = parseDuration(durationStr);
+
+      if (!duration) {
+        return interaction.reply({
+          content: '❌ Invalid duration format.',
+          flags: 64
+        });
+      }
+
+      if (!member.permissions.has(PermissionsBitField.Flags.ModerateMembers)) {
+        return interaction.reply({
+          content: '❌ You lack permission to timeout users.',
+          flags: 64
+        });
+      }
+
+      const guildMember = await interaction.guild.members.fetch(target.id).catch(() => null);
+      if (!guildMember) {
+        return interaction.reply({ content: 'User not found.', flags: 64 });
+      }
+
+      await guildMember.timeout(duration, reason).catch(() => {});
+
+      const caseId = generateCaseId(guildId);
+      await saveCase({
+        caseId,
+        guildId,
+        moderatorId: interaction.user.id,
+        targetId: target.id,
+        action: 'timeout',
+        reason,
+        duration,
+        timestamp: Date.now()
+      });
+
+      const embed = new EmbedBuilder()
+        .setTitle('⏱️ User Timed Out')
+        .setColor(0x5865F2)
+        .addFields(
+          { name: 'User', value: `<@${target.id}>`, inline: true },
+          { name: 'Moderator', value: `<@${interaction.user.id}>`, inline: true },
+          { name: 'Reason', value: reason },
+          { name: 'Duration', value: formatDuration(duration) },
+          { name: 'Case ID', value: `\`${caseId}\`` }
+        );
+
+      const logChannelId = await getLogChannel(guildId);
+      if (logChannelId) {
+        const logChannel = interaction.guild.channels.cache.get(logChannelId);
+        if (logChannel?.send) logChannel.send({ embeds: [embed] }).catch(() => {});
+      }
+
+      return interaction.reply({ embeds: [embed], flags: 64 });
+    }
+
+    // /mod softban
+    if (sub === 'softban') {
+      const target = interaction.options.getUser('user');
+      const reason = interaction.options.getString('reason') || 'No reason provided';
+
+      if (!member.permissions.has(PermissionsBitField.Flags.BanMembers)) {
+        return interaction.reply({
+          content: '❌ You lack permission to softban users.',
+          flags: 64
+        });
+      }
+
+      const guildMember = await interaction.guild.members.fetch(target.id).catch(() => null);
+      if (!guildMember) {
+        return interaction.reply({ content: 'User not found.', flags: 64 });
+      }
+
+      await guildMember.ban({ reason }).catch(() => {});
+      await interaction.guild.bans.remove(target.id, reason).catch(() => null);
+
+      const caseId = generateCaseId(guildId);
+      await saveCase({
+        caseId,
+        guildId,
+        moderatorId: interaction.user.id,
+        targetId: target.id,
+        action: 'softban',
+        reason,
+        duration: null,
+        timestamp: Date.now()
+      });
+
+      const embed = new EmbedBuilder()
+        .setTitle('👢 User Softbanned')
+        .setColor(0xFAA61A)
+        .addFields(
+          { name: 'User', value: `<@${target.id}>`, inline: true },
+          { name: 'Moderator', value: `<@${interaction.user.id}>`, inline: true },
+          { name: 'Reason', value: reason },
+          { name: 'Case ID', value: `\`${caseId}\`` }
+        );
+
+      const logChannelId = await getLogChannel(guildId);
+      if (logChannelId) {
+        const logChannel = interaction.guild.channels.cache.get(logChannelId);
+        if (logChannel?.send) logChannel.send({ embeds: [embed] }).catch(() => {});
+      }
+
+      return interaction.reply({ embeds: [embed], flags: 64 });
+    }
+
+    // /mod purge
+    if (sub === 'purge') {
       const count = interaction.options.getInteger('count');
 
       if (!member.permissions.has(PermissionsBitField.Flags.ManageMessages)) {
@@ -774,8 +859,8 @@ module.exports = {
       });
     }
 
-    // tools: lockdown
-    if (group === 'tools' && sub === 'lockdown') {
+    // /mod lockdown
+    if (sub === 'lockdown') {
       const channel = interaction.options.getChannel('channel') || interaction.channel;
       const reason = interaction.options.getString('reason') || 'No reason provided';
 
@@ -786,7 +871,6 @@ module.exports = {
         });
       }
 
-      // NOTE: changed bot permission check to ManageRoles as requested
       const me = interaction.guild.members.me;
       if (!me.permissions.has(PermissionsBitField.Flags.ManageRoles)) {
         return interaction.reply({
@@ -820,8 +904,8 @@ module.exports = {
       });
     }
 
-    // tools: unlock
-    if (group === 'tools' && sub === 'unlock') {
+    // /mod unlock
+    if (sub === 'unlock') {
       const channel = interaction.options.getChannel('channel') || interaction.channel;
       const reason = interaction.options.getString('reason') || 'No reason provided';
 
@@ -832,7 +916,6 @@ module.exports = {
         });
       }
 
-      // NOTE: changed bot permission check to ManageRoles as requested
       const me = interaction.guild.members.me;
       if (!me.permissions.has(PermissionsBitField.Flags.ManageRoles)) {
         return interaction.reply({
@@ -866,8 +949,8 @@ module.exports = {
       });
     }
 
-    // tools: slowmode
-    if (group === 'tools' && sub === 'slowmode') {
+    // /mod slowmode
+    if (sub === 'slowmode') {
       const channel = interaction.options.getChannel('channel') || interaction.channel;
       const seconds = interaction.options.getInteger('seconds');
 
@@ -892,8 +975,8 @@ module.exports = {
       });
     }
 
-    // tools: nick
-    if (group === 'tools' && sub === 'nick') {
+    // /mod nick
+    if (sub === 'nick') {
       const target = interaction.options.getUser('user');
       const nickname = interaction.options.getString('nickname');
 
@@ -917,8 +1000,8 @@ module.exports = {
       });
     }
 
-    // tools: force-role
-    if (group === 'tools' && sub === 'force-role') {
+    // /mod force-role
+    if (sub === 'force-role') {
       const action = interaction.options.getString('action');
       const target = interaction.options.getUser('user');
       const role = interaction.options.getRole('role');
@@ -950,8 +1033,8 @@ module.exports = {
       }
     }
 
-    // tools: clear-roles
-    if (group === 'tools' && sub === 'clear-roles') {
+    // /mod clear-roles
+    if (sub === 'clear-roles') {
       const target = interaction.options.getUser('user');
       const preserve = interaction.options.getString('preserveroles');
       const preserveIds = preserve

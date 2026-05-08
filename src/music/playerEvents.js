@@ -55,21 +55,22 @@ async function fetchRelatedTracks(client, track, count = 5) {
   try {
     if (!client.music) return [];
     
-    // Using "radio" or "mix" in search is far more effective for YouTube's clustering algorithm
-    // than "related", which just matches words in titles.
-    const query = `${track.title} ${track.author} radio`;
-    const result = await client.music.search({ 
-      query: `ytmsearch:${query}` 
-    });
-    let tracks = result.tracks || [];
+    // Clean strings to prevent "[object Object]" issues
+    const title = String(track.title || '').replace(/[\[\]]/g, '');
+    const author = String(track.author || '').replace(/[\[\]]/g, '');
     
-    // Fallback to standard search if YTM returns nothing
-    if (tracks.length === 0) {
-      const fallbackResult = await client.music.search({ query: `ytsearch:${track.title} ${track.author} mix` });
-      tracks = fallbackResult.tracks || [];
-    }
+    // Standard YouTube search with "mix" is more stable for finding playable results
+    const query = `${title} ${author} mix`;
+    const result = await client.music.search({ 
+      query: `ytsearch:${query}` 
+    });
+    
+    let tracks = (result.tracks || []).filter(t => {
+       // Ensure the track has a valid title string and isn't a generic object string
+       return t && typeof t.title === 'string' && t.title.length > 1 && !t.title.includes('[object');
+    });
 
-    // Filter out current track and prioritize same author/language vibe
+    // Filter out the song that just played
     const filtered = tracks.filter(t => t.identifier !== track.identifier && t.uri !== track.uri);
     
     return filtered.slice(0, count);
@@ -205,7 +206,11 @@ module.exports.registerPlayerEvents = function registerPlayerEvents(client) {
         if (currentTrack) {
           const relatedTracks = await fetchRelatedTracks(client, currentTrack, 5);
           if (relatedTracks.length > 0) {
-            player.queue.add(relatedTracks);
+            // Add songs individually to ensure the queue processes them as KazagumoTracks
+            for (const t of relatedTracks) {
+              player.queue.add(t);
+            }
+            
             await player.play();
             await sendToPlayerChannel(client, player, {
               embeds: [simpleEmbed(`🎵 Autoplay: Added ${relatedTracks.length} related tracks to queue.`)]
