@@ -33,9 +33,7 @@ module.exports = async function handleRRButton(interaction) {
   const id = interaction.customId;
   if (!id.startsWith('rr_btn:')) return;
 
-  const [_, guildId, setupIdStr, itemIdStr] = id.split(':');
-  const setupId = Number(setupIdStr);
-  const itemId = Number(itemIdStr);
+  const [_, guildId, setupId, itemId] = id.split(':');
   const userId = interaction.user.id;
 
   const lockKey = getLockKey(guildId, userId);

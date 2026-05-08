@@ -95,6 +95,8 @@ function buildButtonsFromItems(client, guildId, setupId, items) {
   // Max 5 buttons per row, up to 25 total (Discord limit)
   const rows = [];
   const chunkSize = 5;
+  // Map style index: 0=Primary,1=Secondary,2=Success,3=Danger,4=Link (not used)
+  const styleMap = [ButtonStyle.Primary, ButtonStyle.Secondary, ButtonStyle.Success, ButtonStyle.Danger, ButtonStyle.Link];
   
   for (let i = 0; i < items.length; i += chunkSize) {
     const row = new ActionRowBuilder();
@@ -103,7 +105,7 @@ function buildButtonsFromItems(client, guildId, setupId, items) {
     for (const it of chunk) {
       const btn = new ButtonBuilder()
         .setCustomId(`rr_btn:${guildId}:${setupId}:${it.id}`)
-        .setStyle(ButtonStyle[it.style] || ButtonStyle.Secondary)
+        .setStyle(styleMap[it.style] ?? ButtonStyle.Secondary)
         .setEmoji(it.emoji)
         .setDisabled(false);
       
@@ -316,7 +318,6 @@ module.exports = {
     ),
   async execute(interaction) {
     const sub = interaction.options.getSubcommand();
-    await rrStorage.initStorage();
 
     const replyError = (text) => interaction.reply({ 
       embeds: [new EmbedBuilder().setColor(ERROR_COLOR).setDescription(text)], 
