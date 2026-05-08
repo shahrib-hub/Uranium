@@ -145,7 +145,7 @@ function buildNowPlayingEmbed(track, player, client) {
   const loopLabel = String(player?.loop || 'none');
   const filterLabel = currentFilterLabel(player);
   const isPaused = player?.paused;
-  const statusEmoji = isPaused ? '⏸️' : '▶️';
+  const statusEmoji = isPaused ? '<:u_pause:1502240276813709342>' : '<:u_resume:1502240481818443896>';
   const accentColor = isPaused ? COLORS.PAUSED : COLORS.PLAYING;
 
   const embed = baseEmbed(accentColor)
@@ -165,11 +165,10 @@ function buildNowPlayingEmbed(track, player, client) {
       { name: '⏱️ Duration', value: `\`${trackDuration(track)}\``, inline: true },
       { name: '🎧 Source', value: sourceName(track), inline: true },
       { name: '👤 Requested by', value: requester, inline: true },
-      { name: '🔊 Volume', value: `\`${player?.volume ?? 100}%\``, inline: true },
-      { name: '📋 Queue', value: `\`${queueCount} upcoming\``, inline: true },
-      { name: '🔁 Loop', value: `\`${loopLabel}\``, inline: true },
-      { name: '🎛️ Filter', value: `\`${filterLabel}\``, inline: true },
-      { name: '🎛️ Filter', value: `\`${filterLabel}\``, inline: true }
+      { name: '<:u_highvol:1502241896507117638> Volume', value: `\`${player?.volume ?? 100}%\``, inline: true },
+      { name: '<:u_queue:1502243141867143299> Queue', value: `\`${queueCount} upcoming\``, inline: true },
+      { name: '<:u_loop:1502242040258232395> Loop', value: `\`${loopLabel}\``, inline: true },
+      { name: '<:u_filters:1502243103774474240> Filter', value: `\`${filterLabel}\``, inline: true }
     )
     .setFooter({ text: 'Uranium • Premium Music Experience' });
 
@@ -180,7 +179,7 @@ function buildNowPlayingEmbed(track, player, client) {
 function buildQueueEmbed(player, client) {
   const current = player?.queue?.current;
   const upcoming = Array.from(player?.queue || []);
-  const currentLine = current ? `▶️ **Now Playing:** ${trackDisplay(current, 45, 25)}` : '⏹️ Nothing playing';
+  const currentLine = current ? `<:u_resume:1502240481818443896> **Now Playing:** ${trackDisplay(current, 45, 25)}` : '<:u_stop:1502241227062378608> Nothing playing';
   const lines = upcoming.slice(0, 10).map((track, index) => {
     const url = track?.uri;
     const display = trackDisplay(track, 42, 24);
@@ -190,7 +189,7 @@ function buildQueueEmbed(player, client) {
 
   return baseEmbed(COLORS.ACCENT)
     .setAuthor({
-      name: '📋 Queue List',
+      name: '<:u_queue:1502243141867143299> Queue List',
       iconURL: client?.user?.displayAvatarURL?.() || undefined
     })
     .setDescription(`${currentLine}\n\n${lines.length ? lines.join('\n') : '*No upcoming tracks.*'}`)
@@ -218,33 +217,33 @@ function buildControlButtons(guildId, paused = false) {
     new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId(`music_ctrl:previous:${guildId}`)
-        .setEmoji('⏮️')
+        .setEmoji('<:u_leftskip:1502241101384253440>')
         .setStyle(ButtonStyle.Secondary),
       new ButtonBuilder()
         .setCustomId(`music_ctrl:pause:${guildId}`)
-        .setEmoji(paused ? '▶️' : '⏸️')
+        .setEmoji(paused ? '<:u_resume:1502240481818443896>' : '<:u_pause:1502240276813709342>')
         .setStyle(paused ? ButtonStyle.Success : ButtonStyle.Primary),
       new ButtonBuilder()
         .setCustomId(`music_ctrl:skip:${guildId}`)
-        .setEmoji('⏭️')
+        .setEmoji('<:u_rightskip:1502241050495029418>')
         .setStyle(ButtonStyle.Secondary),
       new ButtonBuilder()
         .setCustomId(`music_ctrl:stop:${guildId}`)
-        .setEmoji('⏹️')
+        .setEmoji('<:u_stop:1502241227062378608>')
         .setStyle(ButtonStyle.Danger),
       new ButtonBuilder()
         .setCustomId(`music_ctrl:shuffle:${guildId}`)
-        .setEmoji('🔀')
+        .setEmoji('<:u_shuffle:1502241511285329992>')
         .setStyle(ButtonStyle.Secondary)
     ),
     new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId(`music_ctrl:vol_down:${guildId}`).setEmoji('🔉').setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId(`music_ctrl:vol_up:${guildId}`).setEmoji('🔊').setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId(`music_ctrl:loop:${guildId}`).setEmoji('🔁').setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId(`music_ctrl:filters:${guildId}`).setEmoji('🎛️').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId(`music_ctrl:vol_down:${guildId}`).setEmoji('<:u_lowvol:1502241804228231228>').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId(`music_ctrl:vol_up:${guildId}`).setEmoji('<:u_highvol:1502241896507117638>').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId(`music_ctrl:loop:${guildId}`).setEmoji('<:u_loop:1502242040258232395>').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId(`music_ctrl:filters:${guildId}`).setEmoji('<:u_filters:1502243103774474240>').setStyle(ButtonStyle.Secondary),
       new ButtonBuilder()
         .setCustomId(`music_ctrl:queue:${guildId}`)
-        .setEmoji('📋')
+        .setEmoji('<:u_queue:1502243141867143299>')
         .setStyle(ButtonStyle.Secondary)
     )
   ];
@@ -255,13 +254,13 @@ function buildFilterMenu(guildId, currentFilter = 'clear') {
     new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId(`music_filter_select:${guildId}`)
-        .setPlaceholder(`🎛️ Filter: ${currentFilterLabel({ data: new Map([['filter', currentFilter]]) })}`)
+        .setPlaceholder(`<:u_filters:1502243103774474240> Filter: ${currentFilterLabel({ data: new Map([['filter', currentFilter]]) })}`)
         .addOptions([
           { label: '✨ Off', description: 'Clear all audio filters', value: 'clear', default: currentFilter === 'clear' || currentFilter === 'none' },
           { label: '⚡ Nightcore', description: 'Faster tempo with higher pitch', value: 'nightcore', default: currentFilter === 'nightcore' },
-          { label: '🔊 Bassboost', description: 'Enhanced low frequencies', value: 'bassboost', default: currentFilter === 'bassboost' },
+          { label: '<:u_highvol:1502241896507117638> Bassboost', description: 'Enhanced low frequencies', value: 'bassboost', default: currentFilter === 'bassboost' },
           { label: '🌊 Vaporwave', description: 'Slowed down dreamy vibe', value: 'vaporwave', default: currentFilter === 'vaporwave' },
-          { label: '🔉 Soft', description: 'Smooth mellow sound', value: 'soft', default: currentFilter === 'soft' },
+          { label: '<:u_lowvol:1502241804228231228> Soft', description: 'Smooth mellow sound', value: 'soft', default: currentFilter === 'soft' },
           { label: '🎤 Karaoke', description: 'Vocal reduction effect', value: 'karaoke', default: currentFilter === 'karaoke' },
           { label: '🌀 8D Rotation', description: 'Immersive spatial audio', value: 'rotation', default: currentFilter === 'rotation' },
           { label: '🐿️ Chipmunk', description: 'High-pitched squeaky sound', value: 'chipmunk', default: currentFilter === 'chipmunk' },

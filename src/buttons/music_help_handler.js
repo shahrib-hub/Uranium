@@ -34,9 +34,9 @@ const COMMANDS = {
 };
 
 const TITLES = {
-  playback: '▶️ Playback Controls',
+  playback: '<:u_resume:1502240481818443896> Playback Controls',
   queue: '🎒 Queue Management',
-  audio: '🎛️ Audio Effects',
+  audio: '<:u_filters:1502243103774474240> Audio Effects',
   connection: '🔗 Voice Connection',
   nowplaying: 'ℹ️ Track Info',
 
@@ -77,11 +77,11 @@ module.exports = async (interaction) => {
     .setCustomId('music_help_nav')
     .setPlaceholder('🎵 Choose a music category...')
     .addOptions([
-      { label: '▶️ Playback', value: 'playback', description: 'Play, pause, skip, stop, seek', emoji: '▶️' },
+      { label: '<:u_resume:1502240481818443896> Playback', value: 'playback', description: 'Play, pause, skip, stop, seek', emoji: '<:u_resume:1502240481818443896>' },
       { label: '🎒 Queue', value: 'queue', description: 'Queue management commands', emoji: '🎒' },
-      { label: '🎛️ Audio', value: 'audio', description: 'Volume, filters, loop', emoji: '🎛️' },
+      { label: '<:u_filters:1502243103774474240> Audio', value: 'audio', description: 'Volume, filters, loop', emoji: '<:u_filters:1502243103774474240>' },
       { label: '🔗 Connection', value: 'connection', description: 'Join and leave voice', emoji: '🔗' },
-      { label: 'ℹ️ Now Playing', value: 'nowplaying', description: 'Display current track & player info', emoji: 'ℹ️' },
+      { label: 'ℹ️ Now Playing', value: 'nowplaying', description: 'Display current track & player info', emoji: 'ℹ️' }
 
     ]);
 

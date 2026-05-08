@@ -96,7 +96,7 @@ function buildStatusEmbed(client, { mode } = { mode: 'online' }) {
         inline: true
       },
       {
-        name: '🔊 Music Players',
+        name: '<:u_highvol:1502241896507117638> Music Players',
         value: `\`${voiceConnections}\` active`,
         inline: true
       },

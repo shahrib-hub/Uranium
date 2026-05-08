@@ -77,7 +77,7 @@ module.exports = {
         .setDescription('Premium music player with advanced controls.')
         .addFields(
           { name: '⚡ Quick Actions', value: '`/music play <query>` — Play any song\n`/music queue` — View playlist\n`/music skip` — Skip track\n`/music nowplaying` — Display current track', inline: false },
-          { name: '🎛️ Audio Control', value: '`/music volume <1-100>` — Adjust volume\n`/music filter <preset>` — Nightcore, Bassboost & more\n`/music loop <mode>` — Loop song/queue', inline: false },
+          { name: '<:u_filters:1502243103774474240> Audio Control', value: '`/music volume <1-100>` — Adjust volume\n`/music filter <preset>` — Nightcore, Bassboost & more\n`/music loop <mode>` — Loop song/queue', inline: false },
           { name: '🔗 Connection', value: '`/music join` — Join VC\n`/music leave` — Disconnect bot', inline: false },
           { name: '📦 Queue Management', value: '`/music search` — Browse results\n`/music shuffle` — Randomize queue\n`/music clear` — Remove all songs\n`/music remove` — Remove specific track', inline: false }
         )
@@ -89,9 +89,9 @@ module.exports = {
         .setCustomId('music_help_nav')
         .setPlaceholder('🎵 Choose a music category...')
         .addOptions([
-          { label: '▶️ Playback', value: 'playback', description: 'Play, pause, skip, stop, seek', emoji: '▶️' },
+          { label: '<:u_resume:1502240481818443896> Playback', value: 'playback', description: 'Play, pause, skip, stop, seek', emoji: '<:u_resume:1502240481818443896>' },
           { label: '🎒 Queue', value: 'queue', description: 'Queue management commands', emoji: '🎒' },
-          { label: '🎛️ Audio', value: 'audio', description: 'Volume, filters, loop', emoji: '🎛️' },
+          { label: '<:u_filters:1502243103774474240> Audio', value: 'audio', description: 'Volume, filters, loop', emoji: '<:u_filters:1502243103774474240>' },
           { label: '🔗 Connection', value: 'connection', description: 'Join and leave voice', emoji: '🔗' },
           { label: 'ℹ️ Now Playing', value: 'nowplaying', description: 'Display current track & player info', emoji: 'ℹ️' }
         ]);
