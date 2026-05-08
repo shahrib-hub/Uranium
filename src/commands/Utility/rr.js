@@ -662,6 +662,13 @@ module.exports = {
         await sendOrUpdatePanel(ch, setup, items, interaction);
         return replySuccess(`📝 Reposted panel in ${ch}.`);
       }
+      if (sub === 'sync') {
+        const setupId = interaction.options.getInteger('setup', true);
+        const setup = await rrStorage.getSetupById(setupId);
+        if (!setup || setup.guild_id !== interaction.guild.id) return replyError('Panel not found.');
+
+        const ch = await interaction.guild.channels.fetch(setup.channel_id).catch(() => null);
+        if (!ch || !ch.isTextBased()) return replyError('Channel not available.');
 
         const items = await rrStorage.listItems(setupId);
         const result = await syncReactions(ch, setup, items);
