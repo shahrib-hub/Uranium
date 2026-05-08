@@ -576,52 +576,54 @@ async function runMigration() {
     await closeDb(rkDb);
   }
 
-  // 13. Reaction Roles (reaction_roles.db)
-  const rrDb = await getDb('reaction_roles.db');
-  if (rrDb) {
-    console.log('[MIGRATION] Migrating reaction_roles.db...');
-    try {
-      const setups = await fetchAll(rrDb, `SELECT * FROM rr_setups`);
-      // We will map old SQLite IDs to new ones or simply use the string version of the SQLite ID.
-      // We'll use the string version of the old ID to maintain relations.
-      for (const s of setups) {
-        await models.RRSetup.findOneAndUpdate(
-          { _id: s.id },
-          {
-            guildId: s.guild_id,
-            channelId: s.channel_id,
-            messageId: s.message_id,
-            mode: s.mode,
-            title: s.title,
-            description: s.description,
-            creatorId: s.creator_id,
-            createdAt: s.created_at,
-            updatedAt: s.updated_at,
-            active: s.active === 1
-          },
-          { upsert: true }
-        );
-      }
+   // 13. Reaction Roles (reaction_roles.db)
+   const rrDb = await getDb('reaction_roles.db');
+   if (rrDb) {
+     console.log('[MIGRATION] Migrating reaction_roles.db...');
+     try {
+       const setups = await fetchAll(rrDb, `SELECT * FROM rr_setups`);
+       for (const s of setups) {
+         await models.RRSetup.findOneAndUpdate(
+           { _id: s.id },
+           {
+             guildId: s.guild_id,
+             channelId: s.channel_id,
+             messageId: s.message_id,
+             mode: s.mode,
+             title: s.title,
+             description: s.description,
+             creatorId: s.creator_id,
+             createdAt: s.created_at,
+             updatedAt: s.updated_at,
+             active: s.active === 1,
+             config: {} // default config for old setups
+           },
+           { upsert: true }
+         );
+       }
 
-      const items = await fetchAll(rrDb, `SELECT * FROM rr_items`);
-      for (const i of items) {
-        await models.RRItem.findOneAndUpdate(
-          { _id: i.id },
-          {
-            setupId: String(i.setup_id),
-            emoji: i.emoji,
-            emojiIdentifier: i.emoji_identifier,
-            label: i.label,
-            roleId: i.role_id,
-            position: i.position,
-            createdAt: i.created_at
-          },
-          { upsert: true }
-        );
-      }
-    } catch (e) { console.log('Skipping Reaction Roles migration:', e.message); }
-    await closeDb(rrDb);
-  }
+       const items = await fetchAll(rrDb, `SELECT * FROM rr_items`);
+       for (const i of items) {
+         await models.RRItem.findOneAndUpdate(
+           { _id: i.id },
+           {
+             setupId: String(i.setup_id),
+             emoji: i.emoji,
+             emojiIdentifier: i.emoji_identifier,
+             label: i.label,
+             roleId: i.role_id,
+             position: i.position,
+             createdAt: i.created_at,
+             style: 0,
+             description: null,
+             metadata: {}
+           },
+           { upsert: true }
+         );
+       }
+     } catch (e) { console.log('Skipping Reaction Roles migration:', e.message); }
+     await closeDb(rrDb);
+   }
 
   // 14. Socials (social_notifications.db)
   const socDb = await getDb('social_notifications.db');

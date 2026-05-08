@@ -1,26 +1,133 @@
-// src/utils/rrStorage.js
+// src/utils/rrStorage.js - REVAMPED
 const rrdb = require('./rrdb');
 const { useMongoDB } = require('../config/database');
 const { RRSetup, RRItem, RRLog } = require('../database/mongoose');
+const logger = require('./logger');
 const now = () => Math.floor(Date.now() / 1000);
 
-async function initStorage() {
-  await rrdb.init();
+// ========== In-memory caches (survive restarts via persistence layer) ==========
+const cache = {
+  setups: new Map(),           // setupId -> setup doc
+  items: new Map(),            // setupId -> items[] array
+  setupByMessage: new Map(),   // `${guildId}:${messageId}` -> setupId
+  rateLimits: new Map(),       // `${guildId}:${userId}:${setupId}` -> { count, resetAt }
+  roleAssignments: new Map()   // `${guildId}:${userId}` -> Set(roleId)
+};
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+function cacheSet(key, value) { cache[key] = { value, ttl: Date.now() + CACHE_TTL }; }
+function cacheGet(key) {
+  const entry = cache[key];
+  if (!entry) return null;
+  if (Date.now() > entry.ttl) { delete cache[key]; return null; }
+  return entry.value;
+}
+function cacheInvalidateSetup(setupId) {
+  ['setups','items','setupByMessage'].forEach(map => {
+    for (const k of Object.keys(cache[map]||{})) {
+      if (k.includes(setupId)) delete cache[map][k];
+    }
+  });
 }
 
-async function createSetup({ guildId, channelId, mode = 'buttons', title = '', description = '', creatorId }) {
+// ========== Rate Limiting (distributed-ready) ==========
+async function checkRateLimit(guildId, userId, setupId) {
+  const key = `${guildId}:${userId}:${setupId}`;
+  const entry = cache.rateLimits[key];
+  
+  if (entry && Date.now() < entry.resetAt) {
+    const remaining = Math.ceil((entry.resetAt - Date.now()) / 1000);
+    return { allowed: false, remaining };
+  }
+  
+  cache.rateLimits[key] = { count: 1, resetAt: Date.now() + 1000 }; // 1 second default
+  return { allowed: true };
+}
+
+async function incrementRateLimit(guildId, userId, setupId, cooldownSeconds) {
+  const key = `${guildId}:${userId}:${setupId}`;
+  const resetAt = Date.now() + (cooldownSeconds || 1) * 1000;
+  cache.rateLimits[key] = { count: 1, resetAt };
+}
+
+// ========== Role Policy Validation ==========
+/**
+ * Validates if a user can be assigned a role based on:
+ * - exclusive groups (mutually exclusive)
+ * - required roles (prerequisites)
+ * - blocked roles (never self-assign)
+ * - per-setup role limits
+ */
+async function validateRoleAssignment(member, item, setup) {
+  const { guild } = member;
+  const config = setup.config || {};
+  
+  // Normalize Maps to objects for safe iteration (backwards compatible)
+  const getEntries = (maybeMap) => {
+    if (maybeMap instanceof Map) return Array.from(maybeMap.entries());
+    if (typeof maybeMap === 'object' && maybeMap !== null) return Object.entries(maybeMap);
+    return [];
+  };
+
+  // Check blocked roles
+  if (config.blockedRoles && config.blockedRoles.includes(item.roleId)) {
+    return { allowed: false, reason: 'BLOCKED_ROLE' };
+  }
+  
+  // Check required roles (prerequisites)
+  if (config.requiredRoles) {
+    for (const [group, requiredRoleIds] of getEntries(config.requiredRoles)) {
+      const hasAll = requiredRoleIds.every(id => member.roles.cache.has(id));
+      if (!hasAll) {
+        return { allowed: false, reason: 'MISSING_PREREQUISITES', group };
+      }
+    }
+  }
+  
+  // Check exclusive groups (mutual exclusivity)
+  if (config.exclusiveGroups) {
+    for (const [group, roleIds] of getEntries(config.exclusiveGroups)) {
+      const userHasFromGroup = member.roles.cache.some(r => roleIds.includes(r.id));
+      const requestingIsInGroup = roleIds.includes(item.roleId);
+      
+      if (userHasFromGroup && !requestingIsInGroup) {
+        return { allowed: false, reason: 'EXCLUSIVE_GROUP_CONFLICT', group };
+      }
+    }
+  }
+  
+  // Check per-setup user limit
+  if (config.maxPerUser > 0) {
+    const userItems = await listItems(setup._id);
+    const currentCount = userItems.filter(i => 
+      guild.roles.cache.has(i.roleId) && member.roles.cache.has(i.roleId)
+    ).length;
+    if (currentCount >= config.maxPerUser) {
+      return { allowed: false, reason: 'USER_LIMIT_REACHED' };
+    }
+  }
+  
+  return { allowed: true };
+}
+
+// ========== CRUD OPERATIONS WITH CACHE ==========
+async function initStorage() {
+  await rrdb.init();
+  logger.info('[RR] Storage layer initialized (mode: %s)', useMongoDB ? 'MongoDB' : 'SQLite');
+}
+
+async function createSetup({ guildId, channelId, mode = 'buttons', title = '', description = '', creatorId, config = {} }) {
   const ts = now();
   if (useMongoDB) {
     const doc = await RRSetup.create({
-      guildId, channelId, mode, title, description, creatorId, createdAt: ts, updatedAt: ts, active: true
+      guildId, channelId, mode, title, description, creatorId,
+      createdAt: ts, updatedAt: ts, active: true, config
     });
     return doc._id.toString();
   }
-
   const res = await rrdb.instance.run(
-    `INSERT INTO rr_setups (guild_id, channel_id, mode, title, description, creator_id, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
-    [guildId, channelId, mode, title, description, creatorId, ts, ts]
+    `INSERT INTO rr_setups (guild_id, channel_id, mode, title, description, creator_id, created_at, updated_at, config)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+    [guildId, channelId, mode, title, description, creatorId, ts, ts, JSON.stringify(config)]
   );
   return res.lastID;
 }
@@ -28,20 +135,26 @@ async function createSetup({ guildId, channelId, mode = 'buttons', title = '', d
 async function updateSetupMessageId(setupId, messageId) {
   if (useMongoDB) {
     await RRSetup.findByIdAndUpdate(setupId, { messageId, updatedAt: now() }).catch(() => null);
+    cacheInvalidateSetup(setupId);
     return;
   }
-
   await rrdb.instance.run(
     `UPDATE rr_setups SET message_id = ?, updated_at = ? WHERE id = ?;`,
     [messageId, now(), setupId]
   );
+  cacheInvalidateSetup(String(setupId));
 }
 
 async function getSetupById(setupId) {
+  const key = `setup:${setupId}`;
+  const cached = cacheGet(key);
+  if (cached) return cached;
+
+  let result;
   if (useMongoDB) {
     const doc = await RRSetup.findById(setupId).catch(() => null);
     if (!doc) return null;
-    return {
+    result = {
       id: doc._id.toString(),
       guild_id: doc.guildId,
       channel_id: doc.channelId,
@@ -52,18 +165,38 @@ async function getSetupById(setupId) {
       creator_id: doc.creatorId,
       created_at: doc.createdAt,
       updated_at: doc.updatedAt,
-      active: doc.active ? 1 : 0
+      active: doc.active ? 1 : 0,
+      config: doc.config || {}
+    };
+  } else {
+    const row = await rrdb.instance.get(`SELECT * FROM rr_setups WHERE id = ?;`, [setupId]);
+    if (!row) return null;
+    const parsedConfig = typeof row.config === 'string' ? JSON.parse(row.config || '{}') : (row.config || {});
+    // Normalize Maps from plain objects (for SQLite)
+    const normalizedConfig = {
+      ...parsedConfig,
+      exclusiveGroups: parsedConfig.exclusiveGroups ? new Map(Object.entries(parsedConfig.exclusiveGroups)) : new Map(),
+      requiredRoles: parsedConfig.requiredRoles ? new Map(Object.entries(parsedConfig.requiredRoles)) : new Map()
+    };
+    result = {
+      ...row,
+      config: normalizedConfig
     };
   }
-
-  return rrdb.instance.get(`SELECT * FROM rr_setups WHERE id = ?;`, [setupId]);
+  if (result) cacheSet(key, result);
+  return result;
 }
 
 async function getSetupByMessage(guildId, messageId) {
+  const key = `msg:${guildId}:${messageId}`;
+  const cached = cacheGet(key);
+  if (cached) return cached;
+
+  let result;
   if (useMongoDB) {
     const doc = await RRSetup.findOne({ guildId, messageId, active: true });
     if (!doc) return null;
-    return {
+    result = {
       id: doc._id.toString(),
       guild_id: doc.guildId,
       channel_id: doc.channelId,
@@ -74,11 +207,25 @@ async function getSetupByMessage(guildId, messageId) {
       creator_id: doc.creatorId,
       created_at: doc.createdAt,
       updated_at: doc.updatedAt,
-      active: doc.active ? 1 : 0
+      active: doc.active ? 1 : 0,
+      config: doc.config || {}
+    };
+  } else {
+    const row = await rrdb.instance.get(`SELECT * FROM rr_setups WHERE guild_id = ? AND message_id = ? AND active = 1;`, [guildId, messageId]);
+    if (!row) return null;
+    const parsedConfig = typeof row.config === 'string' ? JSON.parse(row.config || '{}') : (row.config || {});
+    const normalizedConfig = {
+      ...parsedConfig,
+      exclusiveGroups: parsedConfig.exclusiveGroups ? new Map(Object.entries(parsedConfig.exclusiveGroups)) : new Map(),
+      requiredRoles: parsedConfig.requiredRoles ? new Map(Object.entries(parsedConfig.requiredRoles)) : new Map()
+    };
+    result = {
+      ...row,
+      config: normalizedConfig
     };
   }
-
-  return rrdb.instance.get(`SELECT * FROM rr_setups WHERE guild_id = ? AND message_id = ? AND active = 1;`, [guildId, messageId]);
+  if (result) cacheSet(key, result);
+  return result;
 }
 
 async function listSetupsForGuild(guildId) {
@@ -99,48 +246,110 @@ async function listSetupsForGuild(guildId) {
     }));
   }
 
-  return rrdb.instance.all(`SELECT * FROM rr_setups WHERE guild_id = ? ORDER BY created_at DESC;`, [guildId]);
+  const rows = await rrdb.instance.all(`SELECT * FROM rr_setups WHERE guild_id = ? ORDER BY created_at DESC;`, [guildId]);
+  return rows.map(row => ({
+    ...row,
+    // Note: we don't include config in list view for performance
+  }));
 }
 
 async function deleteSetup(setupId) {
   if (useMongoDB) {
     await RRSetup.findByIdAndDelete(setupId).catch(() => null);
     await RRItem.deleteMany({ setupId });
+    await RRLog.deleteMany({ setupId });
+    cacheInvalidateSetup(setupId);
     return;
   }
-
-  return rrdb.instance.run(`DELETE FROM rr_setups WHERE id = ?;`, [setupId]);
+  await rrdb.instance.run(`DELETE FROM rr_setups WHERE id = ?;`, [setupId]);
+  cacheInvalidateSetup(String(setupId));
 }
 
-async function addItem({ setupId, emoji, emojiIdentifier, label = null, roleId, position = 0 }) {
+async function addItem({ setupId, emoji, emojiIdentifier, label = null, roleId, position = 0, style = 0, description = null, metadata = {} }) {
   const ts = now();
   if (useMongoDB) {
     const doc = await RRItem.create({
-      setupId: String(setupId), emoji, emojiIdentifier, label, roleId, position, createdAt: ts
+      setupId: String(setupId), emoji, emojiIdentifier, label, roleId, position, createdAt: ts,
+      style, description, metadata
     });
+    cacheInvalidateSetup(setupId);
     return doc._id.toString();
   }
-
   const res = await rrdb.instance.run(
-    `INSERT INTO rr_items (setup_id, emoji, emoji_identifier, label, role_id, position, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?);`,
-    [setupId, emoji, emojiIdentifier, label, roleId, position, ts]
+    `INSERT INTO rr_items (setup_id, emoji, emoji_identifier, label, role_id, position, created_at, style, description, metadata)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+    [setupId, emoji, emojiIdentifier, label, roleId, position, ts, style, description, JSON.stringify(metadata)]
   );
+  cacheInvalidateSetup(String(setupId));
   return res.lastID;
 }
 
-async function removeItem(itemId) {
+async function updateItem(itemId, updates) {
   if (useMongoDB) {
-    await RRItem.findByIdAndDelete(itemId).catch(() => null);
+    await RRItem.findByIdAndUpdate(itemId, { ...updates, updatedAt: now() }).catch(() => null);
     return;
   }
+  const fields = Object.keys(updates).map(k => `${k} = ?`).join(', ');
+  const values = Object.values(updates);
+  await rrdb.instance.run(`UPDATE rr_items SET ${fields} WHERE id = ?;`, [...values, itemId]);
+}
 
-  return rrdb.instance.run(`DELETE FROM rr_items WHERE id = ?;`, [itemId]);
+async function removeItem(itemId) {
+  const item = await findItemById(itemId);
+  if (!item) return;
+  
+  if (useMongoDB) {
+    await RRItem.findByIdAndDelete(itemId).catch(() => null);
+    cacheInvalidateSetup(item.setup_id);
+    return;
+  }
+  await rrdb.instance.run(`DELETE FROM rr_items WHERE id = ?;`, [itemId]);
+  cacheInvalidateSetup(String(item.setup_id));
 }
 
 async function listItems(setupId) {
+  const cacheKey = `items:${setupId}`;
+  const cached = cacheGet(cacheKey);
+  if (cached) return cached;
+
+  let result;
   if (useMongoDB) {
     const docs = await RRItem.find({ setupId: String(setupId) }).sort({ position: 1, _id: 1 });
+    result = docs.map(doc => ({
+      id: doc._id.toString(),
+      setup_id: doc.setupId,
+      emoji: doc.emoji,
+      emoji_identifier: doc.emojiIdentifier,
+      label: doc.label,
+      role_id: doc.roleId,
+      position: doc.position,
+      created_at: doc.createdAt,
+      description: doc.description,
+      style: doc.style,
+      metadata: doc.metadata || {}
+    }));
+  } else {
+    result = await rrdb.instance.all(`SELECT * FROM rr_items WHERE setup_id = ? ORDER BY position ASC, id ASC;`, [setupId]);
+  }
+  cacheSet(cacheKey, result);
+  return result;
+}
+
+async function findItemByEmoji(setupId, emojiIdentifier) {
+  const items = await listItems(setupId);
+  return items.find(it => it.emoji_identifier === emojiIdentifier) || null;
+}
+
+async function findItemByAnyIdentifier(setupId, identifiers = []) {
+  if (!identifiers || identifiers.length === 0) return null;
+  const items = await listItems(setupId);
+  return items.find(it => identifiers.includes(it.emoji_identifier)) || null;
+}
+
+async function findItemsByRoleId(roleId) {
+  // Efficient lookup for cleanup when a role is deleted
+  if (useMongoDB) {
+    const docs = await RRItem.find({ roleId }).sort({ createdAt: 1 });
     return docs.map(doc => ({
       id: doc._id.toString(),
       setup_id: doc.setupId,
@@ -152,63 +361,43 @@ async function listItems(setupId) {
       created_at: doc.createdAt
     }));
   }
-
-  return rrdb.instance.all(`SELECT * FROM rr_items WHERE setup_id = ? ORDER BY position ASC, id ASC;`, [setupId]);
-}
-
-async function findItemByEmoji(setupId, emojiIdentifier) {
-  if (useMongoDB) {
-    const doc = await RRItem.findOne({ setupId: String(setupId), emojiIdentifier });
-    if (!doc) return null;
-    return {
-      id: doc._id.toString(),
-      setup_id: doc.setupId,
-      emoji: doc.emoji,
-      emoji_identifier: doc.emojiIdentifier,
-      label: doc.label,
-      role_id: doc.roleId,
-      position: doc.position,
-      created_at: doc.createdAt
-    };
-  }
-
-  return rrdb.instance.get(`SELECT * FROM rr_items WHERE setup_id = ? AND emoji_identifier = ? LIMIT 1;`, [setupId, emojiIdentifier]);
-}
-
-/**
- * Try multiple possible identifiers in the database and return first match.
- * identifiers: array of strings to test (ordered)
- */
-async function findItemByAnyIdentifier(setupId, identifiers = []) {
-  if (!identifiers || identifiers.length === 0) return null;
-  if (useMongoDB) {
-    const doc = await RRItem.findOne({ setupId: String(setupId), emojiIdentifier: { $in: identifiers } });
-    if (!doc) return null;
-    return {
-      id: doc._id.toString(),
-      setup_id: doc.setupId,
-      emoji: doc.emoji,
-      emoji_identifier: doc.emojiIdentifier,
-      label: doc.label,
-      role_id: doc.roleId,
-      position: doc.position,
-      created_at: doc.createdAt
-    };
-  }
-
-  // make placeholders ?,?,...
-  const placeholders = identifiers.map(() => '?').join(',');
-  // params: setupId, then each identifier
-  const sql = `SELECT * FROM rr_items WHERE setup_id = ? AND emoji_identifier IN (${placeholders}) LIMIT 1;`;
-  const params = [setupId, ...identifiers];
-  return rrdb.instance.get(sql, params);
+  return rrdb.instance.all(`SELECT * FROM rr_items WHERE role_id = ?;`, [roleId]);
 }
 
 async function findItemById(itemId) {
+  const cacheKey = `item:${itemId}`;
+  const cached = cacheGet(cacheKey);
+  if (cached) return cached;
+
+  let result;
   if (useMongoDB) {
     const doc = await RRItem.findById(itemId).catch(() => null);
     if (!doc) return null;
-    return {
+    result = {
+      id: doc._id.toString(),
+      setup_id: doc.setupId,
+      emoji: doc.emoji,
+      emoji_identifier: doc.emojiIdentifier,
+      label: doc.label,
+      role_id: doc.roleId,
+      position: doc.position,
+      created_at: doc.createdAt,
+      description: doc.description,
+      style: doc.style,
+      metadata: doc.metadata || {}
+    };
+  } else {
+    result = await rrdb.instance.get(`SELECT * FROM rr_items WHERE id = ? LIMIT 1;`, [itemId]);
+  }
+  if (result) cacheSet(cacheKey, result);
+  return result;
+}
+
+async function findItemsByRoleId(roleId) {
+  // Useful for cleanup when role is deleted
+  if (useMongoDB) {
+    const docs = await RRItem.find({ roleId }).sort({ createdAt: 1 });
+    return docs.map(doc => ({
       id: doc._id.toString(),
       setup_id: doc.setupId,
       emoji: doc.emoji,
@@ -217,22 +406,100 @@ async function findItemById(itemId) {
       role_id: doc.roleId,
       position: doc.position,
       created_at: doc.createdAt
-    };
+    }));
   }
-
-  return rrdb.instance.get(`SELECT * FROM rr_items WHERE id = ? LIMIT 1;`, [itemId]);
+  return rrdb.instance.all(`SELECT * FROM rr_items WHERE role_id = ?;`, [roleId]);
 }
 
-async function logAction({ guildId, userId, roleId, setupId, action }) {
+async function updateItem(itemId, updates) {
   if (useMongoDB) {
-    await RRLog.create({ guildId, userId, roleId, setupId: String(setupId), action, ts: now() });
+    const updateObj = { ...updates };
+    if (!updateObj.updatedAt) updateObj.updatedAt = now();
+    await RRItem.findByIdAndUpdate(itemId, updateObj).catch(() => null);
+    cacheInvalidateSetup(updates.setupId || (await findItemById(itemId))?.setup_id);
     return;
   }
+   const fields = Object.keys(updates).map(k => `${k} = ?`).join(', ');
+   const params = Object.values(updates);
+   await rrdb.instance.run(`UPDATE rr_items SET ${fields} WHERE id = ?;`, [...params, itemId]);
+   cacheInvalidateSetup(updates.setupId);
+ }
 
-  await rrdb.instance.run(
-    `INSERT INTO rr_logs (guild_id, user_id, role_id, setup_id, action, ts) VALUES (?, ?, ?, ?, ?, ?);`,
-    [guildId, userId, roleId, setupId, action, now()]
-  );
+async function updateSetupConfig(setupId, config) {
+  // Normalize Maps to plain objects for JSON storage (SQLite)
+  const serializableConfig = {
+    ...config,
+    exclusiveGroups: config.exclusiveGroups instanceof Map ? Object.fromEntries(config.exclusiveGroups) : config.exclusiveGroups,
+    requiredRoles: config.requiredRoles instanceof Map ? Object.fromEntries(config.requiredRoles) : config.requiredRoles
+  };
+
+  if (useMongoDB) {
+    await RRSetup.findByIdAndUpdate(setupId, { 
+      config: serializableConfig,
+      updatedAt: now()
+    });
+    cacheInvalidateSetup(setupId);
+  } else {
+    await rrdb.instance.run(
+      `UPDATE rr_setups SET config = ?, updated_at = ? WHERE id = ?;`,
+      [JSON.stringify(serializableConfig), now(), setupId]
+    );
+    cacheInvalidateSetup(String(setupId));
+  }
+}
+
+async function logAction({ guildId, userId, roleId, setupId, action, error = null, metadata = {} }) {
+  const ts = now();
+  try {
+    if (useMongoDB) {
+      await RRLog.create({ 
+        guildId, userId, roleId, setupId: String(setupId), action, ts,
+        error, metadata
+      });
+    } else {
+      await rrdb.instance.run(
+        `INSERT INTO rr_logs (guild_id, user_id, role_id, setup_id, action, ts, error, metadata)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+        [guildId, userId, roleId, setupId, action, ts, error, JSON.stringify(metadata)]
+      );
+    }
+  } catch (err) {
+    logger.error('[RR] Failed to log action:', err.message);
+  }
+}
+
+async function getSetupStats(setupId) {
+  // Get statistics for a setup (counts per action in last 24h)
+  const since = now() - 24*60*60;
+  if (useMongoDB) {
+    const counts = await RRLog.aggregate([
+      { $match: { setupId: String(setupId), ts: { $gte: since } } },
+      { $group: { _id: '$action', count: { $sum: 1 } } }
+    ]);
+    return counts.reduce((acc, c) => ({ ...acc, [c._id]: c.count }), {});
+  } else {
+    const rows = await rrdb.instance.all(
+      `SELECT action, COUNT(*) as count FROM rr_logs WHERE setup_id = ? AND ts >= ? GROUP BY action;`,
+      [setupId, since]
+    );
+    return rows.reduce((acc, r) => ({ ...acc, [r.action]: r.count }), {});
+  }
+}
+
+// Track user role assignments (for limit enforcement)
+function getUserRolesCache(guildId, userId) {
+  const key = `${guildId}:${userId}`;
+  return cache.roleAssignments.get(key) || new Set();
+}
+function setUserRoleCache(guildId, userId, roleId) {
+  const key = `${guildId}:${userId}`;
+  if (!cache.roleAssignments.has(key)) cache.roleAssignments.set(key, new Set());
+  cache.roleAssignments.get(key).add(roleId);
+}
+function removeUserRoleCache(guildId, userId, roleId) {
+  const key = `${guildId}:${userId}`;
+  const set = cache.roleAssignments.get(key);
+  if (set) set.delete(roleId);
 }
 
 module.exports = {
@@ -244,10 +511,21 @@ module.exports = {
   listSetupsForGuild,
   deleteSetup,
   addItem,
+  updateItem,
   removeItem,
   listItems,
   findItemByEmoji,
   findItemByAnyIdentifier,
   findItemById,
-  logAction
+  findItemsByRoleId,
+  updateSetupConfig,
+  logAction,
+  getSetupStats,
+  validateRoleAssignment,
+  checkRateLimit,
+  incrementRateLimit,
+  cacheInvalidateSetup,
+  getUserRolesCache,
+  setUserRoleCache,
+  removeUserRoleCache
 };

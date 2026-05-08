@@ -262,20 +262,66 @@ const RankConfigSchema = new mongoose.Schema({
 });
 
 
-// 13. Reaction Roles (rrdb) (from rr_panels, rr_roles)
-const RRPanelSchema = new mongoose.Schema({
+// 13. Reaction Roles (rrdb) (from rr_panels, rr_roles, rr_logs)
+const RRSetupSchema = new mongoose.Schema({
+  _id: { type: String, required: true }, // mapping from SQLite ID
   guildId: { type: String, required: true },
-  panelId: { type: String, required: true }, // Usually the messageId
-  channelId: { type: String, required: true }
+  channelId: { type: String, required: true },
+  messageId: { type: String, default: null },
+  mode: { type: String, default: 'reactions' },
+  title: { type: String, default: null },
+  description: { type: String, default: null },
+  creatorId: { type: String, default: null },
+  createdAt: { type: Number, default: Date.now },
+  updatedAt: { type: Number, default: Date.now },
+  active: { type: Boolean, default: true },
+  config: {
+    maxPerUser: { type: Number, default: 0 },
+    exclusiveGroups: { type: Map, of: [String] },
+    requiredRoles: { type: Map, of: [String] },
+    blockedRoles: { type: [String], default: [] },
+    cooldownSeconds: { type: Number, default: 0 },
+    allowMultiple: { type: Boolean, default: true },
+    // Embed customization
+    color: { type: Number, default: null },
+    customTitle: { type: String, default: null },
+    customDescription: { type: String, default: null },
+    footerText: { type: String, default: null },
+    thumbnail: { type: String, default: null },
+    authorName: { type: String, default: null },
+    authorIcon: { type: String, default: null },
+    authorUrl: { type: String, default: null },
+    image: { type: String, default: null }
+  }
 });
-RRPanelSchema.index({ guildId: 1, panelId: 1 }, { unique: true });
 
-const RRRoleSchema = new mongoose.Schema({
-  panelId: { type: String, required: true },
+const RRItemSchema = new mongoose.Schema({
+  _id: { type: String, required: true },
+  setupId: { type: String, required: true },
   emoji: { type: String, required: true },
-  roleId: { type: String, required: true }
+  emojiIdentifier: { type: String, required: true },
+  label: { type: String, default: null },
+  roleId: { type: String, required: true },
+  position: { type: Number, default: 0 },
+  createdAt: { type: Number, default: Date.now },
+  description: { type: String, default: null },
+  style: { type: Number, default: 0 }, // 0=primary, 1=secondary, 2=success, 3=danger
+  metadata: { type: Map, of: mongoose.Schema.Types.Mixed, default: {} }
 });
-RRRoleSchema.index({ panelId: 1, emoji: 1 }, { unique: true });
+
+const RRLogSchema = new mongoose.Schema({
+  guildId: { type: String, required: true },
+  userId: { type: String, required: true },
+  roleId: { type: String, required: true },
+  setupId: { type: String, required: true },
+  action: { type: String, required: true }, // 'grant' | 'revoke' | 'fail' | 'blocked' | 'limit_reached'
+  ts: { type: Number, required: true },
+  error: { type: String, default: null },
+  metadata: { type: Map, of: mongoose.Schema.Types.Mixed, default: {} }
+});
+RRLogSchema.index({ guildId: 1, ts: -1 });
+RRLogSchema.index({ setupId: 1, ts: -1 });
+RRLogSchema.index({ userId: 1, guildId: 1 });
 
 
 // 14. Social / Reputation (from rep_users, rep_logs)
@@ -473,31 +519,7 @@ const RankRoleRewardSchema = new mongoose.Schema({
 });
 RankRoleRewardSchema.index({ guildId: 1, level: 1 }, { unique: true });
 
-// RR Setup
-const RRSetupSchema = new mongoose.Schema({
-  _id: { type: String, required: true }, // mapping from SQLite ID
-  guildId: { type: String, required: true },
-  channelId: { type: String, required: true },
-  messageId: { type: String, default: null },
-  mode: { type: String, default: 'reactions' },
-  title: { type: String, default: null },
-  description: { type: String, default: null },
-  creatorId: { type: String, default: null },
-  createdAt: { type: Number, default: Date.now },
-  updatedAt: { type: Number, default: Date.now },
-  active: { type: Boolean, default: true }
-});
-
-const RRItemSchema = new mongoose.Schema({
-  _id: { type: String, required: true },
-  setupId: { type: String, required: true },
-  emoji: { type: String, required: true },
-  emojiIdentifier: { type: String, required: true },
-  label: { type: String, default: null },
-  roleId: { type: String, required: true },
-  position: { type: Number, default: 0 },
-  createdAt: { type: Number, default: Date.now }
-});
+// Reaction Roles schemas are defined earlier (line ~266) to avoid circular dependencies
 
 // Sticky Config
 const StickyConfigSchema = new mongoose.Schema({
@@ -710,6 +732,7 @@ exports.RankConfig = mongoose.model('RankConfig', RankConfigSchema);
 exports.RankRoleReward = mongoose.model('RankRoleReward', RankRoleRewardSchema);
 exports.RRSetup = mongoose.model('RRSetup', RRSetupSchema);
 exports.RRItem = mongoose.model('RRItem', RRItemSchema);
+exports.RRLog = mongoose.model('RRLog', RRLogSchema);
 exports.SocialUser = mongoose.model('SocialUser', SocialUserSchema);
 exports.SocialLog = mongoose.model('SocialLog', SocialLogSchema);
 exports.Sticky = mongoose.model('Sticky', StickySchema);
