@@ -171,7 +171,6 @@ async function executeMusicAction(interaction) {
   const { client, guildId, member, options } = interaction;
   const sub = options.getSubcommand();
 
-
   let player = client.music?.players?.get(guildId);
   await interaction.deferReply({ flags: 64 }).catch(() => null);
 
@@ -184,26 +183,197 @@ async function executeMusicAction(interaction) {
         
         player = await createPlayer(client, guildId, member.voice.channelId, interaction.channelId);
         const res = await searchTracks(client, query, member);
-        if (!res.tracks?.length) return interaction.editReply({ embeds: [errorEmbed('No results found for your query.')] });
+        if (!res.tracks?.length) return interaction.editReply({ embeds: [errorEmbed(res.error || 'No results found.')] });
         
-        await addTracksAndPlay(player, res.type === 'PLAYLIST' ? res.tracks : res.tracks[0]);
-        await interaction.editReply({ embeds: [successEmbed(`Added **${res.type === 'PLAYLIST' ? `${res.tracks.length} tracks` : res.tracks[0].title}** to queue.`)] });
-break;
+        if (res.type === 'PLAYLIST') {
+          await addTracksAndPlay(player, res.tracks);
+          await interaction.editReply({ embeds: [successEmbed(`Added playlist **${res.playlistName || 'Unknown'}** (${res.tracks.length} tracks) to queue.`)] });
+        } else {
+          await addTracksAndPlay(player, res.tracks[0]);
+          await interaction.editReply({ embeds: [successEmbed(`Added **${res.tracks[0].title}** to queue.`)] });
+        }
+        break;
       }
 
+      case 'search': {
+        const query = options.getString('query');
+        if (!member.voice.channelId) return interaction.editReply({ embeds: [errorEmbed('Join a voice channel first.')] });
+        if (player && player.voiceId !== member.voice.channelId) return interaction.editReply({ embeds: [errorEmbed('You must be in the same voice channel.')] });
+        
+        player = await createPlayer(client, guildId, member.voice.channelId, interaction.channelId);
+        const res = await searchTracks(client, query, member);
+        if (!res.tracks?.length) return interaction.editReply({ embeds: [errorEmbed(res.error || 'No results found.')] });
+
+        if (res.type === 'PLAYLIST') {
+          await addTracksAndPlay(player, res.tracks);
+          return interaction.editReply({ embeds: [successEmbed(`Added playlist **${res.playlistName || 'Unknown'}** (${res.tracks.length} tracks) to queue.`)] });
+        }
+
+        const tracks = res.tracks.slice(0, 10);
+        const select = new StringSelectMenuBuilder()
+          .setCustomId('music_search_select')
+          .setPlaceholder('Choose a track to play...')
+          .addOptions(tracks.map((t, i) => ({
+            label: limit(t.title || 'Unknown', 95),
+            description: limit(t.author || 'Unknown', 95),
+            value: i.toString()
+          })));
+
+        await interaction.editReply({ 
+          embeds: [buildSearchEmbed(query, tracks)], 
+          components: [new ActionRowBuilder().addComponents(select)] 
+        });
+
+        const msg = await interaction.fetchReply();
+        const collector = msg.createMessageComponentCollector({
+          filter: i => i.user.id === interaction.user.id,
+          time: 30000,
+          max: 1
+        });
+
+        collector.on('collect', async i => {
+          const track = tracks[parseInt(i.values[0])];
+          await addTracksAndPlay(player, track);
+          await i.update({ embeds: [successEmbed(`Added **${track.title}** to queue.`)], components: [] });
+          if (player) client.dashboardBridge?.emitPlayerUpdate(player);
+        });
+
+        collector.on('end', (_, reason) => {
+          if (reason === 'time') interaction.editReply({ components: [] }).catch(() => null);
+        });
+        return; 
+      }
+
+      case 'join': {
+        if (!member.voice.channelId) return interaction.editReply({ embeds: [errorEmbed('Join a voice channel first.')] });
+        player = await createPlayer(client, guildId, member.voice.channelId, interaction.channelId);
+        await interaction.editReply({ embeds: [successEmbed(`Joined <#${member.voice.channelId}>.`)] });
+        break;
+      }
+
+      case 'leave': {
+        if (!player) return interaction.editReply({ embeds: [errorEmbed('I am not in a voice channel.')] });
+        await player.destroy();
+        await interaction.editReply({ embeds: [successEmbed('Left the voice channel.')] });
+        break;
+      }
+
+      case 'pause': {
+        if (!player) return interaction.editReply({ embeds: [errorEmbed('No player active.')] });
+        if (player.paused) return interaction.editReply({ embeds: [errorEmbed('Player is already paused.')] });
+        await player.pause(true);
+        await interaction.editReply({ embeds: [successEmbed('Paused the music.')] });
+        break;
+      }
+
+      case 'resume': {
+        if (!player) return interaction.editReply({ embeds: [errorEmbed('No player active.')] });
+        if (!player.paused) return interaction.editReply({ embeds: [errorEmbed('Player is not paused.')] });
+        await player.pause(false);
+        await interaction.editReply({ embeds: [successEmbed('Resumed the music.')] });
+        break;
+      }
+
+      case 'skip': {
+        if (!player) return interaction.editReply({ embeds: [errorEmbed('No player active.')] });
+        await player.skip();
+        await interaction.editReply({ embeds: [successEmbed('Skipped the current song.')] });
+        break;
+      }
+
+      case 'previous': {
+        if (!player) return interaction.editReply({ embeds: [errorEmbed('No player active.')] });
+        const previous = player.getPrevious?.(true) || player.queue.previous?.shift();
+        if (!previous) return interaction.editReply({ embeds: [errorEmbed('No previous song found.')] });
+        if (player.queue.current) player.queue.unshift(player.queue.current);
+        player.queue.unshift(previous);
+        await player.skip();
+        await interaction.editReply({ embeds: [successEmbed('Playing the previous song.')] });
+        break;
+      }
+
+      case 'stop': {
+        if (!player) return interaction.editReply({ embeds: [errorEmbed('No player active.')] });
+        player.queue.clear();
+        await player.destroy();
+        await interaction.editReply({ embeds: [successEmbed('Stopped the player and cleared the queue.')] });
+        break;
+      }
+
+      case 'nowplaying': {
+        if (!player || !player.queue.current) return interaction.editReply({ embeds: [errorEmbed('Nothing is playing right now.')] });
+        await interaction.editReply({ embeds: [buildNowPlayingEmbed(player.queue.current, player, client)] });
+        break;
+      }
+
+      case 'queue': {
+        if (!player) return interaction.editReply({ embeds: [errorEmbed('No player active.')] });
+        await interaction.editReply({ embeds: [buildQueueEmbed(player, client)] });
+        break;
+      }
+
+      case 'clear': {
+        if (!player) return interaction.editReply({ embeds: [errorEmbed('No player active.')] });
+        player.queue.clear();
+        await interaction.editReply({ embeds: [successEmbed('Cleared the queue.')] });
+        break;
+      }
+
+      case 'shuffle': {
+        if (!player) return interaction.editReply({ embeds: [errorEmbed('No player active.')] });
+        if (player.queue.size < 2) return interaction.editReply({ embeds: [errorEmbed('Need at least 2 songs to shuffle.')] });
+        player.queue.shuffle();
+        await interaction.editReply({ embeds: [successEmbed('Shuffled the queue.')] });
+        break;
+      }
+
+      case 'remove': {
+        if (!player) return interaction.editReply({ embeds: [errorEmbed('No player active.')] });
+        const pos = options.getInteger('position');
+        if (pos > player.queue.size || pos < 1) return interaction.editReply({ embeds: [errorEmbed(`Invalid position. Queue size is ${player.queue.size}.`)] });
+        const removed = player.queue.remove(pos - 1);
+        await interaction.editReply({ embeds: [successEmbed(`Removed **${removed.title}** from queue.`)] });
+        break;
+      }
+
+      case 'seek': {
+        if (!player || !player.queue.current) return interaction.editReply({ embeds: [errorEmbed('Nothing is playing.')] });
+        const seconds = options.getInteger('seconds');
+        const duration = getDurationMs(player.queue.current);
+        if (seconds * 1000 > duration) return interaction.editReply({ embeds: [errorEmbed('Cannot seek past song duration.')] });
+        await player.seek(seconds * 1000);
+        await interaction.editReply({ embeds: [successEmbed(`Seeked to \`${formatTimeMs(seconds * 1000)}\`.`)] });
+        break;
+      }
+
+      case 'volume': {
+        if (!player) return interaction.editReply({ embeds: [errorEmbed('No player active.')] });
+        const val = options.getInteger('value');
+        if (val === null) return interaction.editReply({ embeds: [simpleEmbed(`Current volume: \`${player.volume}%\`.`)] });
+        await player.setVolume(val);
+        await interaction.editReply({ embeds: [successEmbed(`Volume set to \`${val}%\`.`)] });
+        break;
+      }
 
       case 'loop': {
         if (!player) return interaction.editReply({ embeds: [errorEmbed('No player active.')] });
         const mode = options.getString('mode');
-        if (!mode) {
-           const modes = ['none', 'track', 'queue'];
-           const next = modes[(modes.indexOf(player.loop || 'none') + 1) % 3];
-           player.setLoop(next);
-           await interaction.editReply({ embeds: [successEmbed(`Loop mode set to \`${next}\``)] });
-        } else {
-           player.setLoop(mode);
-           await interaction.editReply({ embeds: [successEmbed(`Loop mode set to \`${mode}\``)] });
-        }
+        const next = mode || (player.loop === 'none' ? 'track' : player.loop === 'track' ? 'queue' : 'none');
+        player.setLoop(next);
+        await interaction.editReply({ embeds: [successEmbed(`Loop mode set to \`${next}\`.`)] });
+        break;
+      }
+
+      case 'filter': {
+        if (!player) return interaction.editReply({ embeds: [errorEmbed('No player active.')] });
+        const mode = options.getString('mode');
+        const applied = await applyFilter(player, mode);
+        await interaction.editReply({ embeds: [successEmbed(`Filter applied: **${currentFilterLabel({ data: new Map([['filter', applied]]) })}**.`)] });
+        break;
+      }
+
+      default: {
+        await interaction.editReply({ embeds: [errorEmbed('Unknown subcommand.')] });
         break;
       }
     }
@@ -211,6 +381,7 @@ break;
     if (player) {
       setImmediate(() => {
         client.dashboardBridge?.emitPlayerUpdate(player);
+        updatePlayerMessage(client, player).catch(() => null);
       });
     }
 
@@ -219,6 +390,7 @@ break;
     await interaction.editReply({ embeds: [errorEmbed(`An error occurred: ${err.message}`)] }).catch(() => null);
   }
 }
+
 
 module.exports = {
   applyFilter,
