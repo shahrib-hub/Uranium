@@ -18,7 +18,7 @@ const COLORS = {
 
 function clean(value, fallback = 'Unknown') {
   const text = String(value || '').trim();
-  if (!text || /^unknown$/i.test(text)) return fallback;
+  if (!text || /^unknown$/i.test(text) || text.includes('[object')) return fallback;
   return text.replace(/\s+-\s+Topic$/i, '').trim() || fallback;
 }
 

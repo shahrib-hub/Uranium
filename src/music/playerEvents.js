@@ -206,8 +206,9 @@ module.exports.registerPlayerEvents = function registerPlayerEvents(client) {
         if (currentTrack) {
           const relatedTracks = await fetchRelatedTracks(client, currentTrack, 5);
           if (relatedTracks.length > 0) {
-            // Add songs individually to ensure the queue processes them as KazagumoTracks
+            // Add songs individually and mark them as Autoplay
             for (const t of relatedTracks) {
+              t.requester = client.user;
               player.queue.add(t);
             }
             
