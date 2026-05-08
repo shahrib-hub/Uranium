@@ -55,27 +55,35 @@ async function fetchRelatedTracks(client, track, count = 5) {
   try {
     if (!client.music) return [];
     
-    // Clean strings to prevent "[object Object]" issues
-    const title = String(track.title || '').replace(/[\[\]]/g, '');
-    const author = String(track.author || '').replace(/[\[\]]/g, '');
+    const { searchTracks } = require('./service');
     
-    // Standard YouTube search with "mix" is more stable for finding playable results
-    const query = `${title} ${author} mix`;
-    const result = await client.music.search({ 
-      query: `ytsearch:${query}` 
-    });
-    
-    let tracks = (result.tracks || []).filter(t => {
-       // Ensure the track has a valid title string and isn't a generic object string
-       return t && typeof t.title === 'string' && t.title.length > 1 && !t.title.includes('[object');
-    });
+    // Get a variety of candidates from a mix search
+    const query = `${track.title} ${track.author} mix`;
+    const result = await client.music.search({ query: `ytsearch:${query}` });
+    const rawTracks = result.tracks || [];
 
-    // Filter out the song that just played
-    const filtered = tracks.filter(t => t.identifier !== track.identifier && t.uri !== track.uri);
+    const resolvedTracks = [];
+    for (const rawTrack of rawTracks) {
+      if (resolvedTracks.length >= count) break;
+      
+      // Basic sanity checks
+      if (!rawTrack.uri || String(rawTrack.uri).includes('[object')) continue;
+      if (rawTrack.identifier === track.identifier) continue;
+
+      // DEEP RESOLVE: Take the link and force the bot to fetch official metadata for it
+      // This is the only way to be 100% sure we don't get "[object Object]" names
+      const deepResult = await searchTracks(client, rawTrack.uri, client.user).catch(() => null);
+      const cleanTrack = deepResult?.tracks?.[0];
+
+      if (cleanTrack && typeof cleanTrack.title === 'string' && !cleanTrack.title.includes('[object')) {
+        cleanTrack.requester = client.user;
+        resolvedTracks.push(cleanTrack);
+      }
+    }
     
-    return filtered.slice(0, count);
+    return resolvedTracks;
   } catch (e) {
-    console.error('[Autoplay] Failed to fetch related tracks:', e.message);
+    console.error('[Autoplay] Deep Resolve failed:', e.message);
     return [];
   }
 }
