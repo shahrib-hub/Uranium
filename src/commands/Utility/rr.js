@@ -58,7 +58,6 @@ function panelEmbed(setup, items = [], stats = null) {
   }
 
   // Config summary
-  const config = setup.config || {};
   const configLines = [];
   if (config.maxPerUser > 0) configLines.push(`Max per user: ${config.maxPerUser}`);
   if (config.cooldownSeconds > 0) configLines.push(`Cooldown: ${config.cooldownSeconds}s`);
