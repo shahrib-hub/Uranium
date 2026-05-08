@@ -3,7 +3,6 @@ const { getTicket, updateTicket, getConfig } = require('../utils/ticketDb');
 const { generateTranscriptBuffer } = require('./transcript');
 const { AttachmentBuilder } = require('discord.js');
 const { ticketClosedEmbed } = require('../components/ticketEmbeds');
-const { ticketClosedEmbed } = require('../components/ticketEmbeds');
 
 const watchdogs = new Map();
 

@@ -55,6 +55,8 @@ const { useMongoDB } = require('./config/database');
   partials: ['MESSAGE', 'CHANNEL', 'REACTION']
 });
 
+client.setMaxListeners(50);
+
 // ---------- Robust global error handlers (do NOT exit on Lavlink errors) ----------
 process.on('uncaughtException', (err) => {
   try {
