@@ -224,7 +224,7 @@ module.exports = {
     .addSubcommand((sc) =>
       sc
         .setName('nick')
-        .setDescription('Change a user's nickname')
+        .setDescription('Change a users nickname')
         .addUserOption((o) =>
           o.setName('user').setDescription('Target user').setRequired(true)
         )
