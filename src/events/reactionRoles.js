@@ -2,6 +2,7 @@
 const { Events } = require('discord.js');
 const rrStorage = require('../utils/rrStorage');
 const logger = require('../utils/logger');
+const chalk = require('chalk');
 
 /**
  * Emoji identifier matching strategy:

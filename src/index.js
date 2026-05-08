@@ -139,47 +139,45 @@ const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
 // ---------- Client ready ----------
 client.once('clientReady', async () => {
   console.clear();
-  console.log(`
-╔══════════════════════════════════════════════════════════╗
-║ 🤖 Multi-Bot Discord v14                                 ║
-║ 🛠️ Made by Mynzz                                          ║
-║ 📦 Commands loaded: ${client.commands.size.toString().padEnd(40)}║
-║ 🚀 Bot is now online and ready to serve!                 ║
-╚══════════════════════════════════════════════════════════╝
-  `);
+  logger.info(chalk.cyan.bold('╔══════════════════════════════════════════════════════════╗'));
+  logger.info(chalk.cyan.bold('║ 🤖 Multi-Bot Discord v14                                 ║'));
+  logger.info(chalk.cyan.bold('║ 🛠️ Made by Mynzz                                          ║'));
+  logger.info(chalk.cyan.bold(`║ 📦 Commands loaded: ${client.commands.size.toString().padEnd(40)}║`));
+  logger.info(chalk.cyan.bold('║ 🚀 Bot is now online and ready to serve!                 ║'));
+  logger.info(chalk.cyan.bold('╚══════════════════════════════════════════════════════════╝'));
 
   // Register slash commands
   try {
-    console.log('🌐 Registering global commands...');
+    logger.info(chalk.blue('🌐 Registering global commands...'));
     await rest.put(Routes.applicationCommands(process.env.CLIENT_ID), { body: globalCommands });
-    console.log('✅ Global commands registered!');
+    logger.info(chalk.green('✅ Global commands registered!'));
     if (process.env.DEV_GUILD_ID && devGuildCommands.length > 0) {
-      console.log(`🛠️ Registering dev-only commands in guild ${process.env.DEV_GUILD_ID}...`);
+      logger.info(chalk.blue(`🛠️ Registering dev-only commands in guild ${process.env.DEV_GUILD_ID}...`));
       await rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.DEV_GUILD_ID), { body: devGuildCommands });
-      console.log('✅ Dev-only commands registered!');
+      logger.info(chalk.green('✅ Dev-only commands registered!'));
     }
   } catch (err) {
-    console.error('❌ Failed to register commands:', err?.message || err);
+    logger.error('❌ Failed to register commands: %s', err?.message || err);
   }
 
    // Init music events
    try {
      registerPlayerEvents(client);
-     console.log('🎧 Music system initialized (Shoukaku).');
+     logger.info(chalk.magenta('🎧 Music system initialized (Shoukaku).'));
    } catch (e) {
-     console.error('❌ Failed to initialize music system:', e?.message || e);
+     logger.error('❌ Failed to initialize music system: %s', e?.message || e);
    }
 
    // Init web dashboard
    try {
      startDashboard(client);
    } catch (e) {
-     console.error('❌ Failed to start dashboard:', e?.message || e);
+     logger.error('❌ Failed to start dashboard: %s', e?.message || e);
    }
 });
 
   // ---------- Login ----------
   client.login(process.env.DISCORD_TOKEN).catch(err => {
-    console.error('Failed to login:', err?.message || err);
+    logger.error('Failed to login: %s', err?.message || err);
   });
 })();

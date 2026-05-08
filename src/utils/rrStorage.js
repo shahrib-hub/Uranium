@@ -3,6 +3,9 @@ const rrdb = require('./rrdb');
 const { useMongoDB } = require('../config/database');
 const { RRSetup, RRItem, RRLog, RRCounter } = require('../database/mongoose');
 const logger = require('./logger');
+const chalk = require('chalk');
+const now = () => Math.floor(Date.now() / 1000);
+
 const now = () => Math.floor(Date.now() / 1000);
 
 // ========== In-memory caches (survive restarts via persistence layer) ==========
@@ -108,7 +111,7 @@ async function validateRoleAssignment(member, item, setup) {
 // ========== CRUD OPERATIONS WITH CACHE ==========
 async function initStorage() {
   await rrdb.init();
-  logger.info('[RR] Storage layer initialized (mode: %s)', useMongoDB ? 'MongoDB' : 'SQLite');
+  logger.info(chalk.magenta('[RR] Storage layer initialized (mode: %s)'), useMongoDB ? 'MongoDB' : 'SQLite');
 }
 
 async function createSetup({ guildId, channelId, mode = 'buttons', title = '', description = '', creatorId, config = {} }) {
@@ -272,12 +275,20 @@ async function addItem({ setupId, emoji, emojiIdentifier, label = null, roleId, 
   const ts = now();
   const sid = String(setupId);
   if (useMongoDB) {
+    const counter = await RRCounter.findOneAndUpdate(
+      { guildId: 'GLOBAL_ITEMS' }, // Special key for global item counter
+      { $inc: { nextId: 1 } },
+      { upsert: true, new: true }
+    );
+    const integerId = String(counter.nextId);
+
     const doc = await RRItem.create({
+      _id: integerId,
       setupId: sid, emoji, emojiIdentifier, label, roleId, position, createdAt: ts,
       style, description, metadata
     });
     cacheInvalidateSetup(sid);
-    return doc._id.toString();
+    return doc._id;
   }
   const res = await rrdb.instance.run(
     `INSERT INTO rr_items (setup_id, emoji, emoji_identifier, label, role_id, position, created_at, style, description, metadata)

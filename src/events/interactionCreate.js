@@ -110,6 +110,13 @@ module.exports = {
           });
         }
 
+        if (sid?.startsWith('rr_select:')) {
+          await safeExecute(async () => {
+            const handler = require('../buttons/rr_dropdown.js');
+            await handler(interaction);
+          });
+        }
+
         return;
       }
 

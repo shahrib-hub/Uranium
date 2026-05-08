@@ -1,5 +1,7 @@
 const { Connectors } = require('shoukaku');
 const { Kazagumo, Plugins } = require('kazagumo');
+const logger = require('../utils/logger');
+const chalk = require('chalk');
 
 function boolEnv(name, fallback = false) {
   const value = process.env[name];
@@ -84,24 +86,24 @@ module.exports.createMusicManager = function createMusicManager(client) {
   let mainFailures = 0;
 
   kazagumo.shoukaku.on('ready', (name) => {
-    console.log(`[music] Lavalink node ready: ${name}`);
+    logger.info(chalk.magenta(`[Music] Lavalink node ready: ${name}`));
     
     if (name === 'Main') {
       mainFailures = 0; // Reset on success
       
       if (secondaryAdded) {
-        console.log(`[music] Main node restored. Falling back from secondary node...`);
+        logger.info(chalk.yellow(`[Music] Main node restored. Falling back from secondary node...`));
         
         const players = Array.from(kazagumo.players.values());
         players.forEach(player => {
           if (player.node.name === 'Secondary') {
-            player.moveNode('Main').catch(e => console.error(`[music] Failed to move player to Main:`, e));
+            player.moveNode('Main').catch(e => logger.error(`[Music] Failed to move player to Main: %s`, e.message));
           }
         });
 
         setTimeout(() => {
           if (secondaryAdded) {
-            console.log(`[music] Deactivating secondary node.`);
+            logger.info(chalk.yellow(`[Music] Deactivating secondary node.`));
             kazagumo.shoukaku.removeNode('Secondary');
             secondaryAdded = false;
           }
@@ -111,15 +113,15 @@ module.exports.createMusicManager = function createMusicManager(client) {
   });
 
   kazagumo.shoukaku.on('close', (name, code, reason) => {
-    console.warn(`[music] Lavalink node ${name} closed. Code: ${code}, Reason: ${reason || 'None'}`);
+    logger.warn(`[Music] Lavalink node ${name} closed. Code: ${code}, Reason: ${reason || 'None'}`);
     
     if (name === 'Main') {
       mainFailures++;
-      console.log(`[music] Main node failure count: ${mainFailures}`);
+      logger.debug(`[Music] Main node failure count: ${mainFailures}`);
 
       // Failover logic: After 1 failed attempt on Main, activate Secondary if available
       if (mainFailures >= 1 && secondaryNode && !secondaryAdded) {
-        console.log(`[music] Main node failed. Activating secondary node: ${secondaryNode.name}`);
+        logger.warn(chalk.yellow(`[Music] Main node failed. Activating secondary node: ${secondaryNode.name}`));
         kazagumo.shoukaku.addNode(secondaryNode);
         secondaryAdded = true;
       }
@@ -127,15 +129,15 @@ module.exports.createMusicManager = function createMusicManager(client) {
   });
 
   kazagumo.shoukaku.on('error', (name, error) => {
-    console.error(`[music] Lavalink node error (${name}):`, error?.message || error);
+    logger.error(`[Music] Lavalink node error (${name}): %s`, error?.message || error);
   });
 
   kazagumo.shoukaku.on('debug', (name, info) => {
-    if (boolEnv('MUSIC_DEBUG', false)) console.log(`[music:shoukaku:debug] [${name}] ${info}`);
+    if (boolEnv('MUSIC_DEBUG', false)) logger.debug(`[Music:Shoukaku] [${name}] ${info}`);
   });
   
   kazagumo.on('debug', (message) => {
-    if (boolEnv('MUSIC_DEBUG', false)) console.log(`[music:kazagumo:debug] ${message}`);
+    if (boolEnv('MUSIC_DEBUG', false)) logger.debug(`[Music:Kazagumo] ${message}`);
   });
 
   return kazagumo;
