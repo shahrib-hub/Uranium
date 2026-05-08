@@ -1,5 +1,7 @@
 // src/events/loggingAll.js
 const { PermissionsBitField, Events } = require('discord.js');
+const logger = require('../utils/logger');
+const chalk = require('chalk');
 const logStorage = require('../utils/logStorage');
 const webhookHelper = require('../utils/webhookHelper');
 const {
@@ -318,6 +320,6 @@ module.exports = {
       } catch {}
     });
 
-    console.log('[loggingAll] listeners ready');
+    logger.info(chalk.blue('[loggingAll] listeners ready'));
   }
 };

@@ -225,7 +225,7 @@ module.exports = {
       }
     });
 
-    logger.info('[RR] Reaction Roles system ready – %d setups loaded', 
+    logger.info(chalk.magenta('[RR] Reaction Roles system ready – %d setups loaded'), 
       (await rrStorage.listSetupsForGuild?.(client.guilds.cache.first()?.id) || []).length);
   }
 };

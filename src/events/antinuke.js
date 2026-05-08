@@ -1,5 +1,7 @@
 // src/events/antinuke.js
 const { Events, AuditLogEvent } = require('discord.js');
+const logger = require('../utils/logger');
+const chalk = require('chalk');
 
 const db = require('../utils/antinukeDb');
 const embeds = require('../components/antinukeEmbeds');
@@ -157,6 +159,6 @@ module.exports = {
       if (r) handleNuke(member.guild, 'BOT_ADD', r.executorId, member);
     });
 
-    console.log('[AntiNuke] Protection listeners registered');
+    logger.info(chalk.green('[AntiNuke] Protection listeners registered'));
   }
 };

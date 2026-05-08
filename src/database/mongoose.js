@@ -400,6 +400,11 @@ const TicketCounterSchema = new mongoose.Schema({
   nextId: { type: Number, default: 1 }
 });
 
+const RRCounterSchema = new mongoose.Schema({
+  guildId: { type: String, required: true, unique: true },
+  nextId: { type: Number, default: 1 }
+});
+
 
 // 22. Verification (from verification.db)
 const VerificationConfigSchema = new mongoose.Schema({
@@ -645,6 +650,8 @@ const MusicHistorySchema = new mongoose.Schema({
 MusicHistorySchema.index({ guildId: 1, playedAt: -1 });
 MusicHistorySchema.index({ guildId: 1, userId: 1, playedAt: -1 });
 
+const logger = require('../utils/logger');
+
 // Setup DB connection
 let isConnected = false;
 async function connectToMongo() {
@@ -652,29 +659,29 @@ async function connectToMongo() {
   if (isConnected) return;
 
   try {
-    console.log('[DATABASE] Connecting to MongoDB...');
+    logger.info('[Database] Connecting to MongoDB...');
     await mongoose.connect(mongoURI, {
       serverSelectionTimeoutMS: 5000,
       family: 4 // Force IPv4 to avoid certain DNS resolution issues
     });
     isConnected = true;
-    console.log('✅ [DATABASE] Successfully connected to MongoDB.');
+    logger.info('[Database] Successfully connected to MongoDB.');
   } catch (err) {
     const isDnsError = err.message.includes('ENOTFOUND');
-    console.error('❌ [DATABASE] Failed to connect to MongoDB:', err.message);
+    logger.error('[Database] Failed to connect to MongoDB: %s', err.message);
     if (isDnsError) {
-      console.error('💡 HINT: This is a DNS error. Please ensure your host machine can resolve the MongoDB Atlas address.');
+      logger.error('💡 HINT: This is a DNS error. Please ensure your host machine can resolve the MongoDB Atlas address.');
     } else if (err.message.includes('Server selection timed out')) {
-      console.error('💡 HINT: Connection timed out. This often means your server\'s IP is not whitelisted in MongoDB Atlas "Network Access".');
+      logger.error('💡 HINT: Connection timed out. This often means your server\'s IP is not whitelisted in MongoDB Atlas "Network Access".');
     }
   }
 
   mongoose.connection.on('error', err => {
-    console.error('❌ [DATABASE] MongoDB runtime error:', err.message);
+    logger.error('[Database] MongoDB runtime error: %s', err.message);
   });
 
   mongoose.connection.on('disconnected', () => {
-    console.warn('⚠️ [DATABASE] MongoDB disconnected. Attempting to reconnect...');
+    logger.warn('[Database] MongoDB disconnected. Attempting to reconnect...');
     isConnected = false;
   });
 
@@ -743,6 +750,7 @@ exports.TicketCategory = mongoose.model('TicketCategory', TicketCategorySchema);
 exports.Ticket = mongoose.model('Ticket', TicketSchema);
 exports.TicketMember = mongoose.model('TicketMember', TicketMemberSchema);
 exports.TicketCounter = mongoose.model('TicketCounter', TicketCounterSchema);
+exports.RRCounter = mongoose.model('RRCounter', RRCounterSchema);
 exports.VerificationConfig = mongoose.model('VerificationConfig', VerificationConfigSchema);
 exports.VerifiedUser = mongoose.model('VerifiedUser', VerifiedUserSchema);
 exports.OtpCode = mongoose.model('OtpCode', OtpCodeSchema);

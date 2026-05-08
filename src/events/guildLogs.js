@@ -1,5 +1,7 @@
 // src/events/guildLogs.js
 const { Events, EmbedBuilder } = require('discord.js');
+const logger = require('../utils/logger');
+const chalk = require('chalk');
 
 module.exports = {
   // We use ClientReady once, then attach guildCreate + guildDelete listeners here
@@ -17,7 +19,7 @@ module.exports = {
 
     const devChannelId = process.env.DEV_LOG_CHANNEL_ID;
     if (!devChannelId) {
-      console.warn('[guildLogs] DEV_LOG_CHANNEL_ID not set in .env, skipping dev logs.');
+      logger.warn('[guildLogs] DEV_LOG_CHANNEL_ID not set in .env, skipping dev logs.');
       return;
     }
 
@@ -27,7 +29,7 @@ module.exports = {
         channel = await client.channels.fetch(devChannelId).catch(() => null);
       }
       if (!channel || !channel.isTextBased()) {
-        console.warn('[guildLogs] Dev log channel not found or not text-based.');
+        logger.warn('[guildLogs] Dev log channel not found or not text-based.');
         return null;
       }
       return channel;
@@ -100,7 +102,7 @@ module.exports = {
 
         await channel.send({ embeds: [embed] });
       } catch (err) {
-        console.error('[guildLogs] Failed to send guild join log:', err);
+        logger.error('[guildLogs] Failed to send guild join log: %s', err.message);
       }
     });
 
@@ -151,10 +153,10 @@ module.exports = {
 
         await channel.send({ embeds: [embed] });
       } catch (err) {
-        console.error('[guildLogs] Failed to send guild leave log:', err);
+        logger.error('[guildLogs] Failed to send guild leave log: %s', err.message);
       }
     });
 
-    console.log('[guildLogs] Guild join/leave logging initialized.');
+    logger.info(chalk.green('[guildLogs] Guild join/leave logging initialized.'));
   }
 };

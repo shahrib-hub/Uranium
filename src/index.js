@@ -15,6 +15,8 @@ const { registerPlayerEvents } = require('./music/playerEvents');
 const { createMusicManager } = require('./music/manager');
 
 const { startDashboard } = require('./dashboard/server');
+const logger = require('./utils/logger');
+const chalk = require('chalk');
 
 // ---------- Initialize MongoDB ----------
 const { connectToMongo, getDbStatus } = require('./database/mongoose');
@@ -24,9 +26,8 @@ const { useMongoDB } = require('./config/database');
   if (useMongoDB) {
     await connectToMongo();
     if (!getDbStatus()) {
-      console.error('❌ [CRITICAL] USE_MONGODB is enabled but the connection to MongoDB failed.');
-      console.error('⚠️ Data persistence for major systems (Economy, Giveaways, Tickets, etc.) will NOT work.');
-      console.error('💡 Please check your MONGODB_URI and IP whitelist in MongoDB Atlas.');
+      logger.error('USE_MONGODB is enabled but the connection to MongoDB failed.');
+      logger.warn('Data persistence for major systems (Economy, Giveaways, Tickets, etc.) will NOT work.');
     }
   }
 
@@ -36,10 +37,10 @@ const { useMongoDB } = require('./config/database');
     const collections = await mongoose.connection.db.listCollections({ name: 'musichubs' }).toArray();
     if (collections.length > 0) {
       await mongoose.connection.db.collection('musichubs').drop();
-      console.log('🧹 [DATABASE] Central Music Hub data cleared from MongoDB.');
+      logger.info(chalk.green('🧹 [Database] Central Music Hub data cleared.'));
     }
   } catch (e) {
-    console.warn('⚠️ [DATABASE] Failed to clear MusicHub data:', e?.message || e);
+    logger.warn('[Database] Failed to clear MusicHub data: %s', e?.message || e);
   }
 
   // ---------- Create client ----------
@@ -59,35 +60,22 @@ client.setMaxListeners(50);
 
 // ---------- Robust global error handlers (do NOT exit on Lavlink errors) ----------
 process.on('uncaughtException', (err) => {
-  try {
-    const msg = String(err?.message || err);
-    // If it's a lavalink/undici timeout or /v4/info problem, log and continue.
-    if (msg.includes('/v4/info') || msg.includes('Lavalink Node') || msg.includes('undici') || msg.includes('TimeoutError') || msg.includes('ON-OPEN-FETCH')) {
-      console.error('[UNCAUGHT] Lavalink-related error (swallowed):', msg);
-      return;
-    }
-  } catch (e) {
-    // fallthrough to general logging
+  const msg = String(err?.message || err);
+  if (msg.includes('/v4/info') || msg.includes('Lavalink Node') || msg.includes('undici') || msg.includes('TimeoutError')) {
+    logger.debug('[Lavalink] Network hiccup (swallowed): %s', msg);
+    return;
   }
-  // For non-lavalink critical exceptions, still log them but don't exit (you can change to process.exit if desired)
-  console.error('[UNCAUGHT EXCEPTION] (non-lavalink) — logged for visibility:', err);
+  logger.error('[Uncaught Exception] %s', err.stack || err);
 });
 
 process.on('unhandledRejection', (reason) => {
-  try {
-    const msg = String(reason?.message || reason);
-    const code = reason?.code;
-    // Swallow harmless errors: Lavalink connectivity + expired Discord interactions (10062)
-    if (msg.includes('/v4/info') || msg.includes('Lavalink Node') || msg.includes('undici') || msg.includes('TimeoutError') || msg.includes('ON-OPEN-FETCH')) {
-      console.error('[UNHANDLED REJECTION] Lavalink-related (swallowed):', msg);
-      return;
-    }
-    if (code === 10062 || msg.includes('Unknown interaction')) {
-      // Interaction expired before bot could respond — harmless, ignore silently
-      return;
-    }
-  } catch (e) {}
-  console.error('[UNHANDLED REJECTION] (non-lavalink) — logged for visibility:', reason);
+  const msg = String(reason?.message || reason);
+  if (msg.includes('/v4/info') || msg.includes('Lavalink Node') || msg.includes('undici') || msg.includes('TimeoutError')) {
+    logger.debug('[Lavalink] Promise rejection (swallowed): %s', msg);
+    return;
+  }
+  if (reason?.code === 10062 || msg.includes('Unknown interaction')) return;
+  logger.error('[Unhandled Rejection] %s', reason.stack || reason);
 });
 
 // ---------- Music manager (Shoukaku) ----------
@@ -139,13 +127,11 @@ if (fs.existsSync(eventsPath)) {
   }
 }
 
-// load listeners if present
+// load listeners
 try {
   const ytv = path.join(__dirname, 'listeners', 'messageCreateYtVerify.js');
   if (fs.existsSync(ytv)) require(ytv)(client);
-} catch (e) {
-  console.warn('[listeners] messageCreateYtVerify failed to load:', e?.message || e);
-}
+} catch (e) {}
 
 // ---------- REST for command registration ----------
 const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);

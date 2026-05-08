@@ -1,7 +1,7 @@
 // src/utils/rrStorage.js - REVAMPED
 const rrdb = require('./rrdb');
 const { useMongoDB } = require('../config/database');
-const { RRSetup, RRItem, RRLog } = require('../database/mongoose');
+const { RRSetup, RRItem, RRLog, RRCounter } = require('../database/mongoose');
 const logger = require('./logger');
 const now = () => Math.floor(Date.now() / 1000);
 
@@ -114,11 +114,19 @@ async function initStorage() {
 async function createSetup({ guildId, channelId, mode = 'buttons', title = '', description = '', creatorId, config = {} }) {
   const ts = now();
   if (useMongoDB) {
+    const counter = await RRCounter.findOneAndUpdate(
+      { guildId },
+      { $inc: { nextId: 1 } },
+      { upsert: true, new: true }
+    );
+    const integerId = String(counter.nextId);
+
     const doc = await RRSetup.create({
+      _id: integerId,
       guildId, channelId, mode, title, description, creatorId,
       createdAt: ts, updatedAt: ts, active: true, config
     });
-    return doc._id.toString();
+    return doc._id;
   }
   const res = await rrdb.instance.run(
     `INSERT INTO rr_setups (guild_id, channel_id, mode, title, description, creator_id, created_at, updated_at, config)
