@@ -120,18 +120,21 @@ function buildButtonsFromItems(client, guildId, setupId, items) {
   return rows;
 }
 
-function buildDropdownFromItems(guildId, setupId, items) {
+function buildDropdownFromItems(guild, setupId, items) {
   if (!items || items.length === 0) return [];
   
   const select = new StringSelectMenuBuilder()
-    .setCustomId(`rr_select:${guildId}:${setupId}`)
+    .setCustomId(`rr_select:${guild.id}:${setupId}`)
     .setPlaceholder('Select roles to toggle (select multiple)')
     .setMinValues(1)
     .setMaxValues(Math.min(25, items.length));
 
   for (const it of items.slice(0, 25)) {
+    const role = guild.roles.cache.get(it.role_id);
+    const label = it.label || role?.name || `Role ${it.id}`;
+    
     select.addOptions({
-      label: (it.label || `Role ${it.id}`).substring(0, 100),
+      label: label.substring(0, 100),
       value: String(it.id),
       emoji: it.emoji ? { name: it.emoji, id: it.emoji.includes('<') ? null : undefined } : undefined,
       description: (it.description || '').substring(0, 150)
@@ -148,7 +151,7 @@ async function sendOrUpdatePanel(channel, setup, items, interaction) {
   if (setup.mode === 'buttons') {
     components = buildButtonsFromItems(interaction.client, setup.guild_id, setup.id, items);
   } else if (setup.mode === 'dropdown') {
-    components = buildDropdownFromItems(setup.guild_id, setup.id, items);
+    components = buildDropdownFromItems(channel.guild, setup.id, items);
   }
 
   if (setup.message_id) {
