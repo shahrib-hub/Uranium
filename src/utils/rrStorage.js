@@ -74,8 +74,13 @@ async function validateRoleAssignment(member, item, setup) {
   if (config.requiredRoles) {
     const reqEntries = config.requiredRoles.entries ? config.requiredRoles.entries() : Object.entries(config.requiredRoles);
     for (const [group, requiredRoleIds] of reqEntries) {
-      if (!Array.isArray(requiredRoleIds)) continue;
-      const hasAll = requiredRoleIds.every(id => member.roles.cache.has(id));
+      if (!requiredRoleIds || (typeof requiredRoleIds !== 'object' && !Array.isArray(requiredRoleIds))) continue;
+      
+      // Handle both array and object/Map entries
+      const rolesToVerify = Array.isArray(requiredRoleIds) ? requiredRoleIds : Object.values(requiredRoleIds);
+      if (rolesToVerify.length === 0) continue;
+
+      const hasAll = rolesToVerify.every(id => member.roles.cache.has(String(id)));
       if (!hasAll) {
         return { allowed: false, reason: 'MISSING_PREREQUISITES', group };
       }
@@ -86,9 +91,11 @@ async function validateRoleAssignment(member, item, setup) {
   if (config.exclusiveGroups) {
     const excEntries = config.exclusiveGroups.entries ? config.exclusiveGroups.entries() : Object.entries(config.exclusiveGroups);
     for (const [group, roleIds] of excEntries) {
-      if (!Array.isArray(roleIds)) continue;
-      const userHasFromGroup = member.roles.cache.some(r => roleIds.includes(r.id));
-      const requestingIsInGroup = roleIds.includes(item.role_id);
+      if (!roleIds || (typeof roleIds !== 'object' && !Array.isArray(roleIds))) continue;
+      
+      const groupRoles = Array.isArray(roleIds) ? roleIds : Object.values(roleIds);
+      const userHasFromGroup = member.roles.cache.some(r => groupRoles.includes(r.id));
+      const requestingIsInGroup = groupRoles.includes(item.role_id);
       
       if (userHasFromGroup && !requestingIsInGroup) {
         return { allowed: false, reason: 'EXCLUSIVE_GROUP_CONFLICT', group };
@@ -314,6 +321,16 @@ async function removeItem(itemId) {
   cacheInvalidateSetup(String(item.setup_id));
 }
 
+async function clearAllItems(setupId) {
+  const sid = String(setupId);
+  if (useMongoDB) {
+    await RRItem.deleteMany({ setupId: sid });
+  } else {
+    await rrdb.instance.run(`DELETE FROM rr_items WHERE setup_id = ?;`, [sid]);
+  }
+  cacheInvalidateSetup(sid);
+}
+
 async function listItems(setupId) {
   const sid = String(setupId);
   const cacheKey = `items:${sid}`;
@@ -349,7 +366,7 @@ async function findItemByEmoji(setupId, emojiIdentifier) {
 }
 
 async function findItemByAnyIdentifier(setupId, identifiers = []) {
-  if (!identifiers || identifiers.length === 0) return null;
+  if (!Array.isArray(identifiers) || identifiers.length === 0) return null;
   const items = await listItems(setupId);
   return items.find(it => identifiers.includes(it.emoji_identifier)) || null;
 }
@@ -508,6 +525,7 @@ module.exports = {
   addItem,
   updateItem,
   removeItem,
+  clearAllItems,
   listItems,
   findItemByEmoji,
   findItemByAnyIdentifier,

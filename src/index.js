@@ -31,6 +31,10 @@ const { useMongoDB } = require('./config/database');
     }
   }
 
+  // ---------- Initialize RR Storage ----------
+  const rrStorage = require('./utils/rrStorage');
+  await rrStorage.initStorage();
+
   // ---------- Database Cleanup (Remove MusicHub data) ----------
   try {
     const mongoose = require('mongoose');

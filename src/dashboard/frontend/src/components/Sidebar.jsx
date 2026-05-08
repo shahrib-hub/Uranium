@@ -11,7 +11,10 @@ import {
   X,
   ChevronLeft,
   Server,
-  Activity
+  Activity,
+  Settings,
+  Tag,
+  ChevronDown
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
@@ -55,9 +58,25 @@ export default function Sidebar() {
       color: 'text-red-500',
       activeOn: ['/dashboard/music']
     },
+    { 
+      name: 'Essentials', 
+      icon: Settings, 
+      color: 'text-blue-500',
+      children: [
+        { name: 'Reaction Roles', icon: Tag, path: '/dashboard/rr', activeOn: ['/dashboard/rr'] }
+      ]
+    },
     { name: 'Moderation', icon: Shield, path: '/dashboard/mod', color: 'text-green-500', badge: 'Soon' },
     { name: 'Commands', icon: Terminal, path: '/commands', color: 'text-yellow-500' },
   ];
+
+  const [expandedGroups, setExpandedGroups] = useState(['Essentials']);
+
+  const toggleGroup = (name) => {
+    setExpandedGroups(prev => 
+      prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]
+    );
+  };
 
   return (
     <>
@@ -156,13 +175,14 @@ export default function Sidebar() {
           )}
           
           {menuItems.map((item) => {
-            const isActive = item.activeOn ? item.activeOn.some(path => pathname === path) : pathname === item.path;
+            const isActive = item.activeOn ? item.activeOn.some(p => pathname === p) : (item.path && pathname === item.path);
+            const isExpanded = expandedGroups.includes(item.name);
             
             if (!isOpen) {
               return (
                 <Link 
-                  key={item.path} 
-                  href={item.path + (guildId ? `?guild=${guildId}` : '')}
+                  key={item.name} 
+                  href={(item.path || item.children?.[0]?.path) + (guildId ? `?guild=${guildId}` : '')}
                   className={`p-4 rounded-2xl transition-all group ${isActive ? 'bg-red-500/10 text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.1)]' : 'text-white/20 hover:text-red-500'}`}
                 >
                   <item.icon size={24} />
@@ -170,8 +190,43 @@ export default function Sidebar() {
               );
             }
 
+            if (item.children) {
+              return (
+                <div key={item.name} className="space-y-1">
+                  <button 
+                    onClick={() => toggleGroup(item.name)}
+                    className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all group hover:bg-white/5 ${isExpanded ? 'text-white' : 'text-white/40'}`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <item.icon size={20} className={isExpanded ? 'text-blue-500' : 'group-hover:text-blue-500 transition-colors'} />
+                      <span className="font-bold text-sm">{item.name}</span>
+                    </div>
+                    <ChevronDown size={14} className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                  </button>
+                  
+                  {isExpanded && (
+                    <div className="ml-4 pl-4 border-l border-white/5 space-y-1 mt-1 animate-in slide-in-from-top-2 duration-300">
+                      {item.children.map(child => {
+                        const isChildActive = child.activeOn ? child.activeOn.some(p => pathname === p) : pathname === child.path;
+                        return (
+                          <Link 
+                            key={child.path}
+                            href={child.path + (guildId ? `?guild=${guildId}` : '')}
+                            className={`flex items-center gap-3 p-3 rounded-xl transition-all ${isChildActive ? 'bg-blue-500/10 text-blue-400' : 'text-white/30 hover:text-white hover:bg-white/5'}`}
+                          >
+                            <child.icon size={16} />
+                            <span className="font-bold text-xs">{child.name}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
             return (
-              <div key={item.path} className="space-y-1">
+              <div key={item.name} className="space-y-1">
                 <Link 
                   href={item.path + (guildId ? `?guild=${guildId}` : '')}
                   className={`flex items-center justify-between p-4 rounded-2xl transition-all group ${

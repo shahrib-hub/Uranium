@@ -198,6 +198,32 @@ async function sendOrUpdatePanel(channel, setup, items, interaction) {
   await rrStorage.updateSetupMessageId(setup.id, sent.id);
 }
 
+async function syncReactions(channel, setup, items) {
+  if (!setup.message_id) return { success: false, error: 'No message linked' };
+  
+  const msg = await channel.messages.fetch(setup.message_id).catch(() => null);
+  if (!msg) return { success: false, error: 'Message not found' };
+
+  let synced = 0;
+  // Add missing reactions
+  for (const item of items) {
+    const exists = msg.reactions.cache.some(r => r.emoji.toString() === item.emoji);
+    if (!exists) {
+      try { await msg.react(item.emoji).catch(() => {}); synced++; } catch {}
+    }
+  }
+
+  // Remove extra reactions
+  const itemEmojis = new Set(items.map(it => it.emoji));
+  for (const [emojiStr, reaction] of msg.reactions.cache) {
+    if (!itemEmojis.has(emojiStr)) {
+      try { await reaction.remove().catch(() => {}); } catch {}
+    }
+  }
+
+  return { success: true, synced };
+}
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('rr')
@@ -637,39 +663,11 @@ module.exports = {
         return replySuccess(`📝 Reposted panel in ${ch}.`);
       }
 
-      if (sub === 'sync') {
-        const setupId = interaction.options.getInteger('setup', true);
-        const setup = await rrStorage.getSetupById(setupId);
-        if (!setup || setup.mode !== 'reactions') return replyError('Sync only works for reaction mode.');
-        
-        if (!setup.message_id) return replyError('No message linked. Use /rr regen first.');
-
-        const ch = await interaction.guild.channels.fetch(setup.channel_id).catch(() => null);
-        if (!ch || !ch.isTextBased()) return replyError('Channel not found.');
-
-        const msg = await ch.messages.fetch(setup.message_id).catch(() => null);
-        if (!msg) return replyError('Message not found (it may have been deleted).');
-
         const items = await rrStorage.listItems(setupId);
-        let synced = 0;
+        const result = await syncReactions(ch, setup, items);
         
-        // Add missing reactions
-        for (const item of items) {
-          const exists = msg.reactions.cache.some(r => r.emoji.toString() === item.emoji);
-          if (!exists) {
-            try { await msg.react(item.emoji).catch(() => {}); synced++; } catch {}
-          }
-        }
-
-        // Remove extra reactions
-        for (const [emojiStr, reaction] of msg.reactions.cache) {
-          const needed = items.some(it => it.emoji === emojiStr);
-          if (!needed) {
-            try { await reaction.remove().catch(() => {}); } catch {}
-          }
-        }
-
-        return replySuccess(`🔄 Synced reactions. Added ${synced} missing reactions.`);
+        if (!result.success) return replyError(result.error);
+        return replySuccess(`🔄 Synced reactions. Added ${result.synced} missing reactions.`);
       }
 
       if (sub === 'stats') {
@@ -835,7 +833,9 @@ module.exports = {
         flags: 64 
       });
     }
-  }
+  },
+  sendOrUpdatePanel,
+  syncReactions
 };
 
 // Helper: Parse emoji string into standardized format

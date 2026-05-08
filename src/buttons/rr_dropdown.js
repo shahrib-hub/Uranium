@@ -60,6 +60,9 @@ module.exports = async function handleRRDropdown(interaction) {
     const setup = await rrStorage.getSetupById(setupId);
     if (!setup) return interaction.reply({ embeds: [errEmbed('Setup not found.')], flags: 64 });
 
+    // Defer because multiple role updates can take > 3s
+    await interaction.deferReply({ flags: 64 });
+
     const selectedItemIds = interaction.values;
     const member = await guild.members.fetch(userId).catch(() => null);
     if (!member) return interaction.reply({ embeds: [errEmbed('Member not found.')], flags: 64 });
@@ -132,7 +135,7 @@ module.exports = async function handleRRDropdown(interaction) {
 
     if (!response) response = 'No changes made.';
 
-    await interaction.reply({ content: response.trim(), flags: 64 });
+    await interaction.editReply({ content: response.trim() });
 
     // Rate limit
     await rrStorage.incrementRateLimit(guildId, userId, setupId, setup.config?.cooldownSeconds);
