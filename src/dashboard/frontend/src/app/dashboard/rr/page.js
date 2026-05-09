@@ -93,13 +93,18 @@ export default function ReactionRolesPage() {
 
   const fetchItems = async (setupId) => {
     setLoadingItems(true);
+    console.log('Fetching items for setup:', setupId);
     try {
       const res = await fetch(`/api/guild/${guildId}/rr/setups/${setupId}`);
-      if (!res.ok) throw new Error('Failed to fetch items');
       const data = await res.json();
+      console.log('Fetch items response:', data);
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to fetch items');
+      }
       setItems(data.items || []);
     } catch (err) {
-      console.error(err);
+      console.error('Fetch items error:', err);
+      setItems([]);
     } finally {
       setLoadingItems(false);
     }
@@ -120,16 +125,26 @@ export default function ReactionRolesPage() {
   };
 
   const handleRegen = async (id) => {
+    alert('DEBUG: handleRegen clicked, id=' + id);
+    console.log('DEBUG: handleRegen clicked, id=', id);
+    if (!id) {
+      alert('Invalid setup ID');
+      return;
+    }
     setRefreshing(true);
     try {
-      const res = await fetch(`/api/guild/${guildId}/rr/setups/${id}/regen`, { method: 'POST' });
+      const url = `/api/guild/${guildId}/rr/setups/${id}/regen`;
+      console.log('DEBUG: Calling', url);
+      const res = await fetch(url, { method: 'POST' });
       const data = await res.json();
+      console.log('DEBUG: Regen response:', res.status, data);
       if (res.ok) {
         alert('Panel regenerated in Discord!');
       } else {
         alert(data.error || 'Failed to regenerate panel');
       }
     } catch (err) {
+      console.error('DEBUG: Regen error:', err);
       alert(err.message);
     } finally {
       setRefreshing(false);
@@ -137,16 +152,26 @@ export default function ReactionRolesPage() {
   };
 
   const handleSync = async (id) => {
+    alert('DEBUG: handleSync clicked, id=' + id);
+    console.log('DEBUG: handleSync called with id =', id, 'guildId =', guildId);
+    if (!id) {
+      alert('Invalid setup ID');
+      return;
+    }
     setRefreshing(true);
     try {
-      const res = await fetch(`/api/guild/${guildId}/rr/setups/${id}/sync`, { method: 'POST' });
+      const url = `/api/guild/${guildId}/rr/setups/${id}/sync`;
+      console.log('DEBUG: Calling', url);
+      const res = await fetch(url, { method: 'POST' });
       const data = await res.json();
+      console.log('DEBUG: Sync response:', res.status, data);
       if (res.ok) {
         alert('Reactions synced in Discord!');
       } else {
         alert(data.error || 'Failed to sync reactions');
       }
     } catch (err) {
+      console.error('DEBUG: Sync error:', err);
       alert(err.message);
     } finally {
       setRefreshing(false);
@@ -154,7 +179,9 @@ export default function ReactionRolesPage() {
   };
 
   const handleDeleteSetup = async (id) => {
+    alert('DEBUG: handleDeleteSetup clicked, id=' + id);
     if (!confirm('Are you sure you want to delete this panel? This cannot be undone.')) return;
+    alert('User confirmed delete');
     try {
       const res = await fetch(`/api/guild/${guildId}/rr/setups/${id}`, { method: 'DELETE' });
       const data = await res.json();
@@ -223,9 +250,15 @@ export default function ReactionRolesPage() {
   }, [selectedSetup]);
 
   const handleSaveConfig = async () => {
-    if (!editingSetup) return;
+    console.log('DEBUG: handleSaveConfig called with editingSetup =', editingSetup);
+    if (!editingSetup) {
+      alert('No setup selected to save');
+      return;
+    }
     try {
-      const res = await fetch(`/api/guild/${guildId}/rr/setups/${editingSetup.id}`, {
+      const url = `/api/guild/${guildId}/rr/setups/${editingSetup.id}`;
+      console.log('DEBUG: Calling PATCH', url);
+      const res = await fetch(url, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -234,11 +267,18 @@ export default function ReactionRolesPage() {
           config: editingSetup.config
         })
       });
+      const data = await res.json();
+      console.log('DEBUG: SaveConfig response:', res.status, data);
       if (res.ok) {
         alert('Configuration saved!');
         fetchSetups();
+      } else {
+        alert(data.error || 'Failed to save configuration');
       }
-    } catch (err) { alert(err.message); }
+    } catch (err) {
+      console.error('DEBUG: SaveConfig error:', err);
+      alert(err.message);
+    }
   };
 
   if (!guildId) {
@@ -603,11 +643,7 @@ export default function ReactionRolesPage() {
                       </button>
 
                       <button
-                        onClick={() => {
-                          if (confirm('Are you sure you want to delete this panel? This cannot be undone.')) {
-                            handleDeleteSetup(selectedSetup.id);
-                          }
-                        }}
+                        onClick={() => handleDeleteSetup(selectedSetup.id)}
                         className="w-full flex items-center justify-center gap-3 p-4 rounded-[25px] bg-red-500/5 border border-red-500/10 text-red-500/40 font-black uppercase tracking-widest text-[10px] hover:bg-red-500 hover:text-black hover:border-transparent transition-all"
                       >
                          <Trash2 size={14} />
