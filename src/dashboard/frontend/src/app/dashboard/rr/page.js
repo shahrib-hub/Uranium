@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import RRCreateModal from '@/components/RRCreateModal';
+import AddItemModal from '@/components/AddItemModal';
 
 export default function ReactionRolesPage() {
   const searchParams = useSearchParams();
@@ -37,6 +38,7 @@ export default function ReactionRolesPage() {
   const [loadingItems, setLoadingItems] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showAddItemModal, setShowAddItemModal] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [bulkInput, setBulkInput] = useState('');
   const [editingSetup, setEditingSetup] = useState(null);
@@ -48,6 +50,22 @@ export default function ReactionRolesPage() {
     title: 'Reaction Roles',
     description: 'Select a role to gain access.'
   });
+
+  // Success modal handlers
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [lastCreatedSetup, setLastCreatedSetup] = useState(null);
+
+  const handleCreateSuccess = (setupId) => {
+    setShowCreateModal(false);
+    setLastCreatedSetup(setupId);
+    setShowSuccessModal(true);
+  };
+
+  const handleGoToAddItem = () => {
+    setShowSuccessModal(false);
+    setSelectedSetup({ id: lastCreatedSetup, mode: newSetup.mode });
+    setShowAddItemModal(true);
+  };
 
   const fetchSetups = async () => {
     if (!guildId) return;
@@ -587,8 +605,50 @@ export default function ReactionRolesPage() {
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
           guildId={guildId}
+          onSuccess={handleCreateSuccess}
+        />
+      )}
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+          <div className="relative w-full max-w-md bg-[#0A0A0A] rounded-2xl border border-green-500/20 p-8 text-center animate-in zoom-in-95 duration-300">
+            <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
+              <CheckCircle2 size={32} className="text-green-500" />
+            </div>
+            <h2 className="text-2xl font-black text-white mb-2">Panel Created!</h2>
+            <p className="text-white/60 mb-6">Now you need to add roles to your panel.</p>
+            <div className="space-y-3">
+              <button
+                onClick={handleGoToAddItem}
+                className="w-full py-3 rounded-xl bg-red-500 text-black font-bold hover:bg-red-400 transition-all"
+              >
+                Add Roles Now
+              </button>
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="w-full py-3 rounded-xl bg-white/5 text-white/60 hover:text-white transition-all"
+              >
+                Later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Item Modal */}
+      {showAddItemModal && selectedSetup && (
+        <AddItemModal
+          isOpen={showAddItemModal}
+          onClose={() => setShowAddItemModal(false)}
+          guildId={guildId}
+          setupId={selectedSetup.id}
+          setupMode={selectedSetup.mode}
+          existingCount={items.length}
           onSuccess={() => {
-            fetchSetups();
+            fetchItems(selectedSetup.id);
+            setShowAddItemModal(false);
           }}
         />
       )}

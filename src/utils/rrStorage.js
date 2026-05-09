@@ -126,8 +126,9 @@ async function initStorage() {
 async function createSetup({ guildId, channelId, mode = 'buttons', title = '', description = '', creatorId, config = {} }) {
   const ts = now();
   if (useMongoDB) {
+    // Use global counter to avoid duplicate ID conflicts across guilds
     const counter = await RRCounter.findOneAndUpdate(
-      { guildId },
+      { guildId: 'GLOBAL' },
       { $inc: { nextId: 1 } },
       { upsert: true, returnDocument: 'after' }
     );

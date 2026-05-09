@@ -271,6 +271,24 @@ function createApiRouter(client) {
     res.json(channels);
   });
 
+  // Server roles for role selector
+  router.get('/guild/:guildId/roles', requireGuildAccess(client), async (req, res) => {
+    const guild = req.guild;
+    await guild.roles.fetch();
+
+    const roles = guild.roles.cache
+      .filter(role => role.id !== guild.id && !role.managed)
+      .map(role => ({
+        id: role.id,
+        name: role.name,
+        color: role.hexColor,
+        position: role.position
+      }))
+      .sort((a, b) => b.position - a.position);
+
+    res.json(roles);
+  });
+
   router.post('/guild/:guildId/player/join', requireGuildAccess(client), async (req, res) => {
     const { voiceId } = req.body;
     const guildId = req.params.guildId;
