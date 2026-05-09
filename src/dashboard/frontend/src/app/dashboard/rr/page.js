@@ -25,6 +25,7 @@ import {
 import { clsx } from 'clsx';
 import RRCreateModal from '@/components/RRCreateModal';
 import AddItemModal from '@/components/AddItemModal';
+import CustomSelect from '@/components/CustomSelect';
 
 export default function ReactionRolesPage() {
   const searchParams = useSearchParams();
@@ -54,6 +55,7 @@ export default function ReactionRolesPage() {
   // Success modal handlers
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [lastCreatedSetup, setLastCreatedSetup] = useState(null);
+  const [editingPolicy, setEditingPolicy] = useState('normal');
 
   const handleCreateSuccess = (setupId) => {
     setShowCreateModal(false);
@@ -117,28 +119,52 @@ export default function ReactionRolesPage() {
     } catch (err) { alert(err.message); }
   };
 
-  const handleDeleteSetup = async (id) => {
-    if (!confirm('Are you sure you want to delete this panel?')) return;
-    try {
-      const res = await fetch(`/api/guild/${guildId}/rr/setups/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        setSelectedSetup(null);
-        fetchSetups();
-      }
-    } catch (err) { alert(err.message); }
-  };
-
   const handleRegen = async (id) => {
+    setRefreshing(true);
     try {
       const res = await fetch(`/api/guild/${guildId}/rr/setups/${id}/regen`, { method: 'POST' });
-      if (res.ok) alert('Panel regenerated in Discord!');
-    } catch (err) { alert(err.message); }
+      const data = await res.json();
+      if (res.ok) {
+        alert('Panel regenerated in Discord!');
+      } else {
+        alert(data.error || 'Failed to regenerate panel');
+      }
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const handleSync = async (id) => {
+    setRefreshing(true);
     try {
       const res = await fetch(`/api/guild/${guildId}/rr/setups/${id}/sync`, { method: 'POST' });
-      if (res.ok) alert('Reactions synced in Discord!');
+      const data = await res.json();
+      if (res.ok) {
+        alert('Reactions synced in Discord!');
+      } else {
+        alert(data.error || 'Failed to sync reactions');
+      }
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const handleDeleteSetup = async (id) => {
+    if (!confirm('Are you sure you want to delete this panel? This cannot be undone.')) return;
+    try {
+      const res = await fetch(`/api/guild/${guildId}/rr/setups/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (res.ok) {
+        setSelectedSetup(null);
+        setEditingSetup(null);
+        fetchSetups();
+      } else {
+        alert(data.error || 'Failed to delete panel');
+      }
     } catch (err) { alert(err.message); }
   };
 
@@ -169,26 +195,16 @@ export default function ReactionRolesPage() {
     } catch (err) { alert(err.message); }
   };
 
-  const addItem = async (setupId) => {
-    const roleId = prompt('Enter Discord Role ID:');
-    if (!roleId) return;
-    const label = prompt('Enter Button Label:', 'Role');
-    const emoji = prompt('Enter Emoji (Unicode or Custom ID):', '✨');
-    
-    try {
-      const res = await fetch(`/api/guild/${guildId}/rr/setups/${setupId}/items`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roleId, label, emoji, style: 2 })
-      });
-      if (res.ok) fetchItems(setupId);
-    } catch (err) { alert(err.message); }
+  const handleOpenAddItem = () => {
+    setShowAddItemModal(true);
   };
 
   const removeItem = async (itemId, setupId) => {
     try {
       const res = await fetch(`/api/guild/${guildId}/rr/items/${itemId}`, { method: 'DELETE' });
+      const data = await res.json();
       if (res.ok) fetchItems(setupId);
+      else alert(data.error || 'Failed to remove item');
     } catch (err) { alert(err.message); }
   };
 
@@ -471,26 +487,26 @@ export default function ReactionRolesPage() {
                            Functional Configuration
                          </h3>
                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <label className="text-[10px] font-black uppercase text-white/20 tracking-widest ml-1">Interaction Mode</label>
-                              <select 
-                                value={editingSetup?.mode || 'buttons'}
-                                onChange={(e) => setEditingSetup({...editingSetup, mode: e.target.value})}
-                                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold uppercase outline-none transition-all appearance-none cursor-pointer"
-                              >
-                                <option value="buttons">Buttons</option>
-                                <option value="dropdown">Dropdown Menu</option>
-                                <option value="reactions">Classic Reactions</option>
-                              </select>
-                            </div>
-                            <div className="space-y-2">
-                              <label className="text-[10px] font-black uppercase text-white/20 tracking-widest ml-1">Policy Type</label>
-                              <select className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold uppercase outline-none transition-all appearance-none cursor-pointer">
-                                <option value="normal">Standard (Toggle)</option>
-                                <option value="unique">Unique (One Role Only)</option>
-                                <option value="verify">Verification (Permanent)</option>
-                              </select>
-                            </div>
+                            <CustomSelect
+                              label="Interaction Mode"
+                              value={editingSetup?.mode || 'buttons'}
+                              onChange={(val) => setEditingSetup({...editingSetup, mode: val})}
+                              options={[
+                                { value: 'buttons', label: '🔘 Buttons' },
+                                { value: 'dropdown', label: '📋 Dropdown Menu' },
+                                { value: 'reactions', label: '💬 Classic Reactions' }
+                              ]}
+                            />
+                            <CustomSelect
+                              label="Policy Type"
+                              value={editingPolicy}
+                              onChange={setEditingPolicy}
+                              options={[
+                                { value: 'normal', label: 'Standard (Toggle)' },
+                                { value: 'unique', label: 'Unique (One Role Only)' },
+                                { value: 'verify', label: 'Verification (Permanent)' }
+                              ]}
+                            />
                          </div>
                       </section>
                     </div>
@@ -519,7 +535,7 @@ export default function ReactionRolesPage() {
                                 <Zap size={16} />
                              </button>
                              <button 
-                               onClick={() => addItem(selectedSetup.id)}
+                               onClick={handleOpenAddItem}
                                className="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-black transition-all"
                                title="Add Role"
                              >
@@ -560,32 +576,38 @@ export default function ReactionRolesPage() {
                       </section>
 
                       <div className="grid grid-cols-2 gap-4">
-                         <button 
+                         <button
                            onClick={() => handleRegen(selectedSetup.id)}
-                           className="flex items-center justify-center gap-3 p-4 rounded-[25px] bg-white/5 border border-white/10 text-white/60 font-black uppercase tracking-widest text-[10px] hover:border-red-500/30 hover:text-red-500 transition-all"
+                           disabled={refreshing}
+                           className="flex items-center justify-center gap-3 p-4 rounded-[25px] bg-white/5 border border-white/10 text-white/60 font-black uppercase tracking-widest text-[10px] hover:border-red-500/30 hover:text-red-500 transition-all disabled:opacity-50"
                          >
-                            <Send size={14} />
-                            Regen
+                           {refreshing ? <RefreshCcw size={14} className="animate-spin" /> : <Send size={14} />}
+                           Regen
                          </button>
-                         <button 
+                         <button
                            onClick={() => handleSync(selectedSetup.id)}
-                           className="flex items-center justify-center gap-3 p-4 rounded-[25px] bg-white/5 border border-white/10 text-white/60 font-black uppercase tracking-widest text-[10px] hover:border-red-500/30 hover:text-red-500 transition-all"
+                           disabled={refreshing}
+                           className="flex items-center justify-center gap-3 p-4 rounded-[25px] bg-white/5 border border-white/10 text-white/60 font-black uppercase tracking-widest text-[10px] hover:border-red-500/30 hover:text-red-500 transition-all disabled:opacity-50"
                          >
-                            <RefreshCcw size={14} />
-                            Sync
+                           <RefreshCcw size={14} />
+                           Sync
                          </button>
                       </div>
-                      
-                      <button 
+
+                      <button
                         onClick={handleSaveConfig}
-                        className="w-full flex items-center justify-center gap-3 p-4 rounded-[25px] bg-red-500 text-black font-black uppercase tracking-widest text-[10px] hover:scale-105 transition-all shadow-lg shadow-red-500/20"
+                        className="w-full flex items-center justify-center gap-3 p-4 rounded-[25px] bg-green-500 text-black font-black uppercase tracking-widest text-[10px] hover:scale-105 transition-all shadow-lg shadow-green-500/20"
                       >
                          <CheckCircle2 size={14} />
                          Save Config
                       </button>
-                      
-                      <button 
-                        onClick={() => handleDeleteSetup(selectedSetup.id)}
+
+                      <button
+                        onClick={() => {
+                          if (confirm('Are you sure you want to delete this panel? This cannot be undone.')) {
+                            handleDeleteSetup(selectedSetup.id);
+                          }
+                        }}
                         className="w-full flex items-center justify-center gap-3 p-4 rounded-[25px] bg-red-500/5 border border-red-500/10 text-red-500/40 font-black uppercase tracking-widest text-[10px] hover:bg-red-500 hover:text-black hover:border-transparent transition-all"
                       >
                          <Trash2 size={14} />
