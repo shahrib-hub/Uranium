@@ -447,6 +447,20 @@ function createApiRouter(client) {
         creatorId: req.session.user.id,
         config: fullConfig
       });
+
+      // Send panel to Discord channel
+      try {
+        const { sendOrUpdatePanel } = require('../commands/Utility/rr');
+        const channel = await client.channels.fetch(channelId).catch(() => null);
+        if (channel && channel.isTextBased()) {
+          const setup = await rrStorage.getSetupById(setupId);
+          const items = await rrStorage.listItems(setupId);
+          await sendOrUpdatePanel(channel, setup, items, { client, user: req.session.user });
+        }
+      } catch (err) {
+        console.error('[RR API] Failed to send panel to Discord:', err.message);
+      }
+
       res.json({ success: true, setupId });
     } catch (err) { res.status(500).json({ error: err.message }); }
   });
@@ -529,6 +543,22 @@ function createApiRouter(client) {
         setupId: req.params.setupId,
         emoji, emojiIdentifier, label, roleId, style, description
       });
+
+      // Refresh panel in Discord
+      try {
+        const setup = await rrStorage.getSetupById(req.params.setupId);
+        if (setup && setup.channel_id) {
+          const { sendOrUpdatePanel } = require('../commands/Utility/rr');
+          const channel = await client.channels.fetch(setup.channel_id).catch(() => null);
+          if (channel && channel.isTextBased()) {
+            const items = await rrStorage.listItems(req.params.setupId);
+            await sendOrUpdatePanel(channel, setup, items, { client, user: req.session.user });
+          }
+        }
+      } catch (err) {
+        console.error('[RR API] Failed to refresh panel after add:', err.message);
+      }
+
       res.json({ success: true, itemId });
     } catch (err) { res.status(500).json({ error: err.message }); }
   });
@@ -545,7 +575,27 @@ function createApiRouter(client) {
   // Delete Item
   router.delete('/guild/:guildId/rr/items/:itemId', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
     try {
+      const item = await rrStorage.findItemById(req.params.itemId);
+      const setupId = item?.setup_id;
       await rrStorage.removeItem(req.params.itemId);
+
+      // Refresh panel in Discord if setup exists
+      if (setupId) {
+        try {
+          const setup = await rrStorage.getSetupById(setupId);
+          if (setup && setup.channel_id) {
+            const { sendOrUpdatePanel } = require('../commands/Utility/rr');
+            const channel = await client.channels.fetch(setup.channel_id).catch(() => null);
+            if (channel && channel.isTextBased()) {
+              const items = await rrStorage.listItems(setupId);
+              await sendOrUpdatePanel(channel, setup, items, { client, user: req.session.user });
+            }
+          }
+        } catch (err) {
+          console.error('[RR API] Failed to refresh panel after delete:', err.message);
+        }
+      }
+
       res.json({ success: true });
     } catch (err) { res.status(500).json({ error: err.message }); }
   });

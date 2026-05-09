@@ -180,7 +180,7 @@ export default function ReactionRolesPage() {
 
   useEffect(() => {
     if (selectedSetup) {
-      fetchItems(selectedSetup._id);
+      fetchItems(selectedSetup.id);
       setEditingSetup({ ...selectedSetup });
     } else {
       setItems([]);
@@ -191,7 +191,7 @@ export default function ReactionRolesPage() {
   const handleSaveConfig = async () => {
     if (!editingSetup) return;
     try {
-      const res = await fetch(`/api/guild/${guildId}/rr/setups/${editingSetup._id}`, {
+      const res = await fetch(`/api/guild/${guildId}/rr/setups/${editingSetup.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -310,8 +310,8 @@ export default function ReactionRolesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {setups.map((setup) => (
-            <motion.div 
-              key={setup._id}
+            <motion.div
+              key={setup.id}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               whileHover={{ y: -8 }}
@@ -325,7 +325,22 @@ export default function ReactionRolesPage() {
                 <div className="p-3 rounded-2xl bg-red-500/10 text-red-500 border border-red-500/20 group-hover:bg-red-500 group-hover:text-black transition-all">
                   <Layout size={20} />
                 </div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-white/20">ID: #{setup._id}</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleRegen(setup.id); }}
+                    className="p-2 rounded-lg bg-white/5 text-white/40 hover:text-red-500 transition-all"
+                    title="Regenerate"
+                  >
+                    <RefreshCcw size={14} />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDeleteSetup(setup.id); }}
+                    className="p-2 rounded-lg bg-white/5 text-red-400/40 hover:text-red-500 transition-all"
+                    title="Delete"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               </div>
 
               <div className="flex-1 space-y-2 mb-8">
@@ -340,17 +355,17 @@ export default function ReactionRolesPage() {
               <div className="flex items-center justify-between pt-6 border-t border-white/5">
                 <div className="flex items-center gap-4">
                    <div className="flex flex-col">
-                      <span className="text-[8px] font-black uppercase text-white/20 tracking-widest">Mode</span>
-                      <span className="text-[10px] font-bold uppercase text-red-500">{setup.mode}</span>
+                      <span className="text-[8px] font-black uppercase text-white/20 tracking-widest">ID</span>
+                      <span className="text-[10px] font-bold text-white/60">#{setup.id}</span>
                    </div>
                    <div className="w-px h-6 bg-white/5" />
                    <div className="flex flex-col">
-                      <span className="text-[8px] font-black uppercase text-white/20 tracking-widest">Items</span>
-                      <span className="text-[10px] font-bold text-white/60">Calculated...</span>
+                      <span className="text-[8px] font-black uppercase text-white/20 tracking-widest">Mode</span>
+                      <span className="text-[10px] font-bold uppercase text-red-500">{setup.mode}</span>
                    </div>
                 </div>
-                
-                <button 
+
+                <button
                   onClick={() => setSelectedSetup(setup)}
                   className="p-3 rounded-xl bg-white/5 border border-white/10 text-white/40 group-hover:text-red-500 group-hover:border-red-500/50 transition-all"
                 >
@@ -387,7 +402,7 @@ export default function ReactionRolesPage() {
                     </div>
                     <div>
                       <p className="text-[10px] font-black uppercase text-red-500 tracking-[3px] mb-1">Configuration Node</p>
-                      <h2 className="text-2xl font-black uppercase italic tracking-tighter">Edit Panel <span className="text-white/40">#{selectedSetup._id}</span></h2>
+                      <h2 className="text-2xl font-black uppercase italic tracking-tighter">Edit Panel <span className="text-white/40">#{selectedSetup.id}</span></h2>
                     </div>
                   </div>
                   <button 
@@ -472,7 +487,7 @@ export default function ReactionRolesPage() {
                            </h3>
                            <div className="flex items-center gap-2">
                              <button 
-                               onClick={() => handleClearAll(selectedSetup._id)}
+                               onClick={() => handleClearAll(selectedSetup.id)}
                                className="p-2 rounded-lg bg-white/5 text-white/40 hover:text-red-500 transition-all"
                                title="Clear All"
                              >
@@ -486,7 +501,7 @@ export default function ReactionRolesPage() {
                                 <Zap size={16} />
                              </button>
                              <button 
-                               onClick={() => addItem(selectedSetup._id)}
+                               onClick={() => addItem(selectedSetup.id)}
                                className="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-black transition-all"
                                title="Add Role"
                              >
@@ -504,7 +519,7 @@ export default function ReactionRolesPage() {
                               <p className="text-[10px] text-white/20 font-bold text-center py-8 italic uppercase tracking-widest">No roles configured for this panel.</p>
                             ) : (
                               items.map(item => (
-                                <div key={item._id} className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/5 hover:border-red-500/10 transition-all group/item">
+                                <div key={item.id} className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/5 hover:border-red-500/10 transition-all group/item">
                                   <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-xl shadow-inner">
                                       {item.emoji || '❓'}
@@ -515,7 +530,7 @@ export default function ReactionRolesPage() {
                                     </div>
                                   </div>
                                   <button 
-                                    onClick={() => removeItem(item._id, selectedSetup._id)}
+                                    onClick={() => removeItem(item.id, selectedSetup.id)}
                                     className="p-2 rounded-lg text-white/10 hover:text-red-500 transition-colors"
                                   >
                                     <Trash2 size={14} />
@@ -528,14 +543,14 @@ export default function ReactionRolesPage() {
 
                       <div className="grid grid-cols-2 gap-4">
                          <button 
-                           onClick={() => handleRegen(selectedSetup._id)}
+                           onClick={() => handleRegen(selectedSetup.id)}
                            className="flex items-center justify-center gap-3 p-4 rounded-[25px] bg-white/5 border border-white/10 text-white/60 font-black uppercase tracking-widest text-[10px] hover:border-red-500/30 hover:text-red-500 transition-all"
                          >
                             <Send size={14} />
                             Regen
                          </button>
                          <button 
-                           onClick={() => handleSync(selectedSetup._id)}
+                           onClick={() => handleSync(selectedSetup.id)}
                            className="flex items-center justify-center gap-3 p-4 rounded-[25px] bg-white/5 border border-white/10 text-white/60 font-black uppercase tracking-widest text-[10px] hover:border-red-500/30 hover:text-red-500 transition-all"
                          >
                             <RefreshCcw size={14} />
@@ -552,7 +567,7 @@ export default function ReactionRolesPage() {
                       </button>
                       
                       <button 
-                        onClick={() => handleDeleteSetup(selectedSetup._id)}
+                        onClick={() => handleDeleteSetup(selectedSetup.id)}
                         className="w-full flex items-center justify-center gap-3 p-4 rounded-[25px] bg-red-500/5 border border-red-500/10 text-red-500/40 font-black uppercase tracking-widest text-[10px] hover:bg-red-500 hover:text-black hover:border-transparent transition-all"
                       >
                          <Trash2 size={14} />
@@ -614,7 +629,7 @@ export default function ReactionRolesPage() {
               </div>
 
               <button 
-                onClick={() => handleBulkAdd(selectedSetup._id)}
+                onClick={() => handleBulkAdd(selectedSetup.id)}
                 className="w-full py-4 rounded-2xl bg-blue-500 text-black font-black uppercase tracking-wider text-xs shadow-lg shadow-blue-500/20 hover:scale-[1.02] transition-all"
               >
                 Inject Roles
