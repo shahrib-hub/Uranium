@@ -256,21 +256,15 @@ function createApiRouter(client) {
     res.json(req.guild.channels.cache.filter(c => c.type === 2).map(c => ({ id: c.id, name: c.name, userCount: c.members.size })));
   });
 
-  // All channels (text + voice + category) for channel selector
+  // Text channels only for channel selector
   router.get('/guild/:guildId/channels', requireGuildAccess(client), (req, res) => {
     const channels = {
-      text: [],
-      voice: [],
-      category: []
+      text: []
     };
 
     for (const [id, channel] of req.guild.channels.cache) {
       if (channel.type === 0) {
         channels.text.push({ id: channel.id, name: channel.name, categoryId: channel.parentId });
-      } else if (channel.type === 2) {
-        channels.voice.push({ id: channel.id, name: channel.name, categoryId: channel.parentId, userCount: channel.members.size });
-      } else if (channel.type === 4) {
-        channels.category.push({ id: channel.id, name: channel.name });
       }
     }
 
@@ -413,6 +407,16 @@ function createApiRouter(client) {
         embedImage
       } = req.body;
 
+      // Convert hex color to number
+      const parseColor = (hex) => {
+        if (!hex) return null;
+        if (typeof hex === 'number') return hex;
+        if (typeof hex === 'string' && hex.startsWith('#')) {
+          return parseInt(hex.slice(1), 16);
+        }
+        return null;
+      };
+
       // Build full config
       const fullConfig = {
         maxPerUser,
@@ -422,7 +426,7 @@ function createApiRouter(client) {
         blockedRoles: [],
         cooldownSeconds,
         // Embed options
-        color: embedColor || null,
+        color: parseColor(embedColor),
         customTitle: embedTitle || null,
         customDescription: embedDescription || null,
         footerText: embedFooter || null,

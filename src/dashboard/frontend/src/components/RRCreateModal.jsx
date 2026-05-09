@@ -267,21 +267,17 @@ function StepMode({ formData, updateField }) {
 }
 
 function StepChannel({ formData, updateField, channels }) {
-  const allChannels = [
-    ...(channels.category || []).map(c => ({ ...c, type: 'category' })),
-    ...(channels.text || []).map(c => ({ ...c, type: 'text' })),
-    ...(channels.voice || []).map(c => ({ ...c, type: 'voice' }))
-  ];
+  const textChannels = channels.text || [];
 
   return (
     <div className="space-y-4">
       {/* Channel Selection */}
       <div className="space-y-2">
         <label className="block text-xs font-bold text-white/60 uppercase tracking-wider">
-          Select Channel
+          Select Text Channel
         </label>
         <div className="grid sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto">
-          {allChannels.map((ch) => (
+          {textChannels.map((ch) => (
             <button
               key={ch.id}
               onClick={() => updateField('channelId', ch.id)}
@@ -291,9 +287,7 @@ function StepChannel({ formData, updateField, channels }) {
                   : 'bg-white/5 border border-white/10 hover:border-white/20'
               }`}
             >
-              <span className="text-lg">
-                {ch.type === 'category' ? '📁' : ch.type === 'text' ? '💬' : '🔊'}
-              </span>
+              <span className="text-lg">💬</span>
               <span className="text-sm font-medium text-white truncate">{ch.name}</span>
             </button>
           ))}
@@ -312,8 +306,9 @@ function StepChannel({ formData, updateField, channels }) {
           value={formData.maxPerUser}
           onChange={(e) => updateField('maxPerUser', parseInt(e.target.value) || 0)}
           className="w-full p-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/20"
-          placeholder="0 = Unlimited"
+          placeholder="0"
         />
+        <p className="text-xs text-white/40">0 = Unlimited</p>
       </div>
 
       {/* Exclusive Mode */}
