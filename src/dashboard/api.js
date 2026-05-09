@@ -256,6 +256,27 @@ function createApiRouter(client) {
     res.json(req.guild.channels.cache.filter(c => c.type === 2).map(c => ({ id: c.id, name: c.name, userCount: c.members.size })));
   });
 
+  // All channels (text + voice + category) for channel selector
+  router.get('/guild/:guildId/channels', requireGuildAccess(client), (req, res) => {
+    const channels = {
+      text: [],
+      voice: [],
+      category: []
+    };
+
+    for (const [id, channel] of req.guild.channels.cache) {
+      if (channel.type === 0) {
+        channels.text.push({ id: channel.id, name: channel.name, categoryId: channel.parentId });
+      } else if (channel.type === 2) {
+        channels.voice.push({ id: channel.id, name: channel.name, categoryId: channel.parentId, userCount: channel.members.size });
+      } else if (channel.type === 4) {
+        channels.category.push({ id: channel.id, name: channel.name });
+      }
+    }
+
+    res.json(channels);
+  });
+
   router.post('/guild/:guildId/player/join', requireGuildAccess(client), async (req, res) => {
     const { voiceId } = req.body;
     const guildId = req.params.guildId;
@@ -371,12 +392,56 @@ function createApiRouter(client) {
   // Create setup
   router.post('/guild/:guildId/rr/setups', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
     try {
-      const { channelId, mode, title, description, config } = req.body;
+      const {
+        channelId,
+        mode,
+        title,
+        description,
+        config = {},
+        maxPerUser = 0,
+        exclusive = false,
+        cooldownSeconds = 0,
+        // Embed customization
+        embedColor,
+        embedTitle,
+        embedDescription,
+        embedFooter,
+        embedThumbnail,
+        embedAuthorName,
+        embedAuthorIcon,
+        embedAuthorUrl,
+        embedImage
+      } = req.body;
+
+      // Build full config
+      const fullConfig = {
+        maxPerUser,
+        allowMultiple: !exclusive,
+        exclusiveGroups: exclusive ? { default: [] } : {},
+        requiredRoles: {},
+        blockedRoles: [],
+        cooldownSeconds,
+        // Embed options
+        color: embedColor || null,
+        customTitle: embedTitle || null,
+        customDescription: embedDescription || null,
+        footerText: embedFooter || null,
+        thumbnail: embedThumbnail || null,
+        authorName: embedAuthorName || null,
+        authorIcon: embedAuthorIcon || null,
+        authorUrl: embedAuthorUrl || null,
+        image: embedImage || null,
+        ...config
+      };
+
       const setupId = await rrStorage.createSetup({
         guildId: req.params.guildId,
-        channelId, mode, title, description,
+        channelId,
+        mode,
+        title,
+        description,
         creatorId: req.session.user.id,
-        config: config || {}
+        config: fullConfig
       });
       res.json({ success: true, setupId });
     } catch (err) { res.status(500).json({ error: err.message }); }

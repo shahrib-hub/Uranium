@@ -2,16 +2,16 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Tag, 
-  Plus, 
-  RefreshCcw, 
-  Settings, 
-  Trash2, 
-  Send, 
-  ChevronRight, 
-  Layout, 
-  Type, 
+import {
+  Tag,
+  Plus,
+  RefreshCcw,
+  Settings,
+  Trash2,
+  Send,
+  ChevronRight,
+  Layout,
+  Type,
   Palette,
   AlertCircle,
   CheckCircle2,
@@ -23,6 +23,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { clsx } from 'clsx';
+import RRCreateModal from '@/components/RRCreateModal';
 
 export default function ReactionRolesPage() {
   const searchParams = useSearchParams();
@@ -565,61 +566,17 @@ export default function ReactionRolesPage() {
         )}
       </AnimatePresence>
 
-      {/* Create Modal */}
-      <AnimatePresence>
-        {showCreateModal && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[110] flex items-center justify-center p-4"
-          >
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setShowCreateModal(false)} />
-            <motion.div 
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              className="relative w-full max-w-md bg-[#050505] rounded-[40px] border border-white/10 p-8 space-y-6 shadow-2xl"
-            >
-              <div className="flex items-center gap-4 mb-2">
-                <div className="p-3 rounded-2xl bg-red-500/10 text-red-500">
-                  <Tag size={20} />
-                </div>
-                <h2 className="text-xl font-bold uppercase tracking-tight italic">New RR Subsystem</h2>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-white/20 tracking-widest ml-1">Channel ID</label>
-                  <input 
-                    type="text" 
-                    value={newSetup.channelId}
-                    onChange={(e) => setNewSetup({...newSetup, channelId: e.target.value})}
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-medium focus:border-red-500/50 outline-none" 
-                    placeholder="Enter Channel ID..."
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-white/20 tracking-widest ml-1">Panel Title</label>
-                  <input 
-                    type="text" 
-                    value={newSetup.title}
-                    onChange={(e) => setNewSetup({...newSetup, title: e.target.value})}
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-medium focus:border-red-500/50 outline-none" 
-                    placeholder="Panel Title..."
-                  />
-                </div>
-              </div>
-
-              <button 
-                onClick={handleCreateSetup}
-                className="w-full py-4 rounded-2xl bg-red-500 text-black font-black uppercase tracking-wider text-xs shadow-lg shadow-red-500/20 hover:scale-[1.02] transition-all"
-              >
-                Initialize Subsystem
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Create Modal - New Step-by-Step */}
+      {showCreateModal && (
+        <RRCreateModal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          guildId={guildId}
+          onSuccess={() => {
+            fetchSetups();
+          }}
+        />
+      )}
 
       {/* Bulk Add Modal */}
       <AnimatePresence>
