@@ -1,6 +1,6 @@
 // src/dashboard/api.js — Backend API for Uranium Dashboard
 const { Router } = require('express');
-const { PermissionsBitField } = require('discord.js');
+const { PermissionFlagsBits } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const rrStorage = require('../utils/rrStorage');
@@ -20,7 +20,7 @@ function createApiRouter(client) {
       if (!member) return res.status(403).json({ error: 'Not a member' });
 
       // Strict Music Permissions Check
-      if (!member.permissions.has([PermissionsBitField.Flags.Connect, PermissionsBitField.Flags.SendMessages])) {
+      if (!member.permissions.has([PermissionFlagsBits.Connect, PermissionFlagsBits.SendMessages])) {
         return res.status(403).json({ error: 'Missing Permissions: You need "Connect" and "Send Messages" to use the music system.' });
       }
 
@@ -31,7 +31,7 @@ function createApiRouter(client) {
   };
 
   const requireGuildAdmin = (req, res, next) => {
-    if (!req.member.permissions.has(PermissionsBitField.Flags.ManageGuild)) {
+    if (!req.member.permissions.has(PermissionFlagsBits.ManageGuild)) {
       return res.status(403).json({ error: 'Missing Permissions' });
     }
     next();
@@ -50,7 +50,7 @@ function createApiRouter(client) {
     const mapped = userGuilds.map(g => ({
       ...g,
       isBotAdded: botGuilds.has(g.id),
-      isAdmin: (BigInt(g.permissions) & PermissionsBitField.Flags.ManageGuild) === PermissionsBitField.Flags.ManageGuild
+      isAdmin: (BigInt(g.permissions) & PermissionFlagsBits.ManageGuild) === PermissionFlagsBits.ManageGuild
     }));
 
     mapped.sort((a, b) => (b.isBotAdded ? 1 : 0) - (a.isBotAdded ? 1 : 0));
@@ -308,7 +308,7 @@ function createApiRouter(client) {
 
       // Check if bot has permissions
       const botMember = req.guild.members.me;
-      if (!targetChannel.permissionsFor(botMember).has([PermissionsBitField.Flags.Connect, PermissionsBitField.Flags.Speak])) {
+      if (!targetChannel.permissionsFor(botMember).has([PermissionFlagsBits.Connect, PermissionFlagsBits.Speak])) {
         return res.status(403).json({ error: 'I do not have permission to join or speak in that channel.' });
       }
 

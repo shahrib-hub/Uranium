@@ -14,7 +14,8 @@ import {
   Activity,
   Settings,
   Tag,
-  ChevronDown
+  ChevronDown,
+  LayoutGrid
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
@@ -59,7 +60,7 @@ export default function Sidebar() {
     router.push(newPath);
   };
   
-  const guildId = searchParams.get('guild') || player.guildId;
+  const guildId = searchParams.get('guild');
 
   useEffect(() => {
     if (guildId) {
