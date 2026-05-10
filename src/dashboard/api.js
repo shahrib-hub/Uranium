@@ -560,7 +560,7 @@ function createApiRouter(client) {
     } catch (err) { res.status(500).json({ error: err.message }); }
   });
 
-  // Sync reactions
+  // Sync panel (edit message & sync reactions if needed)
   router.post('/guild/:guildId/rr/setups/:setupId/sync', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
     try {
       const setup = await rrStorage.getSetupById(req.params.setupId);
@@ -570,8 +570,8 @@ function createApiRouter(client) {
       const channel = await client.channels.fetch(setup.channel_id).catch(() => null);
       if (!channel) return res.status(404).json({ error: 'Channel not found' });
 
-      const { syncReactions } = require('../commands/Utility/rr');
-      await syncReactions(channel, setup, items);
+      const { sendOrUpdatePanel } = require('../commands/Utility/rr');
+      await sendOrUpdatePanel(channel, setup, items, { client, user: { id: req.session.user.id } });
       
       res.json({ success: true });
     } catch (err) { res.status(500).json({ error: err.message }); }

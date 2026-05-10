@@ -56,8 +56,9 @@ export default function Sidebar() {
 
   const handleServerSwitch = (newGuildId) => {
     setIsSelectorOpen(false);
-    const newPath = pathname + `?guild=${newGuildId}`;
-    router.push(newPath);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('guild', newGuildId);
+    router.push(`${pathname}?${params.toString()}`);
   };
   
   const guildId = searchParams.get('guild');

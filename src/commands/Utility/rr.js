@@ -199,6 +199,7 @@ async function sendOrUpdatePanel(channel, setup, items, interaction) {
 }
 
 async function syncReactions(channel, setup, items) {
+  if (setup.mode !== 'reactions') return { success: true, synced: 0 };
   if (!setup.message_id) return { success: false, error: 'No message linked' };
   
   const msg = await channel.messages.fetch(setup.message_id).catch(() => null);
@@ -680,10 +681,9 @@ module.exports = {
         if (!ch || !ch.isTextBased()) return replyError('Channel not available.');
 
         const items = await rrStorage.listItems(setupId);
-        const result = await syncReactions(ch, setup, items);
+        await sendOrUpdatePanel(ch, setup, items, interaction);
         
-        if (!result.success) return replyError(result.error);
-        return replySuccess(`🔄 Synced reactions. Added ${result.synced} missing reactions.`);
+        return replySuccess(`🔄 Synced panel. Message content and ${setup.mode === 'reactions' ? 'reactions' : 'components'} are now up to date.`);
       }
 
       if (sub === 'stats') {
