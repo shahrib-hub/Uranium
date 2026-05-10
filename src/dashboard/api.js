@@ -514,23 +514,47 @@ function createApiRouter(client) {
       const setup = await rrStorage.getSetupById(req.params.setupId);
       if (!setup || setup.guild_id !== req.params.guildId) return res.status(404).json({ error: 'Setup not found' });
 
+      // Attempt to delete from Discord
+      if (setup.channel_id && setup.message_id) {
+        try {
+          const channel = await client.channels.fetch(setup.channel_id).catch(() => null);
+          if (channel && channel.isTextBased()) {
+            const msg = await channel.messages.fetch(setup.message_id).catch(() => null);
+            if (msg) await msg.delete().catch(() => null);
+          }
+        } catch (err) {
+          console.error('[RR API] Failed to delete message from Discord:', err.message);
+        }
+      }
+
       await rrStorage.deleteSetup(setup.id);
       res.json({ success: true });
     } catch (err) { res.status(500).json({ error: err.message }); }
   });
 
-  // Regen panel (repost message)
+  // Regen panel (delete old + repost)
   router.post('/guild/:guildId/rr/setups/:setupId/regen', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
     try {
       const setup = await rrStorage.getSetupById(req.params.setupId);
       if (!setup || setup.guild_id !== req.params.guildId) return res.status(404).json({ error: 'Setup not found' });
 
-      const items = await rrStorage.listItems(setup.id);
       const channel = await client.channels.fetch(setup.channel_id).catch(() => null);
       if (!channel) return res.status(404).json({ error: 'Channel not found' });
 
+      // Delete old message if exists
+      if (setup.message_id) {
+        try {
+          const oldMsg = await channel.messages.fetch(setup.message_id).catch(() => null);
+          if (oldMsg) await oldMsg.delete().catch(() => null);
+        } catch (err) { console.error('[RR API] Regen delete failed:', err.message); }
+      }
+
+      // Important: clear message_id so sendOrUpdatePanel sends a fresh one
+      const tempSetup = { ...setup, message_id: null };
+      const items = await rrStorage.listItems(setup.id);
+      
       const { sendOrUpdatePanel } = require('../commands/Utility/rr');
-      await sendOrUpdatePanel(channel, setup, items, { client, user: { id: req.session.user.id } });
+      await sendOrUpdatePanel(channel, tempSetup, items, { client, user: { id: req.session.user.id } });
       
       res.json({ success: true });
     } catch (err) { res.status(500).json({ error: err.message }); }

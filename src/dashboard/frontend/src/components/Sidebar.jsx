@@ -18,19 +18,48 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Sidebar() {
-  const { player } = useStore();
+  const { player, guilds, setGuilds } = useStore();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const [isSelectorOpen, setIsSelectorOpen] = useState(false);
+  const selectorRef = useRef(null);
   useEffect(() => {
     if (window.innerWidth > 1024) setIsOpen(true);
+
+    const handleClickOutside = (e) => {
+      if (selectorRef.current && !selectorRef.current.contains(e.target)) {
+        setIsSelectorOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
   const [guildInfo, setGuildInfo] = useState(null);
+
+  useEffect(() => {
+    if (guilds.length === 0) {
+      fetch('/api/guilds')
+        .then(r => r.json())
+        .then(data => {
+          if (Array.isArray(data)) setGuilds(data.filter(g => g.isBotAdded));
+        })
+        .catch(() => null);
+    }
+  }, []);
+
+  const handleServerSwitch = (newGuildId) => {
+    setIsSelectorOpen(false);
+    const newPath = pathname + `?guild=${newGuildId}`;
+    router.push(newPath);
+  };
   
-  const guildId = player.guildId || searchParams.get('guild');
+  const guildId = searchParams.get('guild') || player.guildId;
 
   useEffect(() => {
     if (guildId) {
@@ -136,20 +165,78 @@ export default function Sidebar() {
           </Link>
         </div>
 
-        {/* Current Server Info */}
-        <div className={`px-6 mb-6 transition-all duration-500 ${isOpen ? 'opacity-100' : 'opacity-0 scale-0 h-0 overflow-hidden'}`}>
-          {guildInfo && (
-            <div className="flex items-center gap-4 p-4 rounded-3xl bg-red-500/[0.03] border border-red-500/10">
-              {guildInfo.icon ? (
-                <img src={guildInfo.icon} className="w-10 h-10 rounded-xl shadow-lg" alt="" />
-              ) : (
-                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">
-                  <Server size={18} className="text-white/20" />
+        {/* Current Server Info / Selector */}
+        <div className={`px-6 mb-6 transition-all duration-500 relative ${isOpen ? 'opacity-100' : 'opacity-0 scale-0 h-0 overflow-hidden'}`} ref={selectorRef}>
+          {guildInfo ? (
+            <>
+              <button 
+                onClick={() => setIsSelectorOpen(!isSelectorOpen)}
+                className={`w-full flex items-center gap-4 p-4 rounded-3xl border transition-all ${isSelectorOpen ? 'bg-red-500/10 border-red-500/40 shadow-[0_0_20px_rgba(239,68,68,0.1)]' : 'bg-red-500/[0.03] border-red-500/10 hover:border-red-500/30'}`}
+              >
+                {guildInfo.icon ? (
+                  <img src={guildInfo.icon} className="w-10 h-10 rounded-xl shadow-lg" alt="" />
+                ) : (
+                  <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">
+                    <Server size={18} className="text-white/20" />
+                  </div>
+                )}
+                <div className="flex-1 text-left">
+                  <p className="text-[8px] font-black uppercase text-red-500/60 tracking-widest mb-0.5">Active Server</p>
+                  <h3 className="font-bold text-sm leading-tight line-clamp-1">{guildInfo.name}</h3>
+                </div>
+                <ChevronDown size={14} className={`text-white/20 transition-transform duration-300 ${isSelectorOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Dropdown Menu */}
+              {isSelectorOpen && (
+                <div className="absolute top-full left-6 right-6 mt-2 bg-[#0A0A0A] border border-white/5 rounded-3xl shadow-2xl z-[70] overflow-hidden animate-in zoom-in-95 duration-200">
+                  <div className="p-2 max-h-64 overflow-y-auto custom-scrollbar">
+                    <div className="px-3 py-2">
+                      <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">Switch Server</span>
+                    </div>
+                    {guilds.length > 0 ? (
+                      guilds.map(g => (
+                        <button
+                          key={g.id}
+                          onClick={() => handleServerSwitch(g.id)}
+                          className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all hover:bg-white/5 ${g.id === guildId ? 'bg-red-500/5 text-red-500' : 'text-white/60 hover:text-white'}`}
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-white/5 overflow-hidden flex-shrink-0">
+                            {g.icon ? (
+                              <img src={`https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png`} className="w-full h-full object-cover" alt="" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-[10px] font-bold">
+                                {g.name.charAt(0)}
+                              </div>
+                            )}
+                          </div>
+                          <span className="text-xs font-bold truncate">{g.name}</span>
+                          {g.id === guildId && <div className="w-1.5 h-1.5 bg-red-500 rounded-full ml-auto" />}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-[10px] text-white/20 uppercase font-black">No servers synced</div>
+                    )}
+                  </div>
+                  <div className="p-2 border-t border-white/5">
+                    <Link 
+                      href="/servers"
+                      onClick={() => setIsSelectorOpen(false)}
+                      className="flex items-center justify-center gap-2 p-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white hover:bg-white/5 transition-all"
+                    >
+                      <LayoutGrid size={12} />
+                      View All Servers
+                    </Link>
+                  </div>
                 </div>
               )}
-              <div className="flex-1">
-                <p className="text-[8px] font-black uppercase text-red-500/60 tracking-widest mb-0.5">Active Server</p>
-                <h3 className="font-bold text-sm leading-tight">{guildInfo.name}</h3>
+            </>
+          ) : (
+            <div className="p-4 rounded-3xl bg-white/5 border border-white/10 animate-pulse flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-white/10" />
+              <div className="flex-1 space-y-2">
+                <div className="h-2 w-12 bg-white/10 rounded" />
+                <div className="h-3 w-24 bg-white/10 rounded" />
               </div>
             </div>
           )}

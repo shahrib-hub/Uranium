@@ -12,9 +12,9 @@ function LayoutContent({ children }) {
   const pathname = usePathname();
   const { player, setPlayer } = useStore();
   
-  // Get Guild ID from URL or Store (Persist across navigation)
+  // Get Guild ID from URL or Store (URL takes precedence)
   const urlGuildId = searchParams.get('guild');
-  const effectiveGuildId = urlGuildId || player.guildId;
+  const effectiveGuildId = urlGuildId; // Do not fallback to store for effective sync to avoid stickiness
 
   useEffect(() => {
     if (effectiveGuildId) {

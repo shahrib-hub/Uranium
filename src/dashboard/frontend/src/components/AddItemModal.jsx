@@ -10,7 +10,8 @@ const COMMON_EMOJIS = [
   '📚', '📖', '📝', '📒', '📃', '📜', '📑', '📈', '📉', '📊',
   '⭐', '🌟', '✨', '💫', '⚡', '🔥', '💥', '💢', '💦', '💧',
   '🩵', '🩶', '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍',
-  '🎃', '🤖', '👻', '👽', '👾', '🤠', '🥳', '😎', '🤓', '🧐'
+  '🎃', '🤖', '👻', '👽', '👾', '🤠', '🥳', '😎', '🤓', '🧐',
+  '🦊', '🦁', '🐯', '🐼', '🐨', '🐻', '🐰', '🐭', '🐹', '🐸'
 ];
 
 const BUTTON_STYLES = [
@@ -37,6 +38,12 @@ export default function AddItemModal({ isOpen, onClose, guildId, setupId, setupM
 
   const [customEmojiInput, setCustomEmojiInput] = useState('');
   const [showCustomEmoji, setShowCustomEmoji] = useState(false);
+  const [displayedEmojis, setDisplayedEmojis] = useState(COMMON_EMOJIS.slice(0, 30));
+
+  const randomizeEmojis = () => {
+    const shuffled = [...COMMON_EMOJIS].sort(() => Math.random() - 0.5);
+    setDisplayedEmojis(shuffled.slice(0, 30));
+  };
 
   useEffect(() => {
     if (isOpen && guildId) {
@@ -204,8 +211,9 @@ export default function AddItemModal({ isOpen, onClose, guildId, setupId, setupM
                   />
                   <button
                     type="button"
-                    onClick={() => setShowCustomEmoji(!showCustomEmoji)}
-                    className="p-3 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:text-white"
+                    onClick={randomizeEmojis}
+                    className="p-3 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:text-white transition-all hover:scale-110 active:scale-95"
+                    title="Randomize Emojis"
                   >
                     <Smile size={20} />
                   </button>
@@ -213,13 +221,13 @@ export default function AddItemModal({ isOpen, onClose, guildId, setupId, setupM
 
                 {/* Common Emojis */}
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {COMMON_EMOJIS.slice(0, 30).map(emo => (
+                  {displayedEmojis.map(emo => (
                     <button
                       key={emo}
                       type="button"
                       onClick={() => setFormData(prev => ({ ...prev, emoji: emo }))}
-                      className={`p-2 rounded-lg text-lg hover:bg-white/10 ${
-                        formData.emoji === emo ? 'bg-white/20 ring-1 ring-white/30' : ''
+                      className={`p-2 rounded-lg text-lg hover:bg-white/10 transition-all hover:scale-125 ${
+                        formData.emoji === emo ? 'bg-red-500/20 ring-1 ring-red-500/50 scale-110' : ''
                       }`}
                     >
                       {emo}
@@ -229,38 +237,42 @@ export default function AddItemModal({ isOpen, onClose, guildId, setupId, setupM
               </div>
 
               {/* Button Label */}
-              <div className="space-y-2">
-                <label className="block text-xs font-bold text-white/60 uppercase tracking-wider">Button Label (optional)</label>
+              <div className={`space-y-2 transition-opacity ${setupMode !== 'buttons' ? 'opacity-50 pointer-events-none' : ''}`}>
+                <label className="block text-xs font-bold text-white/60 uppercase tracking-wider">
+                  Button Label {setupMode !== 'buttons' && <span className="text-[10px] text-red-500/60 lowercase font-medium">(Buttons only)</span>}
+                </label>
                 <input
                   type="text"
                   value={formData.label}
+                  disabled={setupMode !== 'buttons'}
                   onChange={(e) => setFormData(prev => ({ ...prev, label: e.target.value }))}
-                  className="w-full p-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/20"
+                  className="w-full p-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/20 disabled:cursor-not-allowed"
                   placeholder="Role name"
                   maxLength={80}
                 />
               </div>
 
               {/* Button Style (only for buttons mode) */}
-              {setupMode === 'buttons' && (
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-white/60 uppercase tracking-wider">Button Style</label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {BUTTON_STYLES.map(style => (
-                      <button
-                        key={style.id}
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, style: style.id }))}
-                        className={`p-3 rounded-xl ${style.color} ${
-                          formData.style === style.id ? 'ring-2 ring-white' : ''
-                        }`}
-                      >
-                        <span className={`text-xs font-bold ${style.text}`}>{style.name}</span>
-                      </button>
-                    ))}
-                  </div>
+              <div className={`space-y-2 transition-opacity ${setupMode !== 'buttons' ? 'opacity-50 pointer-events-none' : ''}`}>
+                <label className="block text-xs font-bold text-white/60 uppercase tracking-wider">
+                  Button Style {setupMode !== 'buttons' && <span className="text-[10px] text-red-500/60 lowercase font-medium">(Buttons only)</span>}
+                </label>
+                <div className="grid grid-cols-4 gap-2">
+                  {BUTTON_STYLES.map(style => (
+                    <button
+                      key={style.id}
+                      type="button"
+                      disabled={setupMode !== 'buttons'}
+                      onClick={() => setFormData(prev => ({ ...prev, style: style.id }))}
+                      className={`p-3 rounded-xl ${style.color} ${
+                        formData.style === style.id ? 'ring-2 ring-white' : ''
+                      } disabled:cursor-not-allowed`}
+                    >
+                      <span className={`text-xs font-bold ${style.text}`}>{style.name}</span>
+                    </button>
+                  ))}
                 </div>
-              )}
+              </div>
 
               {/* Description */}
               <div className="space-y-2">

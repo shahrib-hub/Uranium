@@ -658,9 +658,18 @@ module.exports = {
         const ch = await interaction.guild.channels.fetch(setup.channel_id).catch(() => null);
         if (!ch || !ch.isTextBased()) return replyError('Channel not available.');
 
+        // Delete old message if exists
+        if (setup.message_id) {
+          try {
+            const oldMsg = await ch.messages.fetch(setup.message_id).catch(() => null);
+            if (oldMsg) await oldMsg.delete().catch(() => null);
+          } catch {}
+        }
+
         const items = await rrStorage.listItems(setupId);
-        await sendOrUpdatePanel(ch, setup, items, interaction);
-        return replySuccess(`📝 Reposted panel in ${ch}.`);
+        // Pass setup with null message_id to force a new send
+        await sendOrUpdatePanel(ch, { ...setup, message_id: null }, items, interaction);
+        return replySuccess(`📝 Reposted panel in ${ch}. Previous message deleted.`);
       }
       if (sub === 'sync') {
         const setupId = interaction.options.getInteger('setup', true);

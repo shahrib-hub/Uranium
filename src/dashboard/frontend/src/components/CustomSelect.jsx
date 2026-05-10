@@ -2,13 +2,13 @@
 import { useState } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
 
-export default function CustomSelect({ value, onChange, options, label, placeholder = 'Select...' }) {
+export default function CustomSelect({ value, onChange, options, label, placeholder = 'Select...', disabled = false }) {
   const [isOpen, setIsOpen] = useState(false);
 
   const selectedOption = options.find(opt => opt.value === value);
 
   return (
-    <div className="space-y-2">
+    <div className={`space-y-2 ${disabled ? 'opacity-50 pointer-events-none' : ''}`}>
       {label && (
         <label className="block text-[10px] font-black uppercase text-white/20 tracking-widest ml-1">
           {label}
@@ -17,8 +17,9 @@ export default function CustomSelect({ value, onChange, options, label, placehol
       <div className="relative">
         <button
           type="button"
+          disabled={disabled}
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 text-left transition-all hover:border-white/20"
+          className={`w-full flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 text-left transition-all ${disabled ? 'cursor-not-allowed' : 'hover:border-white/20'}`}
         >
           <span className="text-sm font-medium text-white">
             {selectedOption?.label || placeholder}

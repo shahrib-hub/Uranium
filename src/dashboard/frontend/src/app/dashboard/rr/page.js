@@ -266,13 +266,10 @@ export default function ReactionRolesPage() {
   }, [selectedSetup]);
 
   const handleSaveConfig = async () => {
-    if (!editingSetup) {
-      showToast('No setup selected to save', 'error');
-      return;
-    }
+    if (!editingSetup) return;
     try {
       const url = `/api/guild/${guildId}/rr/setups/${editingSetup.id}`;
-      const res = await fetch(url, {
+      await fetch(url, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -281,17 +278,22 @@ export default function ReactionRolesPage() {
           config: editingSetup.config
         })
       });
-      const data = await res.json();
-      if (res.ok) {
-        showToast('Configuration saved!', 'success');
-        fetchSetups();
-      } else {
-        showToast(data.error || 'Failed to save configuration', 'error');
-      }
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
+      fetchSetups();
+    } catch (err) { console.error('Auto-save error:', err); }
   };
+
+  // Auto-save title/description when they change
+  useEffect(() => {
+    if (!editingSetup) return;
+    const timer = setTimeout(() => {
+      // Only save if title or description actually changed from the original
+      const original = setups.find(s => s.id === editingSetup.id);
+      if (original && (original.title !== editingSetup.title || original.description !== editingSetup.description)) {
+        handleSaveConfig();
+      }
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [editingSetup?.title, editingSetup?.description]);
 
   if (!guildId) {
     return (
@@ -534,15 +536,19 @@ export default function ReactionRolesPage() {
                       </section>
 
                       <section className="glass p-8 rounded-[30px] border-white/5 space-y-6">
-                         <h3 className="text-lg font-bold flex items-center gap-3 uppercase tracking-tight">
-                           <Palette className="text-red-500" size={20} />
-                           Functional Configuration
-                         </h3>
+                         <div className="flex items-center justify-between">
+                           <h3 className="text-lg font-bold flex items-center gap-3 uppercase tracking-tight">
+                             <Palette className="text-red-500" size={20} />
+                             Functional Configuration
+                           </h3>
+                           <span className="text-[10px] font-black uppercase text-white/20 tracking-widest bg-white/5 px-2 py-1 rounded-md">Preview Only</span>
+                         </div>
                          <div className="grid grid-cols-2 gap-4">
                             <CustomSelect
                               label="Interaction Mode"
                               value={editingSetup?.mode || 'buttons'}
-                              onChange={(val) => setEditingSetup({...editingSetup, mode: val})}
+                              disabled={true}
+                              onChange={() => {}}
                               options={[
                                 { value: 'buttons', label: '🔘 Buttons' },
                                 { value: 'dropdown', label: '📋 Dropdown Menu' },
@@ -552,7 +558,8 @@ export default function ReactionRolesPage() {
                             <CustomSelect
                               label="Policy Type"
                               value={editingPolicy}
-                              onChange={setEditingPolicy}
+                              disabled={true}
+                              onChange={() => {}}
                               options={[
                                 { value: 'normal', label: 'Standard (Toggle)' },
                                 { value: 'unique', label: 'Unique (One Role Only)' },
@@ -646,13 +653,7 @@ export default function ReactionRolesPage() {
                          </button>
                       </div>
 
-                      <button
-                        onClick={handleSaveConfig}
-                        className="w-full flex items-center justify-center gap-3 p-4 rounded-[25px] bg-green-500 text-black font-black uppercase tracking-widest text-[10px] hover:scale-105 transition-all shadow-lg shadow-green-500/20"
-                      >
-                         <CheckCircle2 size={14} />
-                         Save Config
-                      </button>
+
 
                       <button
                         onClick={() => handleDeleteSetup(selectedSetup.id)}
