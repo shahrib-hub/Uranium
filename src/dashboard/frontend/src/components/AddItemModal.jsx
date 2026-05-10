@@ -20,7 +20,7 @@ const BUTTON_STYLES = [
   { id: 3, name: 'Danger', color: 'bg-red-500', text: 'text-white' }
 ];
 
-export default function AddItemModal({ isOpen, onClose, guildId, setupId, setupMode, onSuccess, existingCount = 0 }) {
+export default function AddItemModal({ isOpen, onClose, guildId, setupId, setupMode, onSuccess, existingCount = 0, showToast }) {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [roles, setRoles] = useState([]);
@@ -98,11 +98,11 @@ export default function AddItemModal({ isOpen, onClose, guildId, setupId, setupM
         onClose();
         resetForm();
       } else {
-        alert(data.error || 'Failed to add item');
+        showToast?.(data.error || 'Failed to add item', 'error');
       }
     } catch (err) {
       console.error('Add item error:', err);
-      alert('Failed to add item');
+      showToast?.('Failed to add item', 'error');
     } finally {
       setLoading(false);
     }

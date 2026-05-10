@@ -487,10 +487,10 @@ function createApiRouter(client) {
   router.get('/guild/:guildId/rr/setups/:setupId', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
     try {
       const setup = await rrStorage.getSetupById(req.params.setupId);
-      if (!setup || setup.guildId !== req.params.guildId) return res.status(404).json({ error: 'Setup not found' });
+      if (!setup || setup.guild_id !== req.params.guildId) return res.status(404).json({ error: 'Setup not found' });
       
-      const items = await rrStorage.listItems(setup._id);
-      const stats = await rrStorage.getSetupStats(setup._id);
+      const items = await rrStorage.listItems(setup.id);
+      const stats = await rrStorage.getSetupStats(setup.id);
       
       res.json({ setup, items, stats });
     } catch (err) { res.status(500).json({ error: err.message }); }
@@ -501,9 +501,9 @@ function createApiRouter(client) {
     try {
       const { title, description, config } = req.body;
       const setup = await rrStorage.getSetupById(req.params.setupId);
-      if (!setup || setup.guildId !== req.params.guildId) return res.status(404).json({ error: 'Setup not found' });
+      if (!setup || setup.guild_id !== req.params.guildId) return res.status(404).json({ error: 'Setup not found' });
 
-      await rrStorage.updateSetupConfig(setup._id, { title, description, config });
+      await rrStorage.updateSetupConfig(setup.id, { title, description, config });
       res.json({ success: true });
     } catch (err) { res.status(500).json({ error: err.message }); }
   });
@@ -512,9 +512,9 @@ function createApiRouter(client) {
   router.delete('/guild/:guildId/rr/setups/:setupId', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
     try {
       const setup = await rrStorage.getSetupById(req.params.setupId);
-      if (!setup || setup.guildId !== req.params.guildId) return res.status(404).json({ error: 'Setup not found' });
+      if (!setup || setup.guild_id !== req.params.guildId) return res.status(404).json({ error: 'Setup not found' });
 
-      await rrStorage.deleteSetup(setup._id);
+      await rrStorage.deleteSetup(setup.id);
       res.json({ success: true });
     } catch (err) { res.status(500).json({ error: err.message }); }
   });
@@ -523,10 +523,10 @@ function createApiRouter(client) {
   router.post('/guild/:guildId/rr/setups/:setupId/regen', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
     try {
       const setup = await rrStorage.getSetupById(req.params.setupId);
-      if (!setup || setup.guildId !== req.params.guildId) return res.status(404).json({ error: 'Setup not found' });
+      if (!setup || setup.guild_id !== req.params.guildId) return res.status(404).json({ error: 'Setup not found' });
 
-      const items = await rrStorage.listItems(setup._id);
-      const channel = await client.channels.fetch(setup.channelId).catch(() => null);
+      const items = await rrStorage.listItems(setup.id);
+      const channel = await client.channels.fetch(setup.channel_id).catch(() => null);
       if (!channel) return res.status(404).json({ error: 'Channel not found' });
 
       const { sendOrUpdatePanel } = require('../commands/Utility/rr');
@@ -540,10 +540,10 @@ function createApiRouter(client) {
   router.post('/guild/:guildId/rr/setups/:setupId/sync', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
     try {
       const setup = await rrStorage.getSetupById(req.params.setupId);
-      if (!setup || setup.guildId !== req.params.guildId) return res.status(404).json({ error: 'Setup not found' });
+      if (!setup || setup.guild_id !== req.params.guildId) return res.status(404).json({ error: 'Setup not found' });
 
-      const items = await rrStorage.listItems(setup._id);
-      const channel = await client.channels.fetch(setup.channelId).catch(() => null);
+      const items = await rrStorage.listItems(setup.id);
+      const channel = await client.channels.fetch(setup.channel_id).catch(() => null);
       if (!channel) return res.status(404).json({ error: 'Channel not found' });
 
       const { syncReactions } = require('../commands/Utility/rr');
@@ -622,9 +622,9 @@ function createApiRouter(client) {
   router.delete('/guild/:guildId/rr/setups/:setupId/items', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
     try {
       const setup = await rrStorage.getSetupById(req.params.setupId);
-      if (!setup || setup.guildId !== req.params.guildId) return res.status(404).json({ error: 'Setup not found' });
+      if (!setup || setup.guild_id !== req.params.guildId) return res.status(404).json({ error: 'Setup not found' });
 
-      await rrStorage.clearAllItems(setup._id);
+      await rrStorage.clearAllItems(setup.id);
       res.json({ success: true });
     } catch (err) { res.status(500).json({ error: err.message }); }
   });

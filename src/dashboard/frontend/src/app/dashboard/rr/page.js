@@ -26,6 +26,8 @@ import { clsx } from 'clsx';
 import RRCreateModal from '@/components/RRCreateModal';
 import AddItemModal from '@/components/AddItemModal';
 import CustomSelect from '@/components/CustomSelect';
+import Toast from '@/components/Toast';
+import ConfirmModal from '@/components/ConfirmModal';
 
 export default function ReactionRolesPage() {
   const searchParams = useSearchParams();
@@ -43,6 +45,17 @@ export default function ReactionRolesPage() {
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [bulkInput, setBulkInput] = useState('');
   const [editingSetup, setEditingSetup] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [confirmState, setConfirmState] = useState({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+
+  const showToast = (message, type = 'info') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  const askConfirm = (title, message, onConfirm) => {
+    setConfirmState({ isOpen: true, title, message, onConfirm });
+  };
 
   // New Setup State
   const [newSetup, setNewSetup] = useState({
@@ -92,18 +105,14 @@ export default function ReactionRolesPage() {
   const [hasPermission, setHasPermission] = useState(true);
 
   const fetchItems = async (setupId) => {
-    setLoadingItems(true);
-    console.log('Fetching items for setup:', setupId);
     try {
       const res = await fetch(`/api/guild/${guildId}/rr/setups/${setupId}`);
       const data = await res.json();
-      console.log('Fetch items response:', data);
       if (!res.ok) {
         throw new Error(data.error || 'Failed to fetch items');
       }
       setItems(data.items || []);
     } catch (err) {
-      console.error('Fetch items error:', err);
       setItems([]);
     } finally {
       setLoadingItems(false);
@@ -121,91 +130,93 @@ export default function ReactionRolesPage() {
         setShowCreateModal(false);
         fetchSetups();
       }
-    } catch (err) { alert(err.message); }
+    } catch (err) { showToast(err.message, 'error'); }
   };
 
   const handleRegen = async (id) => {
-    alert('DEBUG: handleRegen clicked, id=' + id);
-    console.log('DEBUG: handleRegen clicked, id=', id);
     if (!id) {
-      alert('Invalid setup ID');
+      showToast('Invalid setup ID', 'error');
       return;
     }
     setRefreshing(true);
     try {
       const url = `/api/guild/${guildId}/rr/setups/${id}/regen`;
-      console.log('DEBUG: Calling', url);
       const res = await fetch(url, { method: 'POST' });
       const data = await res.json();
-      console.log('DEBUG: Regen response:', res.status, data);
       if (res.ok) {
-        alert('Panel regenerated in Discord!');
+        showToast('Panel regenerated in Discord!', 'success');
       } else {
-        alert(data.error || 'Failed to regenerate panel');
+        showToast(data.error || 'Failed to regenerate panel', 'error');
       }
     } catch (err) {
-      console.error('DEBUG: Regen error:', err);
-      alert(err.message);
+      showToast(err.message, 'error');
     } finally {
       setRefreshing(false);
     }
   };
 
   const handleSync = async (id) => {
-    alert('DEBUG: handleSync clicked, id=' + id);
-    console.log('DEBUG: handleSync called with id =', id, 'guildId =', guildId);
     if (!id) {
-      alert('Invalid setup ID');
+      showToast('Invalid setup ID', 'error');
       return;
     }
     setRefreshing(true);
     try {
       const url = `/api/guild/${guildId}/rr/setups/${id}/sync`;
-      console.log('DEBUG: Calling', url);
       const res = await fetch(url, { method: 'POST' });
       const data = await res.json();
-      console.log('DEBUG: Sync response:', res.status, data);
       if (res.ok) {
-        alert('Reactions synced in Discord!');
+        showToast('Reactions synced in Discord!', 'success');
       } else {
-        alert(data.error || 'Failed to sync reactions');
+        showToast(data.error || 'Failed to sync reactions', 'error');
       }
     } catch (err) {
-      console.error('DEBUG: Sync error:', err);
-      alert(err.message);
+      showToast(err.message, 'error');
     } finally {
       setRefreshing(false);
     }
   };
 
   const handleDeleteSetup = async (id) => {
-    alert('DEBUG: handleDeleteSetup clicked, id=' + id);
-    if (!confirm('Are you sure you want to delete this panel? This cannot be undone.')) return;
-    alert('User confirmed delete');
-    try {
-      const res = await fetch(`/api/guild/${guildId}/rr/setups/${id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (res.ok) {
-        setSelectedSetup(null);
-        setEditingSetup(null);
-        fetchSetups();
-      } else {
-        alert(data.error || 'Failed to delete panel');
+    askConfirm(
+      'Delete Panel',
+      'Are you sure you want to delete this panel? This will remove it from Discord and all associated data.',
+      async () => {
+        try {
+          const res = await fetch(`/api/guild/${guildId}/rr/setups/${id}`, { method: 'DELETE' });
+          const data = await res.json();
+          if (res.ok) {
+            setSelectedSetup(null);
+            setEditingSetup(null);
+            showToast('Panel deleted successfully', 'success');
+            fetchSetups();
+          } else {
+            showToast(data.error || 'Failed to delete panel', 'error');
+          }
+        } catch (err) { showToast(err.message, 'error'); }
       }
-    } catch (err) { alert(err.message); }
+    );
   };
 
   const handleClearAll = async (id) => {
-    if (!confirm('Are you sure you want to remove ALL roles from this panel?')) return;
-    try {
-      const res = await fetch(`/api/guild/${guildId}/rr/setups/${id}/items`, { method: 'DELETE' });
-      if (res.ok) fetchItems(id);
-    } catch (err) { alert(err.message); }
+    askConfirm(
+      'Clear All Roles',
+      'Are you sure you want to remove ALL roles from this panel? This action is irreversible.',
+      async () => {
+        try {
+          const res = await fetch(`/api/guild/${guildId}/rr/setups/${id}/items`, { method: 'DELETE' });
+          if (res.ok) {
+            showToast('All roles cleared', 'success');
+            fetchItems(id);
+          }
+        } catch (err) { showToast(err.message, 'error'); }
+      }
+    );
   };
 
   const handleBulkAdd = async (setupId) => {
     const roleIds = bulkInput.split(/[\s,]+/).filter(id => id.length > 5);
-    if (roleIds.length === 0) return alert('No valid Role IDs found.');
+    if (roleIds.length === 0) return showToast('No valid Role IDs found.', 'error');
     
     setLoadingItems(true);
     try {
@@ -218,8 +229,9 @@ export default function ReactionRolesPage() {
       }
       setShowBulkModal(false);
       setBulkInput('');
+      showToast(`Injected ${roleIds.length} roles successfully`, 'success');
       fetchItems(setupId);
-    } catch (err) { alert(err.message); }
+    } catch (err) { showToast(err.message, 'error'); }
   };
 
   const handleOpenAddItem = () => {
@@ -230,9 +242,13 @@ export default function ReactionRolesPage() {
     try {
       const res = await fetch(`/api/guild/${guildId}/rr/items/${itemId}`, { method: 'DELETE' });
       const data = await res.json();
-      if (res.ok) fetchItems(setupId);
-      else alert(data.error || 'Failed to remove item');
-    } catch (err) { alert(err.message); }
+      if (res.ok) {
+        showToast('Item removed', 'success');
+        fetchItems(setupId);
+      } else {
+        showToast(data.error || 'Failed to remove item', 'error');
+      }
+    } catch (err) { showToast(err.message, 'error'); }
   };
 
   useEffect(() => {
@@ -250,14 +266,12 @@ export default function ReactionRolesPage() {
   }, [selectedSetup]);
 
   const handleSaveConfig = async () => {
-    console.log('DEBUG: handleSaveConfig called with editingSetup =', editingSetup);
     if (!editingSetup) {
-      alert('No setup selected to save');
+      showToast('No setup selected to save', 'error');
       return;
     }
     try {
       const url = `/api/guild/${guildId}/rr/setups/${editingSetup.id}`;
-      console.log('DEBUG: Calling PATCH', url);
       const res = await fetch(url, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -268,16 +282,14 @@ export default function ReactionRolesPage() {
         })
       });
       const data = await res.json();
-      console.log('DEBUG: SaveConfig response:', res.status, data);
       if (res.ok) {
-        alert('Configuration saved!');
+        showToast('Configuration saved!', 'success');
         fetchSetups();
       } else {
-        alert(data.error || 'Failed to save configuration');
+        showToast(data.error || 'Failed to save configuration', 'error');
       }
     } catch (err) {
-      console.error('DEBUG: SaveConfig error:', err);
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   };
 
@@ -600,7 +612,7 @@ export default function ReactionRolesPage() {
                                     </div>
                                     <div className="flex flex-col">
                                       <span className="text-xs font-bold text-white/80">{item.label}</span>
-                                      <span className="text-[8px] font-black uppercase text-white/20 tracking-tighter">ROLE: {item.roleId}</span>
+                                      <span className="text-[8px] font-black uppercase text-white/20 tracking-tighter">ROLE: {item.role_id}</span>
                                     </div>
                                   </div>
                                   <button 
@@ -663,6 +675,7 @@ export default function ReactionRolesPage() {
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
           guildId={guildId}
+          showToast={showToast}
           onSuccess={handleCreateSuccess}
         />
       )}
@@ -708,6 +721,7 @@ export default function ReactionRolesPage() {
             fetchItems(selectedSetup.id);
             setShowAddItemModal(false);
           }}
+          showToast={showToast}
         />
       )}
 
@@ -756,6 +770,25 @@ export default function ReactionRolesPage() {
           </motion.div>
         )}
       </AnimatePresence>
+      {/* Toasts */}
+      <AnimatePresence>
+        {toast && (
+          <Toast 
+            message={toast.message} 
+            type={toast.type} 
+            onClose={() => setToast(null)} 
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        onConfirm={confirmState.onConfirm}
+        onCancel={() => setConfirmState({ ...confirmState, isOpen: false })}
+      />
     </div>
   );
 }

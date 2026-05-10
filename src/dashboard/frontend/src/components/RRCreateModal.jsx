@@ -5,7 +5,7 @@ import ColorPicker from './ColorPicker';
 
 const STEPS = ['Mode', 'Channel', 'Embed', 'Details', 'Preview'];
 
-export default function RRCreateModal({ isOpen, onClose, guildId, onSuccess }) {
+export default function RRCreateModal({ isOpen, onClose, guildId, onSuccess, showToast }) {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [channels, setChannels] = useState({ text: [], voice: [], category: [] });
@@ -98,11 +98,11 @@ export default function RRCreateModal({ isOpen, onClose, guildId, onSuccess }) {
         onClose();
         resetForm();
       } else {
-        alert(data.error || 'Failed to create panel');
+        showToast?.(data.error || 'Failed to create panel', 'error');
       }
     } catch (err) {
       console.error('Create error:', err);
-      alert('Failed to create panel');
+      showToast?.('Failed to create panel', 'error');
     } finally {
       setLoading(false);
     }
