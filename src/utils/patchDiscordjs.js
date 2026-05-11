@@ -25,8 +25,21 @@ const markTranslated = (options) => {
 // Patch CommandInteraction
 CommandInteraction.prototype.reply = async function(options) {
   if (this.guildId && !isTranslated(options)) {
+    let deferredByUs = false;
+    if (!this.deferred && !this.replied) {
+      // Determine if the original reply was meant to be ephemeral
+      const isEphemeral = options && (options.ephemeral === true || options.flags === 64);
+      await this.deferReply({ ephemeral: isEphemeral }).catch(() => {});
+      deferredByUs = true;
+    }
+
     options = await translateMessagePayload(options, this.guildId);
     if (typeof options === 'object') markTranslated(options);
+
+    // If we deferred it, we MUST edit instead of reply
+    if (deferredByUs) {
+      return originalEditReply.call(this, options);
+    }
   }
   return originalReply.call(this, options);
 };
@@ -50,10 +63,25 @@ CommandInteraction.prototype.followUp = async function(options) {
 // Patch other interactions (Button, SelectMenu, Modal)
 if (BaseInteraction.prototype.reply && BaseInteraction.prototype.reply !== originalReply) {
     const originalBaseReply = BaseInteraction.prototype.reply;
+    const originalBaseEditReply = BaseInteraction.prototype.editReply || originalEditReply;
+    
     BaseInteraction.prototype.reply = async function(options) {
         if (this.guildId && !isTranslated(options)) {
+            let deferredByUs = false;
+            // Some interactions like Modals don't have deferReply or it works differently,
+            // but for Buttons/Selects it works. We check if deferReply exists.
+            if (!this.deferred && !this.replied && typeof this.deferReply === 'function') {
+                const isEphemeral = options && (options.ephemeral === true || options.flags === 64);
+                await this.deferReply({ ephemeral: isEphemeral }).catch(() => {});
+                deferredByUs = true;
+            }
+
             options = await translateMessagePayload(options, this.guildId);
             if (typeof options === 'object') markTranslated(options);
+
+            if (deferredByUs) {
+                return originalBaseEditReply.call(this, options);
+            }
         }
         return originalBaseReply.call(this, options);
     };
