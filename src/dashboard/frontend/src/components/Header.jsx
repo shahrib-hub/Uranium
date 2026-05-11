@@ -4,16 +4,8 @@ import { useEffect } from 'react';
 import { User, LogOut } from 'lucide-react';
 
 export default function Header() {
-  const { user, setUser } = useStore();
+  const { user } = useStore();
 
-  useEffect(() => {
-    fetch('/api/me')
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (data) setUser(data);
-      })
-      .catch(e => console.error(e));
-  }, []);
 
   const handleLogout = () => {
     window.location.href = '/auth/logout';

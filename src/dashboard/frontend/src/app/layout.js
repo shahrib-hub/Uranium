@@ -11,11 +11,35 @@ import { useStore } from '@/store';
 function LayoutContent({ children }) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const { player, setPlayer } = useStore();
+  const { player, setPlayer, setUser } = useStore();
   
   // Get Guild ID from URL or Store (URL takes precedence)
   const urlGuildId = searchParams.get('guild');
   const effectiveGuildId = urlGuildId; // Do not fallback to store for effective sync to avoid stickiness
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/me');
+        if (!res.ok || res.status === 401) {
+          // If not on landing page or auth pages, redirect to login
+          if (pathname !== '/' && !pathname.startsWith('/auth')) {
+            const next = encodeURIComponent(window.location.pathname + window.location.search);
+            window.location.href = `/auth/login?next=${next}`;
+          }
+        } else {
+          const data = await res.json();
+          if (data && data.authenticated) {
+            setUser(data.user);
+          }
+        }
+      } catch (e) {
+        console.error('[AUTH] Failed to verify session:', e);
+      }
+    };
+
+    checkAuth();
+  }, [pathname]);
 
   useEffect(() => {
     if (effectiveGuildId) {

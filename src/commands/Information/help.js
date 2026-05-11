@@ -191,6 +191,11 @@ module.exports = {
 
       const buttons = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
+          .setLabel('Dashboard')
+          .setStyle(ButtonStyle.Link)
+          .setURL('https://uraniumbot.vercel.app/dashboard')
+          .setEmoji('🚀'),
+        new ButtonBuilder()
           .setLabel('Invite')
           .setStyle(ButtonStyle.Link)
           .setURL(helpData.bot?.invite_url || 'https://discord.com')

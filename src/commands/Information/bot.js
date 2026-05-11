@@ -84,6 +84,9 @@ module.exports = {
                { name: 'Dutch', value: 'nl' }
              )
         )
+    )
+    .addSubcommand(sub =>
+      sub.setName('dashboard').setDescription('Get the link to the web dashboard')
     ),
 
   async execute(interaction) {
@@ -174,6 +177,11 @@ module.exports = {
 
       // add a small action row: invite & support server (if envs are set)
       const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setLabel('Dashboard')
+          .setStyle(ButtonStyle.Link)
+          .setURL('https://uraniumbot.vercel.app/dashboard')
+          .setEmoji('🚀'),
         new ButtonBuilder()
           .setLabel('Invite')
           .setStyle(ButtonStyle.Link)
@@ -287,7 +295,12 @@ module.exports = {
           new ButtonBuilder()
             .setLabel('➕ Invite Me')
             .setStyle(ButtonStyle.Link)
-            .setURL(inviteLink)
+            .setURL(inviteLink),
+          new ButtonBuilder()
+            .setLabel('Dashboard')
+            .setStyle(ButtonStyle.Link)
+            .setURL('https://uraniumbot.vercel.app/dashboard')
+            .setEmoji('🚀')
         );
 
       // optionally add Support / Docs if configured
@@ -310,7 +323,7 @@ module.exports = {
       }
 
       const language = interaction.options.getString('language');
-      const { setBotLanguage, getServerSettings } = require('../../../database/settings');
+      const { setBotLanguage, getServerSettings } = require('../../database/settings');
       
       // Update language if provided
       if (language) {
@@ -332,6 +345,35 @@ module.exports = {
         .setFooter({ text: 'Use /bot settings language:<lang> to change' });
 
       return interaction.reply({ embeds: [embed] });
+    }
+
+    // DASHBOARD
+    if (sub === 'dashboard') {
+      const embed = new EmbedBuilder()
+        .setTitle('🚀 Uranium Web Dashboard')
+        .setDescription([
+          'Manage your music, moderation, and settings from our sleek web interface.',
+          '',
+          '**__Why use the Dashboard?__**',
+          '• **Real-time Sync:** Changes reflect instantly.',
+          '• **Rich Controls:** Drag-and-drop queue, visual filter selection.',
+          '• **Ease of Use:** Manage your entire server from your browser.',
+          '',
+          'Click the button below to launch the console.'
+        ].join('\n'))
+        .setColor(0xEF4444)
+        .setThumbnail(botAvatar)
+        .setFooter({ text: 'uraniumbot.vercel.app' });
+
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setLabel('Launch Console')
+          .setStyle(ButtonStyle.Link)
+          .setURL('https://uraniumbot.vercel.app/dashboard')
+          .setEmoji('⚡')
+      );
+
+      return interaction.reply({ embeds: [embed], components: [row] });
     }
 
     // fallback (shouldn't happen)

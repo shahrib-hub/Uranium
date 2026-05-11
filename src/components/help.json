@@ -199,6 +199,7 @@
         "/bot developer — show developer",
         "/bot invite — invite link",
         "/bot settings — manage server bot settings",
+        "/bot dashboard — get the dashboard link",
         "/help — open this help"
       ]
     },

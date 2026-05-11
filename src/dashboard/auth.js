@@ -14,11 +14,13 @@ const DISCORD_API = 'https://discord.com/api/v10';
  * GET /auth/login — Redirect to Discord OAuth2
  */
 router.get('/login', (req, res) => {
+  const next = req.query.next || '/servers';
   const params = new URLSearchParams({
     client_id: CLIENT_ID,
     redirect_uri: REDIRECT_URI,
     response_type: 'code',
-    scope: SCOPES
+    scope: SCOPES,
+    state: next
   });
   res.redirect(`https://discord.com/oauth2/authorize?${params.toString()}`);
 });
@@ -89,7 +91,8 @@ router.get('/callback', async (req, res) => {
     req.session.accessToken = tokens.access_token;
     req.session.refreshToken = tokens.refresh_token;
 
-    res.redirect('/servers');
+    const next = req.query.state || '/servers';
+    res.redirect(next);
   } catch (err) {
     console.error('[auth] OAuth2 callback error:', err);
     res.redirect('/?error=auth_failed');
