@@ -654,6 +654,30 @@ function createApiRouter(client) {
   });
 
   // ---------- BOT SETTINGS API ----------
+  router.get('/guild/:guildId/settings/nickname', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
+    try {
+      const guild = await client.guilds.fetch(req.params.guildId).catch(() => null);
+      if (!guild) return res.status(404).json({ error: 'Guild not found' });
+      const nickname = guild.members.me?.nickname || '';
+      res.json({ nickname, username: client.user.username });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+  });
+
+  router.post('/guild/:guildId/settings/nickname', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
+    try {
+      const { nickname } = req.body;
+      const guild = await client.guilds.fetch(req.params.guildId).catch(() => null);
+      if (!guild) return res.status(404).json({ error: 'Guild not found' });
+      
+      if (!guild.members.me.permissions.has(PermissionFlagsBits.ChangeNickname)) {
+        return res.status(403).json({ error: 'Bot is missing the Change Nickname permission in this server.' });
+      }
+
+      await guild.members.me.setNickname(nickname === '' ? null : nickname);
+      res.json({ success: true, nickname: guild.members.me.nickname || '' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+  });
+
   router.get('/guild/:guildId/settings/language', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
     try {
       const { getServerSettings } = require('../database/settings');

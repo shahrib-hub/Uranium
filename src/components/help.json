@@ -198,6 +198,7 @@
         "/bot version — version",
         "/bot developer — show developer",
         "/bot invite — invite link",
+        "/bot settings — manage server bot settings",
         "/help — open this help"
       ]
     },

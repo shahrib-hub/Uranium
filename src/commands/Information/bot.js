@@ -57,6 +57,33 @@ module.exports = {
     )
     .addSubcommand(sub =>
       sub.setName('invite').setDescription('Get the bot\'s invite link')
+    )
+    .addSubcommand(sub =>
+      sub.setName('settings')
+        .setDescription('Manage bot settings for this server (Manager only)')
+        .addStringOption(opt => 
+          opt.setName('language')
+             .setDescription('Select the default language for bot responses')
+             .setRequired(false)
+             .addChoices(
+               { name: 'English', value: 'en' },
+               { name: 'Hindi', value: 'hi' },
+               { name: 'Bangla', value: 'bn' },
+               { name: 'Spanish', value: 'es' },
+               { name: 'French', value: 'fr' },
+               { name: 'German', value: 'de' },
+               { name: 'Russian', value: 'ru' },
+               { name: 'Japanese', value: 'ja' },
+               { name: 'Korean', value: 'ko' },
+               { name: 'Arabic', value: 'ar' },
+               { name: 'Portuguese', value: 'pt' },
+               { name: 'Italian', value: 'it' },
+               { name: 'Turkish', value: 'tr' },
+               { name: 'Polish', value: 'pl' },
+               { name: 'Vietnamese', value: 'vi' },
+               { name: 'Dutch', value: 'nl' }
+             )
+        )
     ),
 
   async execute(interaction) {
@@ -272,6 +299,39 @@ module.exports = {
       }
 
       return interaction.reply({ embeds: [embed], components: [row], flags: 64 });
+    }
+
+    // SETTINGS
+    if (sub === 'settings') {
+      // Must be Server Manager
+      const { PermissionFlagsBits } = require('discord.js');
+      if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) {
+        return interaction.reply({ content: '❌ You need **Manage Server** permission to use this command.', flags: 64 });
+      }
+
+      const language = interaction.options.getString('language');
+      const { setBotLanguage, getServerSettings } = require('../../../database/settings');
+      
+      // Update language if provided
+      if (language) {
+        await setBotLanguage(interaction.guildId, language);
+        return interaction.reply({ content: `✅ Bot language successfully updated to \`${language}\` for this server.`, flags: 64 });
+      }
+
+      // If no args provided, show current configuration
+      const settings = await getServerSettings(interaction.guildId);
+      const currentLang = settings.botLanguage || 'en';
+
+      const embed = new EmbedBuilder()
+        .setTitle('⚙️ Server Bot Settings')
+        .setDescription(`Current configuration for **${interaction.guild.name}**`)
+        .addFields(
+          { name: 'Language', value: `\`${currentLang}\``, inline: true }
+        )
+        .setColor(0x5865F2)
+        .setFooter({ text: 'Use /bot settings language:<lang> to change' });
+
+      return interaction.reply({ embeds: [embed] });
     }
 
     // fallback (shouldn't happen)
