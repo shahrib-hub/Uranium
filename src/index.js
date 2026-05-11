@@ -11,6 +11,10 @@ const {
 } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
+
+// Initialize translations via prototype patching
+require('./utils/patchDiscordjs');
+
 const { registerPlayerEvents } = require('./music/playerEvents');
 const { createMusicManager } = require('./music/manager');
 

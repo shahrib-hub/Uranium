@@ -83,6 +83,13 @@ export default function Sidebar() {
       activeOn: ['/dashboard']
     },
     { 
+      name: 'Bot Settings', 
+      icon: Settings, 
+      path: '/dashboard/settings', 
+      color: 'text-purple-500',
+      activeOn: ['/dashboard/settings']
+    },
+    { 
       name: 'Music Engine', 
       icon: Music, 
       path: '/dashboard/music', 

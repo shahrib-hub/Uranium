@@ -653,6 +653,24 @@ function createApiRouter(client) {
     } catch (err) { res.status(500).json({ error: err.message }); }
   });
 
+  // ---------- BOT SETTINGS API ----------
+  router.get('/guild/:guildId/settings/language', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
+    try {
+      const { getServerSettings } = require('../database/settings');
+      const settings = await getServerSettings(req.params.guildId);
+      res.json({ botLanguage: settings.botLanguage || 'en' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+  });
+
+  router.post('/guild/:guildId/settings/language', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
+    try {
+      const { botLanguage } = req.body;
+      const { setBotLanguage } = require('../database/settings');
+      await setBotLanguage(req.params.guildId, botLanguage);
+      res.json({ success: true, botLanguage });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+  });
+
   return router;
 }
 

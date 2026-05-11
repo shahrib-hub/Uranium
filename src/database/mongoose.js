@@ -771,3 +771,9 @@ exports.SocialConfig = mongoose.model('SocialConfig', SocialConfigSchema);
 // Music Hub models
 
 exports.MusicHistory = mongoose.model('MusicHistory', MusicHistorySchema);
+
+const ServerSettingsSchema = new mongoose.Schema({
+  guildId: { type: String, required: true, unique: true },
+  botLanguage: { type: String, default: 'en' }
+});
+exports.ServerSettings = mongoose.model('ServerSettings', ServerSettingsSchema);
