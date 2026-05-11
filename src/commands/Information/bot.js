@@ -50,6 +50,9 @@ module.exports = {
       sub.setName('info').setDescription('Get general information about the bot')
     )
     .addSubcommand(sub =>
+      sub.setName('dashboard').setDescription('Get the link to the web dashboard')
+    )
+    .addSubcommand(sub =>
       sub.setName('version').setDescription('Show the current bot version and environment')
     )
     .addSubcommand(sub =>
@@ -180,7 +183,7 @@ module.exports = {
         new ButtonBuilder()
           .setLabel('Dashboard')
           .setStyle(ButtonStyle.Link)
-          .setURL('https://uraniumbot.vercel.app/dashboard')
+          .setURL('https://uraniumbot.vercel.app/')
           .setEmoji('🚀'),
         new ButtonBuilder()
           .setLabel('Invite')
@@ -359,7 +362,7 @@ module.exports = {
           '• **Rich Controls:** Drag-and-drop queue, visual filter selection.',
           '• **Ease of Use:** Manage your entire server from your browser.',
           '',
-          'Click the button below to launch the console.'
+          'Click the button below to launch the dashboard and manage your servers.',
         ].join('\n'))
         .setColor(0xEF4444)
         .setThumbnail(botAvatar)
@@ -367,10 +370,10 @@ module.exports = {
 
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-          .setLabel('Launch Console')
+          .setLabel('Launch Dashboard')
           .setStyle(ButtonStyle.Link)
-          .setURL('https://uraniumbot.vercel.app/dashboard')
-          .setEmoji('⚡')
+          .setURL('https://uraniumbot.vercel.app/')
+          .setEmoji('🚀')
       );
 
       return interaction.reply({ embeds: [embed], components: [row] });

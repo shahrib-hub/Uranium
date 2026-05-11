@@ -193,7 +193,7 @@ module.exports = {
         new ButtonBuilder()
           .setLabel('Dashboard')
           .setStyle(ButtonStyle.Link)
-          .setURL('https://uraniumbot.vercel.app/dashboard')
+          .setURL('https://uraniumbot.vercel.app/')
           .setEmoji('🚀'),
         new ButtonBuilder()
           .setLabel('Invite')

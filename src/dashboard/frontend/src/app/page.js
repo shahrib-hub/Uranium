@@ -35,7 +35,7 @@ export default function LandingPage() {
         </div>
         <div className="hidden md:flex items-center gap-8 text-sm font-black uppercase tracking-widest text-white/40">
           <a href="#features" className="hover:text-red-500 transition-colors">Features</a>
-          <a href="#stats" className="hover:text-red-500 transition-colors">Intelligence</a>
+          <a href="#stats" className="hover:text-red-500 transition-colors">Stats</a>
           {user ? (
             <Link href="/servers" className="px-6 py-2 bg-red-500 rounded-full text-black hover:scale-105 transition-all font-black">Dashboard</Link>
           ) : (
@@ -59,7 +59,7 @@ export default function LandingPage() {
             className="absolute top-full left-0 right-0 bg-[#050505] border-b border-white/5 p-8 flex flex-col gap-6 md:hidden z-50 shadow-2xl"
           >
             <a href="#features" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-black uppercase tracking-widest text-white/40 hover:text-red-500 transition-colors">Features</a>
-            <a href="#stats" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-black uppercase tracking-widest text-white/40 hover:text-red-500 transition-colors">Intelligence</a>
+            <a href="#stats" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-black uppercase tracking-widest text-white/40 hover:text-red-500 transition-colors">Stats</a>
             <div className="h-px bg-white/5" />
             {user ? (
               <Link href="/servers" className="px-6 py-4 bg-red-500 rounded-2xl text-black text-center font-black uppercase tracking-widest text-sm">Dashboard</Link>
@@ -82,7 +82,7 @@ export default function LandingPage() {
                 className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-black uppercase tracking-[2px]"
               >
                 <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_#ef4444]" />
-                Next-Gen Discord Intelligence
+                The Ultimate Discord Bot
               </motion.div>
               
               <motion.h1 
@@ -91,8 +91,8 @@ export default function LandingPage() {
                 transition={{ delay: 0.1 }}
                 className="text-5xl sm:text-7xl md:text-8xl font-black tracking-tight leading-[0.9]"
               >
-                The Future of <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">Bot Management.</span>
+                Manage Your <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">Discord Server.</span>
               </motion.h1>
 
               <motion.p 
@@ -101,7 +101,7 @@ export default function LandingPage() {
                 transition={{ delay: 0.2 }}
                 className="text-xl text-white/40 max-w-xl leading-relaxed"
               >
-                Elevate your server with Uranium. Realtime music synchronization, military-grade moderation, and a stunning management console that feels like 2030.
+                Uranium makes running your Discord server easy. Play music, moderate chat, and manage everything from a simple dashboard.
               </motion.p>
 
               <motion.div 
@@ -111,9 +111,9 @@ export default function LandingPage() {
                 className="flex flex-col sm:flex-row gap-4"
               >
                 <Link href={user ? "/servers" : "/auth/login"} className="px-10 py-5 bg-red-500 text-black rounded-[24px] font-black uppercase tracking-widest text-sm hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 shadow-[0_20px_40px_rgba(239,68,68,0.2)]">
-                  Launch Console <ChevronRight size={20} />
+                  Launch Dashboard <ChevronRight size={20} />
                 </Link>
-                <a href="#" className="px-10 py-5 bg-white/5 border border-white/10 text-white rounded-[24px] font-black uppercase tracking-widest text-sm hover:bg-white/10 transition-all flex items-center justify-center gap-3">
+                <a href="https://discord.com/oauth2/authorize?client_id=123456789&permissions=8&scope=bot%20applications.commands" className="px-10 py-5 bg-white/5 border border-white/10 text-white rounded-[24px] font-black uppercase tracking-widest text-sm hover:bg-white/10 transition-all flex items-center justify-center gap-3">
                   Add to Discord
                 </a>
               </motion.div>
@@ -142,7 +142,7 @@ export default function LandingPage() {
                 >
                   <Music className="text-red-500 mb-2" />
                   <div className="text-xs font-black uppercase tracking-widest opacity-40">Now Playing</div>
-                  <div className="font-bold">After Hours</div>
+                  <div className="font-bold">Music Sync</div>
                 </motion.div>
 
                 <motion.div 
@@ -191,27 +191,44 @@ export default function LandingPage() {
       <section id="features" className="py-32 px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center space-y-4 mb-24">
-            <h2 className="text-5xl font-black tracking-tight">Engineered for <span className="text-red-500">Excellence.</span></h2>
-            <p className="text-white/40 text-xl max-w-2xl mx-auto">Every feature is built with a focus on performance, aesthetics, and deep Discord integration.</p>
+            <h2 className="text-5xl font-black tracking-tight">Built for Your <span className="text-red-500">Community.</span></h2>
+            <p className="text-white/40 text-xl max-w-2xl mx-auto">Everything you need to keep your server active, safe, and fun for everyone.</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <FeatureCard icon={Music} title="Music Hub 2.0" desc="The most advanced music system on Discord. Audiophile-grade filters and realtime web sync." color="red" />
-            <FeatureCard icon={Shield} title="Omni-Guard Mod" desc="Military-grade moderation. AI-powered automod and instant web management." color="blue" />
-            <FeatureCard icon={Zap} title="Realtime Pulse" desc="No more refreshing. Our Socket.IO bridge ensures changes reflect instantly." color="orange" />
+            <FeatureCard icon={Music} title="High Quality Music" desc="Play songs with crystal clear audio. Control playback and manage queues directly from the web." color="red" />
+            <FeatureCard icon={Shield} title="Easy Moderation" desc="Keep your server safe. Simple tools to manage members, logs, and automated protection." color="blue" />
+            <FeatureCard icon={Zap} title="Real-time Updates" desc="No more refreshing pages. Our dashboard updates instantly whenever you make a change." color="orange" />
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-24 px-8 border-t border-white/5 text-center text-white/20">
-        <div className="flex items-center justify-center gap-3 mb-6">
-          <div className="w-8 h-8 bg-white/5 rounded-lg flex items-center justify-center border border-white/10">
-            <Zap size={14} />
+      <footer className="py-24 px-8 border-t border-white/5 bg-[#020202]">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-12 items-center text-center md:text-left">
+          <div className="space-y-4">
+            <div className="flex items-center justify-center md:justify-start gap-3">
+              <div className="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center">
+                <Zap fill="black" size={14} />
+              </div>
+              <span className="font-black uppercase tracking-tighter text-white">Uranium</span>
+            </div>
+            <p className="text-white/20 text-xs font-bold uppercase tracking-widest">
+              Developed with pride by <span className="text-white">SHM</span>
+            </p>
           </div>
-          <span className="font-black uppercase tracking-tighter text-white">Uranium</span>
+
+          <div className="flex flex-col md:flex-row gap-8 justify-center items-center text-xs font-black uppercase tracking-[3px] text-white/30">
+            <Link href="/tos" className="hover:text-white transition-colors">Terms of Service</Link>
+            <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+            <a href="https://discord.gg/26ThFyckFX" className="hover:text-white transition-colors">Support</a>
+          </div>
+
+          <div className="md:text-right space-y-4">
+            <p className="text-[10px] font-black uppercase tracking-[5px] text-white/10">© 2026 Uranium Project.</p>
+            <p className="text-sm italic text-white/20">Made with love by SHM ❤️</p>
+          </div>
         </div>
-        <p className="text-[10px] font-black uppercase tracking-[5px]">© 2026 Uranium Project. All Rights Reserved.</p>
       </footer>
     </div>
   );
