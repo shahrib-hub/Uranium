@@ -30,6 +30,8 @@ async function translateText(text, targetLang) {
     const res = await translate(textWithPlaceholders, { to: targetLang });
     let translated = res.text;
 
+    if (!translated) return text;
+
     // Restore placeholders
     for (let i = 0; i < placeholders.length; i++) {
       const placeholder = `___m${i}___`;
@@ -51,8 +53,17 @@ async function translateText(text, targetLang) {
 async function translateEmbed(embed, targetLang) {
   if (targetLang === 'en') return embed;
   
-  // Clone embed to avoid mutating the original
-  const newEmbed = { ...embed };
+  // Normalize embed to a plain API object
+  // Discord.js EmbedBuilder has a .data property or .toJSON() method
+  let embedData = embed;
+  if (typeof embed.toJSON === 'function') {
+    embedData = embed.toJSON();
+  } else if (embed.data) {
+    embedData = embed.data;
+  }
+
+  // Clone to avoid mutating original
+  const newEmbed = JSON.parse(JSON.stringify(embedData));
 
   if (newEmbed.title) newEmbed.title = await translateText(newEmbed.title, targetLang);
   if (newEmbed.description) newEmbed.description = await translateText(newEmbed.description, targetLang);
@@ -90,10 +101,22 @@ async function translateMessagePayload(options, guildId) {
 
     if (!targetLang || targetLang === 'en') return options;
 
+    // Handle string payload
     if (typeof options === 'string') {
       return await translateText(options, targetLang);
     }
 
+    // Handle EmbedBuilder passed directly
+    if (options && (typeof options.toJSON === 'function' || options.data)) {
+      // It's a single embed being passed as the entire options
+      // We should return it as part of an embeds array to be safe, 
+      // or just translate it and hope the patch caller handles it.
+      // Most interaction.reply() calls taking an embed expect an options object { embeds: [embed] }
+      // but some old versions or specific methods might take it directly.
+      return await translateEmbed(options, targetLang);
+    }
+
+    // Normal options object
     const newOptions = { ...options };
 
     if (newOptions.content) {
@@ -110,6 +133,8 @@ async function translateMessagePayload(options, guildId) {
     // but if the user wants "everything", we could try. The prompt says "every single messages".
     // Buttons are part of messages, so we translate their labels just in case.
     if (newOptions.components && Array.isArray(newOptions.components)) {
+      // Clone components deeply to avoid mutation issues
+      newOptions.components = JSON.parse(JSON.stringify(newOptions.components));
       for (const row of newOptions.components) {
         if (row.components) {
           for (const comp of row.components) {
