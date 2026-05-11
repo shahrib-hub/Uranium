@@ -29,8 +29,8 @@ function LayoutContent({ children }) {
           }
         } else {
           const data = await res.json();
-          if (data && data.authenticated) {
-            setUser(data.user);
+          if (data && data.id) {
+            setUser(data);
           }
         }
       } catch (e) {
