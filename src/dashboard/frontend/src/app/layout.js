@@ -2,6 +2,7 @@
 import './globals.css';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
+import { Toaster } from 'sonner';
 import { useSearchParams, usePathname } from 'next/navigation';
 import { useEffect, Suspense } from 'react';
 import { connectSocket } from '@/socket';
@@ -62,6 +63,7 @@ export default function RootLayout({ children }) {
         <Suspense>
           <LayoutContent>{children}</LayoutContent>
         </Suspense>
+        <Toaster theme="dark" richColors position="top-right" />
       </body>
     </html>
   );
