@@ -87,9 +87,6 @@ module.exports = {
                { name: 'Dutch', value: 'nl' }
              )
         )
-    )
-    .addSubcommand(sub =>
-      sub.setName('dashboard').setDescription('Get the link to the web dashboard')
     ),
 
   async execute(interaction) {
