@@ -98,10 +98,23 @@ if (BaseInteraction.prototype.editReply && BaseInteraction.prototype.editReply !
 }
 if (BaseInteraction.prototype.update) {
     const originalUpdate = BaseInteraction.prototype.update;
+    const originalBaseEditReply = BaseInteraction.prototype.editReply || originalEditReply;
+    
     BaseInteraction.prototype.update = async function(options) {
         if (this.guildId && !isTranslated(options)) {
+            let deferredByUs = false;
+            if (!this.deferred && !this.replied && typeof this.deferUpdate === 'function') {
+                await this.deferUpdate().catch(() => {});
+                deferredByUs = true;
+            }
+
             options = await translateMessagePayload(options, this.guildId);
             if (typeof options === 'object') markTranslated(options);
+
+            if (deferredByUs) {
+                // If we deferred an update, we must use editReply to actually send the new message content
+                return originalBaseEditReply.call(this, options);
+            }
         }
         return originalUpdate.call(this, options);
     };
