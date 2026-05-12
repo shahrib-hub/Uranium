@@ -13,7 +13,7 @@ export default function ServersPage() {
   const router = useRouter();
   const { resetPlayer } = useStore();
 
-  const CLIENT_ID = "1258671407338524672";
+  const CLIENT_ID = "932136827605905489";
 
   const fetchGuilds = async () => {
     setRefreshing(true);
