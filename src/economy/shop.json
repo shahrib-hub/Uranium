@@ -88,6 +88,880 @@
       }
     },
     {
+      "id": "boost_daily",
+      "name": "Daily Doubler",
+      "emoji": "🎁",
+      "price": 5000,
+      "sellPrice": 2500,
+      "description": "Your next daily reward is doubled!",
+      "type": "consumable",
+      "rarity": "uncommon",
+      "category": "boosters",
+      "levelReq": 0,
+      "stackable": true,
+      "tradeable": true,
+      "data": {
+        "effect": "daily_double"
+      }
+    },
+    {
+      "id": "tool_fishing_rod",
+      "name": "Fishing Rod",
+      "emoji": "🎣",
+      "price": 3000,
+      "sellPrice": 1500,
+      "description": "Required for fishing. Has 30 uses.",
+      "type": "tool",
+      "rarity": "common",
+      "category": "tools",
+      "levelReq": 0,
+      "stackable": false,
+      "tradeable": true,
+      "data": {
+        "durability": 30,
+        "slot": "fish"
+      },
+      "usable": false
+    },
+    {
+      "id": "tool_shovel",
+      "name": "Shovel",
+      "emoji": "🌾",
+      "price": 2000,
+      "sellPrice": 1000,
+      "description": "Doubles search rewards. 25 uses.",
+      "type": "tool",
+      "rarity": "common",
+      "category": "tools",
+      "levelReq": 0,
+      "stackable": false,
+      "tradeable": true,
+      "data": {
+        "durability": 25,
+        "slot": "search"
+      },
+      "usable": false
+    },
+    {
+      "id": "prot_padlock",
+      "name": "Padlock",
+      "emoji": "🔒",
+      "price": 5000,
+      "sellPrice": 2500,
+      "description": "Blocks ONE rob attempt. Consumed on use.",
+      "type": "protection",
+      "rarity": "common",
+      "category": "protection",
+      "levelReq": 0,
+      "stackable": true,
+      "tradeable": true,
+      "data": {
+        "blocks": 1
+      },
+      "usable": false
+    },
+    {
+      "id": "crate_common",
+      "name": "Common Crate",
+      "emoji": "📦",
+      "price": 2000,
+      "sellPrice": 1000,
+      "description": "Contains random common items and Atoms.",
+      "type": "lootbox",
+      "rarity": "common",
+      "category": "lootboxes",
+      "levelReq": 0,
+      "stackable": true,
+      "tradeable": true,
+      "data": {
+        "tier": "common",
+        "Atoms": [
+          500,
+          3000
+        ]
+      }
+    },
+    {
+      "id": "con_energy",
+      "name": "Energy Drink",
+      "emoji": "🥤",
+      "price": 1500,
+      "sellPrice": 750,
+      "description": "Instantly resets your work cooldown!",
+      "type": "consumable",
+      "rarity": "common",
+      "category": "consumables",
+      "levelReq": 0,
+      "stackable": true,
+      "tradeable": true,
+      "data": {
+        "effect": "reset_cooldown",
+        "target": "WORK"
+      }
+    },
+    {
+      "id": "bank_tier_1",
+      "name": "Bank Tier I",
+      "emoji": "💳",
+      "price": 5000,
+      "sellPrice": 0,
+      "description": "Upgrade bank to Tier 1.",
+      "type": "bank_upgrade",
+      "rarity": "common",
+      "category": "bank",
+      "levelReq": 0,
+      "stackable": false,
+      "tradeable": false,
+      "data": {
+        "tier": 1
+      },
+      "usable": false
+    },
+    {
+      "id": "badge_og",
+      "name": "Badge: OG",
+      "emoji": "🕶️",
+      "price": 100000,
+      "sellPrice": 0,
+      "description": "OG badge on your profile.",
+      "type": "badge",
+      "rarity": "rare",
+      "category": "cosmetics",
+      "levelReq": 0,
+      "stackable": false,
+      "tradeable": false,
+      "data": {
+        "badge": "🕶️ OG"
+      },
+      "usable": false
+    },
+    {
+      "id": "color_pink",
+      "name": "Theme: Neon Pink",
+      "emoji": "🌸",
+      "price": 20000,
+      "sellPrice": 0,
+      "description": "Neon pink profile embeds.",
+      "type": "color",
+      "rarity": "uncommon",
+      "category": "cosmetics",
+      "levelReq": 0,
+      "stackable": false,
+      "tradeable": false,
+      "data": {
+        "color": "#ff4b9b"
+      },
+      "usable": false
+    },
+    {
+      "id": "color_midnight",
+      "name": "Theme: Midnight Blue",
+      "emoji": "🌙",
+      "price": 25000,
+      "sellPrice": 0,
+      "description": "Deep midnight blue theme.",
+      "type": "color",
+      "rarity": "uncommon",
+      "category": "cosmetics",
+      "levelReq": 0,
+      "stackable": false,
+      "tradeable": false,
+      "data": {
+        "color": "#1a1a4e"
+      },
+      "usable": false
+    },
+    {
+      "id": "veh_bicycle",
+      "name": "Vintage Bicycle",
+      "emoji": "🚲",
+      "price": 1000,
+      "sellPrice": 500,
+      "description": "Basic transport. Low efficiency.",
+      "type": "vehicle",
+      "rarity": "common",
+      "category": "vehicles",
+      "levelReq": 0,
+      "usable": false
+    },
+    {
+      "id": "pet_hamster",
+      "name": "Chubby Hamster",
+      "emoji": "🐹",
+      "price": 2000,
+      "sellPrice": 1000,
+      "description": "Small but determined.",
+      "type": "pet",
+      "rarity": "common",
+      "category": "pets",
+      "levelReq": 0,
+      "usable": false
+    },
+    {
+      "id": "rel_coin",
+      "name": "Ancient Greek Coin",
+      "emoji": "🪙",
+      "price": 5000,
+      "sellPrice": 2500,
+      "description": "A piece of history.",
+      "type": "relic",
+      "rarity": "common",
+      "category": "relics",
+      "levelReq": 0,
+      "usable": false
+    },
+    {
+      "id": "tool_wooden_pickaxe",
+      "name": "Wooden Pickaxe",
+      "emoji": "⛏️",
+      "price": 500,
+      "sellPrice": 250,
+      "description": "Basic pickaxe. 10 uses.",
+      "type": "tool",
+      "rarity": "common",
+      "category": "tools",
+      "levelReq": 0,
+      "stackable": false,
+      "tradeable": true,
+      "usable": false,
+      "data": {
+        "durability": 10,
+        "slot": "mine"
+      }
+    },
+    {
+      "id": "tool_wooden_axe",
+      "name": "Wooden Axe",
+      "emoji": "🪓",
+      "price": 600,
+      "sellPrice": 300,
+      "description": "Basic axe for chopping. 15 uses.",
+      "type": "tool",
+      "rarity": "common",
+      "category": "tools",
+      "levelReq": 0,
+      "stackable": false,
+      "tradeable": true,
+      "usable": false,
+      "data": {
+        "durability": 15,
+        "slot": "chop"
+      }
+    },
+    {
+      "id": "tool_basic_rod",
+      "name": "Wooden Rod",
+      "emoji": "🎣",
+      "price": 400,
+      "sellPrice": 200,
+      "description": "Simple fishing rod. 15 uses.",
+      "type": "tool",
+      "rarity": "common",
+      "category": "tools",
+      "levelReq": 0,
+      "stackable": false,
+      "tradeable": true,
+      "usable": false,
+      "data": {
+        "durability": 15,
+        "slot": "fish"
+      }
+    },
+    {
+      "id": "tool_trowel",
+      "name": "Hand Trowel",
+      "emoji": "🥄",
+      "price": 300,
+      "sellPrice": 150,
+      "description": "Dig for scraps. 15 uses.",
+      "type": "tool",
+      "rarity": "common",
+      "category": "tools",
+      "levelReq": 0,
+      "stackable": false,
+      "tradeable": true,
+      "usable": false,
+      "data": {
+        "durability": 15,
+        "slot": "dig"
+      }
+    },
+    {
+      "id": "con_apple",
+      "name": "Apple",
+      "emoji": "🍎",
+      "price": 100,
+      "sellPrice": 50,
+      "description": "A tasty apple. +5 XP.",
+      "type": "consumable",
+      "rarity": "common",
+      "category": "consumables",
+      "levelReq": 0,
+      "stackable": true,
+      "tradeable": true,
+      "usable": true,
+      "data": {
+        "effect": "add_xp",
+        "amount": 5
+      }
+    },
+    {
+      "id": "boost_work_tiny",
+      "name": "Work Booster (+5%)",
+      "emoji": "💼",
+      "price": 1000,
+      "sellPrice": 500,
+      "description": "Increases work earnings by 5% for 1 hour.",
+      "type": "booster",
+      "rarity": "common",
+      "category": "boosters",
+      "levelReq": 0,
+      "stackable": true,
+      "tradeable": true,
+      "usable": true,
+      "data": {
+        "key": "work",
+        "multiplier": 1.05,
+        "durationMs": 3600000
+      }
+    },
+    {
+      "id": "con_donut",
+      "name": "Donut",
+      "emoji": "🍩",
+      "price": 300,
+      "sellPrice": 150,
+      "description": "A sweet donut. +20 XP.",
+      "type": "consumable",
+      "rarity": "common",
+      "category": "consumables",
+      "levelReq": 0,
+      "stackable": true,
+      "tradeable": true,
+      "usable": true,
+      "data": {
+        "effect": "add_xp",
+        "amount": 20
+      }
+    },
+    {
+      "id": "col_seashell",
+      "name": "Seashell",
+      "emoji": "🐚",
+      "price": 200,
+      "sellPrice": 100,
+      "description": "A pretty shell.",
+      "type": "collectible",
+      "rarity": "common",
+      "category": "collectibles",
+      "levelReq": 0,
+      "stackable": true,
+      "tradeable": true,
+      "usable": false,
+      "data": {}
+    },
+    {
+      "id": "col_shiny_pebble",
+      "name": "Shiny Pebble",
+      "emoji": "🪨",
+      "price": 300,
+      "sellPrice": 150,
+      "description": "It glows a bit.",
+      "type": "collectible",
+      "rarity": "common",
+      "category": "collectibles",
+      "levelReq": 0,
+      "stackable": true,
+      "tradeable": true,
+      "usable": false,
+      "data": {}
+    },
+    {
+      "id": "col_old_coin",
+      "name": "Old Coin",
+      "emoji": "🪙",
+      "price": 500,
+      "sellPrice": 250,
+      "description": "An old rusted coin.",
+      "type": "collectible",
+      "rarity": "common",
+      "category": "collectibles",
+      "levelReq": 0,
+      "stackable": true,
+      "tradeable": true,
+      "usable": false,
+      "data": {}
+    },
+    {
+      "id": "col_broken_watch",
+      "name": "Broken Watch",
+      "emoji": "⌚",
+      "price": 700,
+      "sellPrice": 350,
+      "description": "A broken watch.",
+      "type": "collectible",
+      "rarity": "common",
+      "category": "collectibles",
+      "levelReq": 0,
+      "stackable": true,
+      "tradeable": true,
+      "usable": false,
+      "data": {}
+    },
+    {
+      "id": "col_cool_leaf",
+      "name": "Cool Leaf",
+      "emoji": "🍁",
+      "price": 150,
+      "sellPrice": 75,
+      "description": "A very cool leaf.",
+      "type": "collectible",
+      "rarity": "common",
+      "category": "collectibles",
+      "levelReq": 0,
+      "stackable": true,
+      "tradeable": true,
+      "usable": false,
+      "data": {}
+    },
+    {
+      "id": "col_glass_shard",
+      "name": "Glass Shard",
+      "emoji": "💎",
+      "price": 400,
+      "sellPrice": 200,
+      "description": "Looks like a gem but it is glass.",
+      "type": "collectible",
+      "rarity": "common",
+      "category": "collectibles",
+      "levelReq": 0,
+      "stackable": true,
+      "tradeable": true,
+      "usable": false,
+      "data": {}
+    },
+    {
+      "id": "col_rusty_key",
+      "name": "Rusty Key",
+      "emoji": "🗝️",
+      "price": 600,
+      "sellPrice": 300,
+      "description": "A rusty old key.",
+      "type": "collectible",
+      "rarity": "common",
+      "category": "collectibles",
+      "levelReq": 0,
+      "stackable": true,
+      "tradeable": true,
+      "usable": false,
+      "data": {}
+    },
+    {
+      "id": "col_toy_car",
+      "name": "Toy Car",
+      "emoji": "🚗",
+      "price": 1000,
+      "sellPrice": 500,
+      "description": "A small toy car.",
+      "type": "collectible",
+      "rarity": "common",
+      "category": "collectibles",
+      "levelReq": 0,
+      "stackable": true,
+      "tradeable": true,
+      "usable": false,
+      "data": {}
+    },
+    {
+      "id": "col_marbles",
+      "name": "Bag of Marbles",
+      "emoji": "🔮",
+      "price": 800,
+      "sellPrice": 400,
+      "description": "A bag of glass marbles.",
+      "type": "collectible",
+      "rarity": "common",
+      "category": "collectibles",
+      "levelReq": 0,
+      "stackable": true,
+      "tradeable": true,
+      "usable": false,
+      "data": {}
+    },
+    {
+      "id": "col_comic_book",
+      "name": "Comic Book",
+      "emoji": "🦸",
+      "price": 1200,
+      "sellPrice": 600,
+      "description": "Issue #1.",
+      "type": "collectible",
+      "rarity": "common",
+      "category": "collectibles",
+      "levelReq": 0,
+      "stackable": true,
+      "tradeable": true,
+      "usable": false,
+      "data": {}
+    },
+    {
+      "id": "pet_fish",
+      "name": "Golden Fish",
+      "emoji": "🐠",
+      "price": 4000,
+      "sellPrice": 2000,
+      "description": "Brings slight luck.",
+      "type": "pet",
+      "rarity": "common",
+      "category": "pets",
+      "levelReq": 1,
+      "usable": false
+    },
+    {
+      "id": "tool_slingshot",
+      "name": "Slingshot",
+      "emoji": "🏹",
+      "price": 800,
+      "sellPrice": 400,
+      "description": "Hunt small animals. 20 uses.",
+      "type": "tool",
+      "rarity": "common",
+      "category": "tools",
+      "levelReq": 1,
+      "stackable": false,
+      "tradeable": true,
+      "usable": false,
+      "data": {
+        "durability": 20,
+        "slot": "hunt"
+      }
+    },
+    {
+      "id": "con_bread",
+      "name": "Bread",
+      "emoji": "🍞",
+      "price": 250,
+      "sellPrice": 125,
+      "description": "A loaf of bread. +15 XP.",
+      "type": "consumable",
+      "rarity": "common",
+      "category": "consumables",
+      "levelReq": 1,
+      "stackable": true,
+      "tradeable": true,
+      "usable": true,
+      "data": {
+        "effect": "add_xp",
+        "amount": 15
+      }
+    },
+    {
+      "id": "boost_xp_small",
+      "name": "XP Booster (1.2x)",
+      "emoji": "✨",
+      "price": 2000,
+      "sellPrice": 1000,
+      "description": "20% extra XP for 1 hour.",
+      "type": "booster",
+      "rarity": "common",
+      "category": "boosters",
+      "levelReq": 1,
+      "stackable": true,
+      "tradeable": true,
+      "usable": true,
+      "data": {
+        "key": "xp",
+        "multiplier": 1.2,
+        "durationMs": 3600000
+      }
+    },
+    {
+      "id": "boost_luck_small",
+      "name": "Tiny Charm",
+      "emoji": "🍀",
+      "price": 3000,
+      "sellPrice": 1500,
+      "description": "Increases luck slightly for 1 hour.",
+      "type": "booster",
+      "rarity": "common",
+      "category": "boosters",
+      "levelReq": 1,
+      "stackable": true,
+      "tradeable": true,
+      "usable": true,
+      "data": {
+        "key": "luck",
+        "multiplier": 1.05,
+        "durationMs": 3600000
+      }
+    },
+    {
+      "id": "veh_scooter",
+      "name": "Electric Scooter",
+      "emoji": "🛴",
+      "price": 5000,
+      "sellPrice": 2500,
+      "description": "Zippy and fun for short trips.",
+      "type": "vehicle",
+      "rarity": "common",
+      "category": "vehicles",
+      "levelReq": 2,
+      "usable": false
+    },
+    {
+      "id": "con_energy_bar",
+      "name": "Protein Bar",
+      "emoji": "🍫",
+      "price": 2000,
+      "sellPrice": 1000,
+      "description": "Short work cooldown reduction.",
+      "type": "consumable",
+      "rarity": "common",
+      "category": "consumables",
+      "levelReq": 2
+    },
+    {
+      "id": "tool_stone_pickaxe",
+      "name": "Stone Pickaxe",
+      "emoji": "⛏️",
+      "price": 1500,
+      "sellPrice": 750,
+      "description": "Better pickaxe. 25 uses.",
+      "type": "tool",
+      "rarity": "common",
+      "category": "tools",
+      "levelReq": 2,
+      "stackable": false,
+      "tradeable": true,
+      "usable": false,
+      "data": {
+        "durability": 25,
+        "slot": "mine"
+      }
+    },
+    {
+      "id": "tool_spade",
+      "name": "Iron Spade",
+      "emoji": "⛏️",
+      "price": 1200,
+      "sellPrice": 600,
+      "description": "Dig deeper. 30 uses.",
+      "type": "tool",
+      "rarity": "common",
+      "category": "tools",
+      "levelReq": 2,
+      "stackable": false,
+      "tradeable": true,
+      "usable": false,
+      "data": {
+        "durability": 30,
+        "slot": "dig"
+      }
+    },
+    {
+      "id": "con_coffee",
+      "name": "Coffee",
+      "emoji": "☕",
+      "price": 500,
+      "sellPrice": 250,
+      "description": "Reduces work cooldowns by 10 mins.",
+      "type": "consumable",
+      "rarity": "common",
+      "category": "consumables",
+      "levelReq": 2,
+      "stackable": true,
+      "tradeable": true,
+      "usable": true,
+      "data": {
+        "effect": "reduce_cooldown",
+        "target": "WORK",
+        "ms": 600000
+      }
+    },
+    {
+      "id": "con_tea",
+      "name": "Green Tea",
+      "emoji": "🍵",
+      "price": 600,
+      "sellPrice": 300,
+      "description": "Reduces crime cooldowns by 10 mins.",
+      "type": "consumable",
+      "rarity": "common",
+      "category": "consumables",
+      "levelReq": 2,
+      "stackable": true,
+      "tradeable": true,
+      "usable": true,
+      "data": {
+        "effect": "reduce_cooldown",
+        "target": "CRIME",
+        "ms": 600000
+      }
+    },
+    {
+      "id": "boost_hunt_small",
+      "name": "Hunt Booster (+10%)",
+      "emoji": "🐾",
+      "price": 2000,
+      "sellPrice": 1000,
+      "description": "Better hunt success for 1 hour.",
+      "type": "booster",
+      "rarity": "common",
+      "category": "boosters",
+      "levelReq": 2,
+      "stackable": true,
+      "tradeable": true,
+      "usable": true,
+      "data": {
+        "key": "hunt",
+        "multiplier": 1.1,
+        "durationMs": 3600000
+      }
+    },
+    {
+      "id": "boost_luck",
+      "name": "Lucky Charm",
+      "emoji": "🍀",
+      "price": 8000,
+      "sellPrice": 4000,
+      "description": "Increases luck in games, hunts and fishing for 1 hour.",
+      "type": "booster",
+      "rarity": "rare",
+      "category": "boosters",
+      "levelReq": 3,
+      "stackable": true,
+      "tradeable": true,
+      "data": {
+        "key": "luck",
+        "multiplier": 1.15,
+        "durationMs": 3600000
+      }
+    },
+    {
+      "id": "tool_hunting_rifle",
+      "name": "Hunting Rifle",
+      "emoji": "🔫",
+      "price": 5000,
+      "sellPrice": 2500,
+      "description": "Required for hunting. Has 25 uses.",
+      "type": "tool",
+      "rarity": "uncommon",
+      "category": "tools",
+      "levelReq": 3,
+      "stackable": false,
+      "tradeable": true,
+      "data": {
+        "durability": 25,
+        "slot": "hunt"
+      },
+      "usable": false
+    },
+    {
+      "id": "con_potion",
+      "name": "Healing Potion",
+      "emoji": "🧪",
+      "price": 3000,
+      "sellPrice": 1500,
+      "description": "Recover from a failed crime (removes fine).",
+      "type": "consumable",
+      "rarity": "uncommon",
+      "category": "consumables",
+      "levelReq": 3,
+      "stackable": true,
+      "tradeable": true,
+      "data": {
+        "effect": "heal_fine"
+      }
+    },
+    {
+      "id": "bank_tier_2",
+      "name": "Bank Tier II",
+      "emoji": "💳",
+      "price": 15000,
+      "sellPrice": 0,
+      "description": "Upgrade bank to Tier 2.",
+      "type": "bank_upgrade",
+      "rarity": "common",
+      "category": "bank",
+      "levelReq": 3,
+      "stackable": false,
+      "tradeable": false,
+      "data": {
+        "tier": 2
+      },
+      "usable": false
+    },
+    {
+      "id": "pet_rabbit",
+      "name": "Fluffy Rabbit",
+      "emoji": "🐰",
+      "price": 8000,
+      "sellPrice": 4000,
+      "description": "Fast and alert.",
+      "type": "pet",
+      "rarity": "common",
+      "category": "pets",
+      "levelReq": 3,
+      "usable": false
+    },
+    {
+      "id": "tool_stone_axe",
+      "name": "Stone Axe",
+      "emoji": "🪓",
+      "price": 1800,
+      "sellPrice": 900,
+      "description": "Stone axe. 30 uses.",
+      "type": "tool",
+      "rarity": "common",
+      "category": "tools",
+      "levelReq": 3,
+      "stackable": false,
+      "tradeable": true,
+      "usable": false,
+      "data": {
+        "durability": 30,
+        "slot": "chop"
+      }
+    },
+    {
+      "id": "tool_iron_rod",
+      "name": "Iron Rod",
+      "emoji": "🎣",
+      "price": 2000,
+      "sellPrice": 1000,
+      "description": "Sturdy rod. 40 uses.",
+      "type": "tool",
+      "rarity": "uncommon",
+      "category": "tools",
+      "levelReq": 4,
+      "stackable": false,
+      "tradeable": true,
+      "usable": false,
+      "data": {
+        "durability": 40,
+        "slot": "fish"
+      }
+    },
+    {
+      "id": "tool_bow",
+      "name": "Hunter Bow",
+      "emoji": "🏹",
+      "price": 2500,
+      "sellPrice": 1250,
+      "description": "Hunt bigger animals. 35 uses.",
+      "type": "tool",
+      "rarity": "uncommon",
+      "category": "tools",
+      "levelReq": 4,
+      "stackable": false,
+      "tradeable": true,
+      "usable": false,
+      "data": {
+        "durability": 35,
+        "slot": "hunt"
+      }
+    },
+    {
       "id": "boost_work_large",
       "name": "Work Booster (+25%)",
       "emoji": "📈",
@@ -126,80 +1000,6 @@
       }
     },
     {
-      "id": "boost_daily",
-      "name": "Daily Doubler",
-      "emoji": "🎁",
-      "price": 5000,
-      "sellPrice": 2500,
-      "description": "Your next daily reward is doubled!",
-      "type": "consumable",
-      "rarity": "uncommon",
-      "category": "boosters",
-      "levelReq": 0,
-      "stackable": true,
-      "tradeable": true,
-      "data": {
-        "effect": "daily_double"
-      }
-    },
-    {
-      "id": "boost_luck",
-      "name": "Lucky Charm",
-      "emoji": "🍀",
-      "price": 8000,
-      "sellPrice": 4000,
-      "description": "Increases luck in games, hunts and fishing for 1 hour.",
-      "type": "booster",
-      "rarity": "rare",
-      "category": "boosters",
-      "levelReq": 3,
-      "stackable": true,
-      "tradeable": true,
-      "data": {
-        "key": "luck",
-        "multiplier": 1.15,
-        "durationMs": 3600000
-      }
-    },
-    {
-      "id": "boost_xp",
-      "name": "XP Booster (2x)",
-      "emoji": "✨",
-      "price": 10000,
-      "sellPrice": 5000,
-      "description": "Double XP from all actions for 1 hour.",
-      "type": "booster",
-      "rarity": "rare",
-      "category": "boosters",
-      "levelReq": 8,
-      "stackable": true,
-      "tradeable": true,
-      "data": {
-        "key": "xp",
-        "multiplier": 2,
-        "durationMs": 3600000
-      }
-    },
-    {
-      "id": "boost_adventure",
-      "name": "Adventure Compass",
-      "emoji": "🧭",
-      "price": 12000,
-      "sellPrice": 6000,
-      "description": "Increases adventure rewards by 20% for 1 hour.",
-      "type": "booster",
-      "rarity": "rare",
-      "category": "boosters",
-      "levelReq": 10,
-      "stackable": true,
-      "tradeable": true,
-      "data": {
-        "key": "adventure",
-        "multiplier": 1.2,
-        "durationMs": 3600000
-      }
-    },
-    {
       "id": "boost_fish",
       "name": "Fish Bait Deluxe",
       "emoji": "🐛",
@@ -219,42 +1019,6 @@
       }
     },
     {
-      "id": "tool_fishing_rod",
-      "name": "Fishing Rod",
-      "emoji": "🎣",
-      "price": 3000,
-      "sellPrice": 1500,
-      "description": "Required for fishing. Has 30 uses.",
-      "type": "tool",
-      "rarity": "common",
-      "category": "tools",
-      "levelReq": 0,
-      "stackable": false,
-      "tradeable": true,
-      "data": {
-        "durability": 30,
-        "slot": "fish"
-      }
-    },
-    {
-      "id": "tool_hunting_rifle",
-      "name": "Hunting Rifle",
-      "emoji": "🔫",
-      "price": 5000,
-      "sellPrice": 2500,
-      "description": "Required for hunting. Has 25 uses.",
-      "type": "tool",
-      "rarity": "uncommon",
-      "category": "tools",
-      "levelReq": 3,
-      "stackable": false,
-      "tradeable": true,
-      "data": {
-        "durability": 25,
-        "slot": "hunt"
-      }
-    },
-    {
       "id": "tool_pickaxe",
       "name": "Pickaxe",
       "emoji": "⛏️",
@@ -270,25 +1034,8 @@
       "data": {
         "durability": 20,
         "slot": "explore"
-      }
-    },
-    {
-      "id": "tool_shovel",
-      "name": "Shovel",
-      "emoji": "🌾",
-      "price": 2000,
-      "sellPrice": 1000,
-      "description": "Doubles search rewards. 25 uses.",
-      "type": "tool",
-      "rarity": "common",
-      "category": "tools",
-      "levelReq": 0,
-      "stackable": false,
-      "tradeable": true,
-      "data": {
-        "durability": 25,
-        "slot": "search"
-      }
+      },
+      "usable": false
     },
     {
       "id": "tool_net",
@@ -306,79 +1053,8 @@
       "data": {
         "durability": 20,
         "slot": "hunt_bonus"
-      }
-    },
-    {
-      "id": "tool_metal_detector",
-      "name": "Metal Detector",
-      "emoji": "📡",
-      "price": 20000,
-      "sellPrice": 10000,
-      "description": "Find rare items while searching. 15 uses.",
-      "type": "tool",
-      "rarity": "epic",
-      "category": "tools",
-      "levelReq": 15,
-      "stackable": false,
-      "tradeable": true,
-      "data": {
-        "durability": 15,
-        "slot": "search_bonus"
-      }
-    },
-    {
-      "id": "tool_lockpick",
-      "name": "Lockpick Set",
-      "emoji": "🔑",
-      "price": 15000,
-      "sellPrice": 7500,
-      "description": "Increases rob success by 15%. 10 uses.",
-      "type": "tool",
-      "rarity": "rare",
-      "category": "tools",
-      "levelReq": 10,
-      "stackable": false,
-      "tradeable": true,
-      "data": {
-        "durability": 10,
-        "slot": "rob"
-      }
-    },
-    {
-      "id": "tool_golden_rod",
-      "name": "Golden Fishing Rod",
-      "emoji": "🏆",
-      "price": 50000,
-      "sellPrice": 25000,
-      "description": "Legendary rod! 50 uses, +40% rare fish.",
-      "type": "tool",
-      "rarity": "legendary",
-      "category": "tools",
-      "levelReq": 25,
-      "stackable": false,
-      "tradeable": true,
-      "data": {
-        "durability": 50,
-        "slot": "fish",
-        "bonus": 0.4
-      }
-    },
-    {
-      "id": "prot_padlock",
-      "name": "Padlock",
-      "emoji": "🔒",
-      "price": 5000,
-      "sellPrice": 2500,
-      "description": "Blocks ONE rob attempt. Consumed on use.",
-      "type": "protection",
-      "rarity": "common",
-      "category": "protection",
-      "levelReq": 0,
-      "stackable": true,
-      "tradeable": true,
-      "data": {
-        "blocks": 1
-      }
+      },
+      "usable": false
     },
     {
       "id": "prot_landmine",
@@ -395,99 +1071,8 @@
       "tradeable": true,
       "data": {
         "counter_pct": 0.25
-      }
-    },
-    {
-      "id": "prot_shield",
-      "name": "Uranium Shield",
-      "emoji": "🛡️",
-      "price": 15000,
-      "sellPrice": 7500,
-      "description": "Blocks rob attempts for 1 hour.",
-      "type": "protection",
-      "rarity": "rare",
-      "category": "protection",
-      "levelReq": 8,
-      "stackable": true,
-      "tradeable": true,
-      "data": {
-        "durationMs": 3600000
-      }
-    },
-    {
-      "id": "prot_insurance",
-      "name": "Life Insurance",
-      "emoji": "📋",
-      "price": 25000,
-      "sellPrice": 12500,
-      "description": "If you fail a crime, your fine is halved. 3 uses.",
-      "type": "protection",
-      "rarity": "rare",
-      "category": "protection",
-      "levelReq": 10,
-      "stackable": false,
-      "tradeable": true,
-      "data": {
-        "uses": 3,
-        "fine_reduction": 0.5
-      }
-    },
-    {
-      "id": "prot_safe",
-      "name": "Uranium Safe",
-      "emoji": "🔐",
-      "price": 50000,
-      "sellPrice": 25000,
-      "description": "Hide up to 50,000 Atoms from robbers permanently.",
-      "type": "protection",
-      "rarity": "epic",
-      "category": "protection",
-      "levelReq": 15,
-      "stackable": false,
-      "tradeable": false,
-      "data": {
-        "stash_limit": 50000
-      }
-    },
-    {
-      "id": "prot_mask",
-      "name": "Robber Mask",
-      "emoji": "🎭",
-      "price": 50000,
-      "sellPrice": 25000,
-      "description": "Increases rob success rate by 20% for 1 hour.",
-      "type": "booster",
-      "rarity": "epic",
-      "category": "protection",
-      "levelReq": 15,
-      "stackable": true,
-      "tradeable": true,
-      "data": {
-        "key": "rob_success",
-        "multiplier": 1.2,
-        "durationMs": 3600000
-      }
-    },
-    {
-      "id": "crate_common",
-      "name": "Common Crate",
-      "emoji": "📦",
-      "price": 2000,
-      "sellPrice": 1000,
-      "description": "Contains random common items and Atoms.",
-      "type": "lootbox",
-      "rarity": "common",
-      "category": "lootboxes",
-      "levelReq": 0,
-      "stackable": true,
-      "tradeable": true,
-      "data": {
-        "tier": "common",
-        "Atoms": [
-          500,
-          3000
-        ]
-      }
+      },
+      "usable": false
     },
     {
       "id": "crate_rare",
@@ -511,123 +1096,6 @@
       }
     },
     {
-      "id": "crate_epic",
-      "name": "Epic Crate",
-      "emoji": "💜",
-      "price": 25000,
-      "sellPrice": 12500,
-      "description": "Guaranteed epic+ item inside!",
-      "type": "lootbox",
-      "rarity": "epic",
-      "category": "lootboxes",
-      "levelReq": 10,
-      "stackable": true,
-      "tradeable": true,
-      "data": {
-        "tier": "epic",
-        "Atoms": [
-          5000,
-          25000
-        ]
-      }
-    },
-    {
-      "id": "crate_legendary",
-      "name": "Legendary Crate",
-      "emoji": "🌟",
-      "price": 75000,
-      "sellPrice": 37500,
-      "description": "Extremely rare items and massive coin drops.",
-      "type": "lootbox",
-      "rarity": "legendary",
-      "category": "lootboxes",
-      "levelReq": 20,
-      "stackable": true,
-      "tradeable": true,
-      "data": {
-        "tier": "legendary",
-        "Atoms": [
-          15000,
-          75000
-        ]
-      }
-    },
-    {
-      "id": "crate_mythic",
-      "name": "Uranium Core Crate",
-      "emoji": "☢️",
-      "price": 200000,
-      "sellPrice": 100000,
-      "description": "The rarest crate. Contains mythic items!",
-      "type": "lootbox",
-      "rarity": "mythic",
-      "category": "lootboxes",
-      "levelReq": 35,
-      "stackable": true,
-      "tradeable": true,
-      "data": {
-        "tier": "mythic",
-        "Atoms": [
-          50000,
-          250000
-        ]
-      }
-    },
-    {
-      "id": "con_energy",
-      "name": "Energy Drink",
-      "emoji": "🥤",
-      "price": 1500,
-      "sellPrice": 750,
-      "description": "Instantly resets your work cooldown!",
-      "type": "consumable",
-      "rarity": "common",
-      "category": "consumables",
-      "levelReq": 0,
-      "stackable": true,
-      "tradeable": true,
-      "data": {
-        "effect": "reset_cooldown",
-        "target": "WORK"
-      }
-    },
-    {
-      "id": "con_potion",
-      "name": "Healing Potion",
-      "emoji": "🧪",
-      "price": 3000,
-      "sellPrice": 1500,
-      "description": "Recover from a failed crime (removes fine).",
-      "type": "consumable",
-      "rarity": "uncommon",
-      "category": "consumables",
-      "levelReq": 3,
-      "stackable": true,
-      "tradeable": true,
-      "data": {
-        "effect": "heal_fine"
-      }
-    },
-    {
-      "id": "con_steroids",
-      "name": "Steroids",
-      "emoji": "💉",
-      "price": 8000,
-      "sellPrice": 4000,
-      "description": "ALL earning commands give 50% more for 30 min.",
-      "type": "booster",
-      "rarity": "rare",
-      "category": "consumables",
-      "levelReq": 10,
-      "stackable": true,
-      "tradeable": true,
-      "data": {
-        "key": "all_earn",
-        "multiplier": 1.5,
-        "durationMs": 1800000
-      }
-    },
-    {
       "id": "con_banknote",
       "name": "Bank Note",
       "emoji": "💵",
@@ -644,6 +1112,166 @@
         "effect": "bank_expand",
         "amount": 10000
       }
+    },
+    {
+      "id": "con_reroll",
+      "name": "Quest Reroll Ticket",
+      "emoji": "🎫",
+      "price": 4000,
+      "sellPrice": 2000,
+      "description": "Reroll your daily quests for new ones.",
+      "type": "consumable",
+      "rarity": "uncommon",
+      "category": "consumables",
+      "levelReq": 5,
+      "stackable": true,
+      "tradeable": true,
+      "data": {
+        "effect": "quest_reroll"
+      }
+    },
+    {
+      "id": "adv_ticket",
+      "name": "Adventure Ticket",
+      "emoji": "🎫",
+      "price": 50000,
+      "sellPrice": 10000,
+      "description": "Required to start an adventure. Rare drop from earning commands.",
+      "type": "consumable",
+      "rarity": "epic",
+      "category": "consumables",
+      "levelReq": 5,
+      "stackable": true,
+      "tradeable": true,
+      "data": {
+        "effect": "adventure"
+      }
+    },
+    {
+      "id": "veh_moto",
+      "name": "Street Motorcycle",
+      "emoji": "🏍️",
+      "price": 25000,
+      "sellPrice": 12500,
+      "description": "Fast and risky. High work boost.",
+      "type": "vehicle",
+      "rarity": "uncommon",
+      "category": "vehicles",
+      "levelReq": 5,
+      "usable": false
+    },
+    {
+      "id": "pet_cat",
+      "name": "House Cat",
+      "emoji": "🐱",
+      "price": 15000,
+      "sellPrice": 7500,
+      "description": "Independent but loyal.",
+      "type": "pet",
+      "rarity": "uncommon",
+      "category": "pets",
+      "levelReq": 5,
+      "usable": false
+    },
+    {
+      "id": "rel_scepter",
+      "name": "Iron Scepter",
+      "emoji": "🦯",
+      "price": 12000,
+      "sellPrice": 6000,
+      "description": "Symbol of a minor kingdom.",
+      "type": "relic",
+      "rarity": "uncommon",
+      "category": "relics",
+      "levelReq": 5,
+      "usable": false
+    },
+    {
+      "id": "prot_decoy",
+      "name": "Hologram Wallet",
+      "emoji": "🧧",
+      "price": 10000,
+      "sellPrice": 5000,
+      "description": "Robbers steal fake money.",
+      "type": "protection",
+      "rarity": "uncommon",
+      "category": "protection",
+      "levelReq": 5,
+      "usable": false
+    },
+    {
+      "id": "con_luck_dice",
+      "name": "Weighted Dice",
+      "emoji": "🎲",
+      "price": 5000,
+      "sellPrice": 2500,
+      "description": "Next gamble win chance +20%.",
+      "type": "consumable",
+      "rarity": "uncommon",
+      "category": "consumables",
+      "levelReq": 5
+    },
+    {
+      "id": "con_medkit",
+      "name": "Advanced Medkit",
+      "emoji": "🩹",
+      "price": 5000,
+      "sellPrice": 2500,
+      "description": "Heal from any injury.",
+      "type": "consumable",
+      "rarity": "uncommon",
+      "category": "consumables",
+      "levelReq": 5
+    },
+    {
+      "id": "pet_dog",
+      "name": "Golden Retriever",
+      "emoji": "🐶",
+      "price": 25000,
+      "sellPrice": 12500,
+      "description": "The best friend you can have.",
+      "type": "pet",
+      "rarity": "uncommon",
+      "category": "pets",
+      "levelReq": 7,
+      "usable": false
+    },
+    {
+      "id": "boost_xp",
+      "name": "XP Booster (2x)",
+      "emoji": "✨",
+      "price": 10000,
+      "sellPrice": 5000,
+      "description": "Double XP from all actions for 1 hour.",
+      "type": "booster",
+      "rarity": "rare",
+      "category": "boosters",
+      "levelReq": 8,
+      "stackable": true,
+      "tradeable": true,
+      "data": {
+        "key": "xp",
+        "multiplier": 2,
+        "durationMs": 3600000
+      }
+    },
+    {
+      "id": "prot_shield",
+      "name": "Uranium Shield",
+      "emoji": "🛡️",
+      "price": 15000,
+      "sellPrice": 7500,
+      "description": "Blocks rob attempts for 1 hour.",
+      "type": "protection",
+      "rarity": "rare",
+      "category": "protection",
+      "levelReq": 8,
+      "stackable": true,
+      "tradeable": true,
+      "data": {
+        "durationMs": 3600000
+      },
+      "usable": false
     },
     {
       "id": "con_speed",
@@ -682,57 +1310,6 @@
       }
     },
     {
-      "id": "con_reroll",
-      "name": "Quest Reroll Ticket",
-      "emoji": "🎫",
-      "price": 4000,
-      "sellPrice": 2000,
-      "description": "Reroll your daily quests for new ones.",
-      "type": "consumable",
-      "rarity": "uncommon",
-      "category": "consumables",
-      "levelReq": 5,
-      "stackable": true,
-      "tradeable": true,
-      "data": {
-        "effect": "quest_reroll"
-      }
-    },
-    {
-      "id": "bank_tier_1",
-      "name": "Bank Tier I",
-      "emoji": "💳",
-      "price": 5000,
-      "sellPrice": 0,
-      "description": "Upgrade bank to Tier 1.",
-      "type": "bank_upgrade",
-      "rarity": "common",
-      "category": "bank",
-      "levelReq": 0,
-      "stackable": false,
-      "tradeable": false,
-      "data": {
-        "tier": 1
-      }
-    },
-    {
-      "id": "bank_tier_2",
-      "name": "Bank Tier II",
-      "emoji": "💳",
-      "price": 15000,
-      "sellPrice": 0,
-      "description": "Upgrade bank to Tier 2.",
-      "type": "bank_upgrade",
-      "rarity": "common",
-      "category": "bank",
-      "levelReq": 3,
-      "stackable": false,
-      "tradeable": false,
-      "data": {
-        "tier": 2
-      }
-    },
-    {
       "id": "bank_tier_3",
       "name": "Bank Tier III",
       "emoji": "💳",
@@ -747,74 +1324,104 @@
       "tradeable": false,
       "data": {
         "tier": 3
-      }
+      },
+      "usable": false
     },
     {
-      "id": "bank_tier_5",
-      "name": "Bank Tier V",
-      "emoji": "💳",
-      "price": 120000,
-      "sellPrice": 0,
-      "description": "Jump to Bank Tier 5.",
-      "type": "bank_upgrade",
+      "id": "boost_adventure",
+      "name": "Adventure Compass",
+      "emoji": "🧭",
+      "price": 12000,
+      "sellPrice": 6000,
+      "description": "Increases adventure rewards by 20% for 1 hour.",
+      "type": "booster",
       "rarity": "rare",
-      "category": "bank",
-      "levelReq": 15,
-      "stackable": false,
-      "tradeable": false,
+      "category": "boosters",
+      "levelReq": 10,
+      "stackable": true,
+      "tradeable": true,
       "data": {
-        "tier": 5
+        "key": "adventure",
+        "multiplier": 1.2,
+        "durationMs": 3600000
       }
     },
     {
-      "id": "bank_tier_10",
-      "name": "Bank Tier X (MAX)",
-      "emoji": "🏦",
-      "price": 500000,
-      "sellPrice": 0,
-      "description": "Max bank capacity!",
-      "type": "bank_upgrade",
-      "rarity": "legendary",
-      "category": "bank",
-      "levelReq": 30,
+      "id": "tool_lockpick",
+      "name": "Lockpick Set",
+      "emoji": "🔑",
+      "price": 15000,
+      "sellPrice": 7500,
+      "description": "Increases rob success by 15%. 10 uses.",
+      "type": "tool",
+      "rarity": "rare",
+      "category": "tools",
+      "levelReq": 10,
       "stackable": false,
-      "tradeable": false,
+      "tradeable": true,
       "data": {
-        "tier": 10
-      }
+        "durability": 10,
+        "slot": "rob"
+      },
+      "usable": false
     },
     {
-      "id": "title_rich",
-      "name": "Title: The Rich",
-      "emoji": "👑",
-      "price": 250000,
-      "sellPrice": 0,
-      "description": "Flex with \"The Rich\" on your profile.",
-      "type": "title",
-      "rarity": "legendary",
-      "category": "cosmetics",
-      "levelReq": 20,
+      "id": "prot_insurance",
+      "name": "Life Insurance",
+      "emoji": "📋",
+      "price": 25000,
+      "sellPrice": 12500,
+      "description": "If you fail a crime, your fine is halved. 3 uses.",
+      "type": "protection",
+      "rarity": "rare",
+      "category": "protection",
+      "levelReq": 10,
       "stackable": false,
-      "tradeable": false,
+      "tradeable": true,
       "data": {
-        "title": "👑 The Rich"
-      }
+        "uses": 3,
+        "fine_reduction": 0.5
+      },
+      "usable": false
     },
     {
-      "id": "title_grinder",
-      "name": "Title: The Grinder",
-      "emoji": "⚙️",
-      "price": 150000,
-      "sellPrice": 0,
-      "description": "\"The Grinder\" — you never stop.",
-      "type": "title",
+      "id": "crate_epic",
+      "name": "Epic Crate",
+      "emoji": "💜",
+      "price": 25000,
+      "sellPrice": 12500,
+      "description": "Guaranteed epic+ item inside!",
+      "type": "lootbox",
       "rarity": "epic",
-      "category": "cosmetics",
-      "levelReq": 15,
-      "stackable": false,
-      "tradeable": false,
+      "category": "lootboxes",
+      "levelReq": 10,
+      "stackable": true,
+      "tradeable": true,
       "data": {
-        "title": "⚙️ The Grinder"
+        "tier": "epic",
+        "Atoms": [
+          5000,
+          25000
+        ]
+      }
+    },
+    {
+      "id": "con_steroids",
+      "name": "Steroids",
+      "emoji": "💉",
+      "price": 8000,
+      "sellPrice": 4000,
+      "description": "ALL earning commands give 50% more for 30 min.",
+      "type": "booster",
+      "rarity": "rare",
+      "category": "consumables",
+      "levelReq": 10,
+      "stackable": true,
+      "tradeable": true,
+      "data": {
+        "key": "all_earn",
+        "multiplier": 1.5,
+        "durationMs": 1800000
       }
     },
     {
@@ -832,58 +1439,8 @@
       "tradeable": false,
       "data": {
         "title": "🗺️ Adventurer"
-      }
-    },
-    {
-      "id": "title_shadow",
-      "name": "Title: Shadow Walker",
-      "emoji": "👤",
-      "price": 300000,
-      "sellPrice": 0,
-      "description": "\"Shadow Walker\" — mysterious and feared.",
-      "type": "title",
-      "rarity": "legendary",
-      "category": "cosmetics",
-      "levelReq": 35,
-      "stackable": false,
-      "tradeable": false,
-      "data": {
-        "title": "👤 Shadow Walker"
-      }
-    },
-    {
-      "id": "badge_og",
-      "name": "Badge: OG",
-      "emoji": "🕶️",
-      "price": 100000,
-      "sellPrice": 0,
-      "description": "OG badge on your profile.",
-      "type": "badge",
-      "rarity": "rare",
-      "category": "cosmetics",
-      "levelReq": 0,
-      "stackable": false,
-      "tradeable": false,
-      "data": {
-        "badge": "🕶️ OG"
-      }
-    },
-    {
-      "id": "badge_legend",
-      "name": "Badge: Legend",
-      "emoji": "🏅",
-      "price": 500000,
-      "sellPrice": 0,
-      "description": "Legendary badge — true champion.",
-      "type": "badge",
-      "rarity": "mythic",
-      "category": "cosmetics",
-      "levelReq": 40,
-      "stackable": false,
-      "tradeable": false,
-      "data": {
-        "badge": "🏅 Legend"
-      }
+      },
+      "usable": false
     },
     {
       "id": "frame_gold",
@@ -900,58 +1457,8 @@
       "tradeable": false,
       "data": {
         "frame": "✨ Gold"
-      }
-    },
-    {
-      "id": "frame_diamond",
-      "name": "Diamond Frame",
-      "emoji": "💎",
-      "price": 200000,
-      "sellPrice": 0,
-      "description": "Stunning diamond profile frame.",
-      "type": "frame",
-      "rarity": "legendary",
-      "category": "cosmetics",
-      "levelReq": 25,
-      "stackable": false,
-      "tradeable": false,
-      "data": {
-        "frame": "💎 Diamond"
-      }
-    },
-    {
-      "id": "color_pink",
-      "name": "Theme: Neon Pink",
-      "emoji": "🌸",
-      "price": 20000,
-      "sellPrice": 0,
-      "description": "Neon pink profile embeds.",
-      "type": "color",
-      "rarity": "uncommon",
-      "category": "cosmetics",
-      "levelReq": 0,
-      "stackable": false,
-      "tradeable": false,
-      "data": {
-        "color": "#ff4b9b"
-      }
-    },
-    {
-      "id": "color_midnight",
-      "name": "Theme: Midnight Blue",
-      "emoji": "🌙",
-      "price": 25000,
-      "sellPrice": 0,
-      "description": "Deep midnight blue theme.",
-      "type": "color",
-      "rarity": "uncommon",
-      "category": "cosmetics",
-      "levelReq": 0,
-      "stackable": false,
-      "tradeable": false,
-      "data": {
-        "color": "#1a1a4e"
-      }
+      },
+      "usable": false
     },
     {
       "id": "collect_petegg",
@@ -968,145 +1475,8 @@
       "tradeable": true,
       "data": {
         "collection": "pets"
-      }
-    },
-    {
-      "id": "collect_trophy",
-      "name": "Gold Trophy",
-      "emoji": "🏆",
-      "price": 45000,
-      "sellPrice": 22500,
-      "description": "A shiny gold trophy for your collection.",
-      "type": "collectible",
-      "rarity": "epic",
-      "category": "collectibles",
-      "levelReq": 15,
-      "stackable": true,
-      "tradeable": true,
-      "data": {
-        "collection": "trophies"
-      }
-    },
-    {
-      "id": "collect_dragon_scale",
-      "name": "Dragon Scale",
-      "emoji": "🐉",
-      "price": 100000,
-      "sellPrice": 50000,
-      "description": "Scale of an ancient dragon. Extremely rare.",
-      "type": "collectible",
-      "rarity": "legendary",
-      "category": "collectibles",
-      "levelReq": 25,
-      "stackable": true,
-      "tradeable": true,
-      "data": {
-        "collection": "dragon"
-      }
-    },
-    {
-      "id": "collect_crown",
-      "name": "Royal Crown",
-      "emoji": "👑",
-      "price": 250000,
-      "sellPrice": 125000,
-      "description": "A crown fit for royalty. Ultimate flex.",
-      "type": "collectible",
-      "rarity": "legendary",
-      "category": "collectibles",
-      "levelReq": 35,
-      "stackable": false,
-      "tradeable": true,
-      "data": {
-        "collection": "royalty"
-      }
-    },
-    {
-      "id": "collect_phoenix",
-      "name": "Phoenix Feather",
-      "emoji": "🔥",
-      "price": 150000,
-      "sellPrice": 75000,
-      "description": "A feather from a reborn phoenix.",
-      "type": "collectible",
-      "rarity": "legendary",
-      "category": "collectibles",
-      "levelReq": 30,
-      "stackable": true,
-      "tradeable": true,
-      "data": {
-        "collection": "mythical"
-      }
-    },
-    {
-      "id": "collect_uranium",
-      "name": "Uranium Core",
-      "emoji": "☢️",
-      "price": 500000,
-      "sellPrice": 250000,
-      "description": "The rarest item. Pure concentrated uranium.",
-      "type": "collectible",
-      "rarity": "mythic",
-      "category": "collectibles",
-      "levelReq": 50,
-      "stackable": false,
-      "tradeable": false,
-      "data": {
-        "collection": "ultimate"
-      }
-    },
-    {
-      "id": "adv_ticket",
-      "name": "Adventure Ticket",
-      "emoji": "🎫",
-      "price": 50000,
-      "sellPrice": 10000,
-      "description": "Required to start an adventure. Rare drop from earning commands.",
-      "type": "consumable",
-      "rarity": "epic",
-      "category": "consumables",
-      "levelReq": 5,
-      "stackable": true,
-      "tradeable": true,
-      "data": {
-        "effect": "adventure"
-      }
-    },
-    {
-      "id": "veh_bicycle",
-      "name": "Vintage Bicycle",
-      "emoji": "🚲",
-      "price": 1000,
-      "sellPrice": 500,
-      "description": "Basic transport. Low efficiency.",
-      "type": "vehicle",
-      "rarity": "common",
-      "category": "vehicles",
-      "levelReq": 0
-    },
-    {
-      "id": "veh_scooter",
-      "name": "Electric Scooter",
-      "emoji": "🛴",
-      "price": 5000,
-      "sellPrice": 2500,
-      "description": "Zippy and fun for short trips.",
-      "type": "vehicle",
-      "rarity": "common",
-      "category": "vehicles",
-      "levelReq": 2
-    },
-    {
-      "id": "veh_moto",
-      "name": "Street Motorcycle",
-      "emoji": "🏍️",
-      "price": 25000,
-      "sellPrice": 12500,
-      "description": "Fast and risky. High work boost.",
-      "type": "vehicle",
-      "rarity": "uncommon",
-      "category": "vehicles",
-      "levelReq": 5
+      },
+      "usable": false
     },
     {
       "id": "veh_atv",
@@ -1118,199 +1488,8 @@
       "type": "vehicle",
       "rarity": "uncommon",
       "category": "vehicles",
-      "levelReq": 10
-    },
-    {
-      "id": "veh_sedan",
-      "name": "Family Sedan",
-      "emoji": "🚗",
-      "price": 75000,
-      "sellPrice": 37500,
-      "description": "Reliable daily driver.",
-      "type": "vehicle",
-      "rarity": "uncommon",
-      "category": "vehicles",
-      "levelReq": 12
-    },
-    {
-      "id": "veh_truck",
-      "name": "Monster Truck",
-      "emoji": "🚙",
-      "price": 150000,
-      "sellPrice": 75000,
-      "description": "Crush the competition.",
-      "type": "vehicle",
-      "rarity": "rare",
-      "category": "vehicles",
-      "levelReq": 15
-    },
-    {
-      "id": "veh_sports",
-      "name": "Sports Car",
-      "emoji": "🏎️",
-      "price": 300000,
-      "sellPrice": 150000,
-      "description": "Sleek and incredibly fast.",
-      "type": "vehicle",
-      "rarity": "rare",
-      "category": "vehicles",
-      "levelReq": 20
-    },
-    {
-      "id": "veh_limo",
-      "name": "Luxury Limo",
-      "emoji": "🚘",
-      "price": 600000,
-      "sellPrice": 300000,
-      "description": "Ride in pure style.",
-      "type": "vehicle",
-      "rarity": "epic",
-      "category": "vehicles",
-      "levelReq": 25
-    },
-    {
-      "id": "veh_super",
-      "name": "Exotic Supercar",
-      "emoji": "🏎️",
-      "price": 1200000,
-      "sellPrice": 600000,
-      "description": "A masterpiece of engineering.",
-      "type": "vehicle",
-      "rarity": "epic",
-      "category": "vehicles",
-      "levelReq": 30
-    },
-    {
-      "id": "veh_hyper",
-      "name": "Hypercar Prototype",
-      "emoji": "🔥",
-      "price": 3000000,
-      "sellPrice": 1500000,
-      "description": "Beyond the limits of physics.",
-      "type": "vehicle",
-      "rarity": "legendary",
-      "category": "vehicles",
-      "levelReq": 40
-    },
-    {
-      "id": "veh_jet",
-      "name": "Private Jet",
-      "emoji": "🛩️",
-      "price": 10000000,
-      "sellPrice": 5000000,
-      "description": "The sky is your playground.",
-      "type": "vehicle",
-      "rarity": "legendary",
-      "category": "vehicles",
-      "levelReq": 50
-    },
-    {
-      "id": "veh_yacht",
-      "name": "Mega Yacht",
-      "emoji": "🚢",
-      "price": 25000000,
-      "sellPrice": 12500000,
-      "description": "A floating palace.",
-      "type": "vehicle",
-      "rarity": "mythic",
-      "category": "vehicles",
-      "levelReq": 60
-    },
-    {
-      "id": "veh_sub",
-      "name": "Attack Submarine",
-      "emoji": "🛥️",
-      "price": 50000000,
-      "sellPrice": 25000000,
-      "description": "Control the depths.",
-      "type": "vehicle",
-      "rarity": "mythic",
-      "category": "vehicles",
-      "levelReq": 70
-    },
-    {
-      "id": "veh_space",
-      "name": "Interstellar Spaceship",
-      "emoji": "🚀",
-      "price": 150000000,
-      "sellPrice": 75000000,
-      "description": "Explore the galaxy.",
-      "type": "vehicle",
-      "rarity": "mythic",
-      "category": "vehicles",
-      "levelReq": 80
-    },
-    {
-      "id": "veh_uranium",
-      "name": "Uranium Rover",
-      "emoji": "☢️",
-      "price": 500000000,
-      "sellPrice": 250000000,
-      "description": "The ultimate survival machine.",
-      "type": "vehicle",
-      "rarity": "mythic",
-      "category": "vehicles",
-      "levelReq": 100
-    },
-    {
-      "id": "pet_hamster",
-      "name": "Chubby Hamster",
-      "emoji": "🐹",
-      "price": 2000,
-      "sellPrice": 1000,
-      "description": "Small but determined.",
-      "type": "pet",
-      "rarity": "common",
-      "category": "pets",
-      "levelReq": 0
-    },
-    {
-      "id": "pet_fish",
-      "name": "Golden Fish",
-      "emoji": "🐠",
-      "price": 4000,
-      "sellPrice": 2000,
-      "description": "Brings slight luck.",
-      "type": "pet",
-      "rarity": "common",
-      "category": "pets",
-      "levelReq": 1
-    },
-    {
-      "id": "pet_rabbit",
-      "name": "Fluffy Rabbit",
-      "emoji": "🐰",
-      "price": 8000,
-      "sellPrice": 4000,
-      "description": "Fast and alert.",
-      "type": "pet",
-      "rarity": "common",
-      "category": "pets",
-      "levelReq": 3
-    },
-    {
-      "id": "pet_cat",
-      "name": "House Cat",
-      "emoji": "🐱",
-      "price": 15000,
-      "sellPrice": 7500,
-      "description": "Independent but loyal.",
-      "type": "pet",
-      "rarity": "uncommon",
-      "category": "pets",
-      "levelReq": 5
-    },
-    {
-      "id": "pet_dog",
-      "name": "Golden Retriever",
-      "emoji": "🐶",
-      "price": 25000,
-      "sellPrice": 12500,
-      "description": "The best friend you can have.",
-      "type": "pet",
-      "rarity": "uncommon",
-      "category": "pets",
-      "levelReq": 7
+      "levelReq": 10,
+      "usable": false
     },
     {
       "id": "pet_fox",
@@ -1322,139 +1501,8 @@
       "type": "pet",
       "rarity": "rare",
       "category": "pets",
-      "levelReq": 10
-    },
-    {
-      "id": "pet_owl",
-      "name": "Snowy Owl",
-      "emoji": "🦉",
-      "price": 80000,
-      "sellPrice": 40000,
-      "description": "Wise predator of the night.",
-      "type": "pet",
-      "rarity": "rare",
-      "category": "pets",
-      "levelReq": 15
-    },
-    {
-      "id": "pet_eagle",
-      "name": "Bald Eagle",
-      "emoji": "🦅",
-      "price": 150000,
-      "sellPrice": 75000,
-      "description": "Majestic bird of prey.",
-      "type": "pet",
-      "rarity": "rare",
-      "category": "pets",
-      "levelReq": 20
-    },
-    {
-      "id": "pet_tiger",
-      "name": "Bengal Tiger",
-      "emoji": "🐅",
-      "price": 350000,
-      "sellPrice": 175000,
-      "description": "Fierce and powerful.",
-      "type": "pet",
-      "rarity": "epic",
-      "category": "pets",
-      "levelReq": 25
-    },
-    {
-      "id": "pet_wolf",
-      "name": "Dire Wolf",
-      "emoji": "🐺",
-      "price": 600000,
-      "sellPrice": 300000,
-      "description": "Leader of the pack.",
-      "type": "pet",
-      "rarity": "epic",
-      "category": "pets",
-      "levelReq": 30
-    },
-    {
-      "id": "pet_griffin",
-      "name": "Ancient Griffin",
-      "emoji": "🦅",
-      "price": 1500000,
-      "sellPrice": 750000,
-      "description": "Legendary half-eagle, half-lion.",
-      "type": "pet",
-      "rarity": "legendary",
-      "category": "pets",
-      "levelReq": 40
-    },
-    {
-      "id": "pet_dragon",
-      "name": "Fire Drake",
-      "emoji": "🐉",
-      "price": 5000000,
-      "sellPrice": 2500000,
-      "description": "A small but deadly dragon.",
-      "type": "pet",
-      "rarity": "legendary",
-      "category": "pets",
-      "levelReq": 50
-    },
-    {
-      "id": "pet_phoenix",
-      "name": "Eternal Phoenix",
-      "emoji": "🔥",
-      "price": 12000000,
-      "sellPrice": 6000000,
-      "description": "Never truly dies.",
-      "type": "pet",
-      "rarity": "mythic",
-      "category": "pets",
-      "levelReq": 60
-    },
-    {
-      "id": "pet_cyber",
-      "name": "Cybernetic Hound",
-      "emoji": "🤖",
-      "price": 30000000,
-      "sellPrice": 15000000,
-      "description": "Advanced AI companion.",
-      "type": "pet",
-      "rarity": "mythic",
-      "category": "pets",
-      "levelReq": 75
-    },
-    {
-      "id": "pet_uranium",
-      "name": "Uranium Dragon",
-      "emoji": "☢️",
-      "price": 100000000,
-      "sellPrice": 50000000,
-      "description": "The pinnacle of evolution.",
-      "type": "pet",
-      "rarity": "mythic",
-      "category": "pets",
-      "levelReq": 100
-    },
-    {
-      "id": "rel_coin",
-      "name": "Ancient Greek Coin",
-      "emoji": "🪙",
-      "price": 5000,
-      "sellPrice": 2500,
-      "description": "A piece of history.",
-      "type": "relic",
-      "rarity": "common",
-      "category": "relics",
-      "levelReq": 0
-    },
-    {
-      "id": "rel_scepter",
-      "name": "Iron Scepter",
-      "emoji": "🦯",
-      "price": 12000,
-      "sellPrice": 6000,
-      "description": "Symbol of a minor kingdom.",
-      "type": "relic",
-      "rarity": "uncommon",
-      "category": "relics",
-      "levelReq": 5
+      "levelReq": 10,
+      "usable": false
     },
     {
       "id": "rel_vase",
@@ -1466,247 +1514,8 @@
       "type": "relic",
       "rarity": "uncommon",
       "category": "relics",
-      "levelReq": 10
-    },
-    {
-      "id": "rel_idol",
-      "name": "Jade Dragon Idol",
-      "emoji": "🐲",
-      "price": 75000,
-      "sellPrice": 37500,
-      "description": "Said to grant luck.",
-      "type": "relic",
-      "rarity": "rare",
-      "category": "relics",
-      "levelReq": 15
-    },
-    {
-      "id": "rel_chalice",
-      "name": "Silver Chalice",
-      "emoji": "🍷",
-      "price": 150000,
-      "sellPrice": 75000,
-      "description": "Used in royal banquets.",
-      "type": "relic",
-      "rarity": "rare",
-      "category": "relics",
-      "levelReq": 20
-    },
-    {
-      "id": "rel_skull",
-      "name": "Crystal Skull",
-      "emoji": "💀",
-      "price": 350000,
-      "sellPrice": 175000,
-      "description": "Mysterious origin.",
-      "type": "relic",
-      "rarity": "epic",
-      "category": "relics",
-      "levelReq": 25
-    },
-    {
-      "id": "rel_tablet",
-      "name": "Golden Tablet",
-      "emoji": "📜",
-      "price": 800000,
-      "sellPrice": 400000,
-      "description": "Inscribed with ancient secrets.",
-      "type": "relic",
-      "rarity": "epic",
-      "category": "relics",
-      "levelReq": 30
-    },
-    {
-      "id": "rel_crown",
-      "name": "Pharaoh's Crown",
-      "emoji": "👑",
-      "price": 2000000,
-      "sellPrice": 1000000,
-      "description": "Ultimate royal artifact.",
-      "type": "relic",
-      "rarity": "legendary",
-      "category": "relics",
-      "levelReq": 40
-    },
-    {
-      "id": "rel_sword",
-      "name": "Excalibur Shard",
-      "emoji": "⚔️",
-      "price": 5000000,
-      "sellPrice": 2500000,
-      "description": "A fragment of legend.",
-      "type": "relic",
-      "rarity": "legendary",
-      "category": "relics",
-      "levelReq": 50
-    },
-    {
-      "id": "rel_eye",
-      "name": "Eye of Ra",
-      "emoji": "👁️",
-      "price": 12000000,
-      "sellPrice": 6000000,
-      "description": "See through the veil.",
-      "type": "relic",
-      "rarity": "mythic",
-      "category": "relics",
-      "levelReq": 60
-    },
-    {
-      "id": "rel_star",
-      "name": "Fallen Star",
-      "emoji": "🌟",
-      "price": 30000000,
-      "sellPrice": 15000000,
-      "description": "Pure celestial energy.",
-      "type": "relic",
-      "rarity": "mythic",
-      "category": "relics",
-      "levelReq": 70
-    },
-    {
-      "id": "rel_void",
-      "name": "Void Core",
-      "emoji": "🌑",
-      "price": 75000000,
-      "sellPrice": 37500000,
-      "description": "Darkness concentrated.",
-      "type": "relic",
-      "rarity": "mythic",
-      "category": "relics",
-      "levelReq": 80
-    },
-    {
-      "id": "rel_sing",
-      "name": "Frozen Singularity",
-      "emoji": "🕳️",
-      "price": 200000000,
-      "sellPrice": 100000000,
-      "description": "The center of a black hole.",
-      "type": "relic",
-      "rarity": "mythic",
-      "category": "relics",
-      "levelReq": 90
-    },
-    {
-      "id": "rel_time",
-      "name": "Epoch Clock",
-      "emoji": "⌚",
-      "price": 500000000,
-      "sellPrice": 250000000,
-      "description": "Control time itself.",
-      "type": "relic",
-      "rarity": "mythic",
-      "category": "relics",
-      "levelReq": 100
-    },
-    {
-      "id": "rel_uranium",
-      "name": "Primordial Uranium",
-      "emoji": "☢️",
-      "price": 1000000000,
-      "sellPrice": 500000000,
-      "description": "The first element.",
-      "type": "relic",
-      "rarity": "mythic",
-      "category": "relics",
-      "levelReq": 120
-    },
-    {
-      "id": "prot_safe_box",
-      "name": "Steel Safe Box",
-      "emoji": "🗄️",
-      "price": 75000,
-      "sellPrice": 37500,
-      "description": "Higher capacity safe.",
-      "type": "protection",
-      "rarity": "rare",
-      "category": "protection",
-      "levelReq": 15,
-      "data": {
-        "stash_limit": 150000
-      }
-    },
-    {
-      "id": "prot_laser",
-      "name": "Laser Grid",
-      "emoji": "🚨",
-      "price": 120000,
-      "sellPrice": 60000,
-      "description": "Blocks 5 robs. High tech.",
-      "type": "protection",
-      "rarity": "epic",
-      "category": "protection",
-      "levelReq": 20,
-      "data": {
-        "blocks": 5
-      }
-    },
-    {
-      "id": "prot_guard",
-      "name": "Security Bot",
-      "emoji": "🤖",
-      "price": 250000,
-      "sellPrice": 125000,
-      "description": "Passive protection from all theft.",
-      "type": "protection",
-      "rarity": "epic",
-      "category": "protection",
-      "levelReq": 25,
-      "data": {
-        "durationMs": 86400000
-      }
-    },
-    {
-      "id": "prot_bunker",
-      "name": "Lead Bunker",
-      "emoji": "🏢",
-      "price": 1000000,
-      "sellPrice": 500000,
-      "description": "Immune to all robs for 3 days.",
-      "type": "protection",
-      "rarity": "legendary",
-      "category": "protection",
-      "levelReq": 40,
-      "data": {
-        "durationMs": 259200000
-      }
-    },
-    {
-      "id": "prot_satellite",
-      "name": "Stealth Satellite",
-      "emoji": "🛰️",
-      "price": 5000000,
-      "sellPrice": 2500000,
-      "description": "You are invisible to /search.",
-      "type": "protection",
-      "rarity": "mythic",
-      "category": "protection",
-      "levelReq": 60
-    },
-    {
-      "id": "prot_decoy",
-      "name": "Hologram Wallet",
-      "emoji": "🧧",
-      "price": 10000,
-      "sellPrice": 5000,
-      "description": "Robbers steal fake money.",
-      "type": "protection",
-      "rarity": "uncommon",
-      "category": "protection",
-      "levelReq": 5
-    },
-    {
-      "id": "prot_cloak",
-      "name": "Void Cloak",
-      "emoji": "🧥",
-      "price": 15000000,
-      "sellPrice": 7500000,
-      "description": "100% rob block chance for 1 week.",
-      "type": "protection",
-      "rarity": "mythic",
-      "category": "protection",
-      "levelReq": 75
+      "levelReq": 10,
+      "usable": false
     },
     {
       "id": "boost_fish_speed",
@@ -1726,6 +1535,131 @@
       }
     },
     {
+      "id": "con_fix_kit",
+      "name": "Advanced Repair Kit",
+      "emoji": "🛠️",
+      "price": 15000,
+      "sellPrice": 7500,
+      "description": "Repair any tool +50 durability.",
+      "type": "consumable",
+      "rarity": "rare",
+      "category": "consumables",
+      "levelReq": 10
+    },
+    {
+      "id": "boost_gamble_luck",
+      "name": "Loaded Dice",
+      "emoji": "🎲",
+      "price": 15000,
+      "sellPrice": 7500,
+      "description": "Slightly higher gamble wins for 1h.",
+      "type": "booster",
+      "rarity": "rare",
+      "category": "boosters",
+      "levelReq": 10
+    },
+    {
+      "id": "con_smoke_bomb",
+      "name": "Smoke Bomb",
+      "emoji": "💨",
+      "price": 8000,
+      "sellPrice": 4000,
+      "description": "Guaranteed escape from adventure ambush.",
+      "type": "consumable",
+      "rarity": "rare",
+      "category": "consumables",
+      "levelReq": 10
+    },
+    {
+      "id": "tool_steel_pickaxe",
+      "name": "Steel Pickaxe",
+      "emoji": "⛏️",
+      "price": 8000,
+      "sellPrice": 4000,
+      "description": "Strong pickaxe. 50 uses.",
+      "type": "tool",
+      "rarity": "rare",
+      "category": "tools",
+      "levelReq": 10,
+      "stackable": false,
+      "tradeable": true,
+      "usable": false,
+      "data": {
+        "durability": 50,
+        "slot": "mine"
+      }
+    },
+    {
+      "id": "tool_steel_axe",
+      "name": "Steel Axe",
+      "emoji": "🪓",
+      "price": 9000,
+      "sellPrice": 4500,
+      "description": "Strong axe. 60 uses.",
+      "type": "tool",
+      "rarity": "rare",
+      "category": "tools",
+      "levelReq": 10,
+      "stackable": false,
+      "tradeable": true,
+      "usable": false,
+      "data": {
+        "durability": 60,
+        "slot": "chop"
+      }
+    },
+    {
+      "id": "tool_metal_spade",
+      "name": "Steel Spade",
+      "emoji": "⛏️",
+      "price": 7500,
+      "sellPrice": 3750,
+      "description": "Dig up anything. 60 uses.",
+      "type": "tool",
+      "rarity": "rare",
+      "category": "tools",
+      "levelReq": 10,
+      "stackable": false,
+      "tradeable": true,
+      "usable": false,
+      "data": {
+        "durability": 60,
+        "slot": "dig"
+      }
+    },
+    {
+      "id": "con_feast",
+      "name": "Grand Feast",
+      "emoji": "🍗",
+      "price": 10000,
+      "sellPrice": 5000,
+      "description": "Massive XP boost (+500 XP).",
+      "type": "consumable",
+      "rarity": "rare",
+      "category": "consumables",
+      "levelReq": 10,
+      "stackable": true,
+      "tradeable": true,
+      "usable": true,
+      "data": {
+        "effect": "add_xp",
+        "amount": 500
+      }
+    },
+    {
+      "id": "veh_sedan",
+      "name": "Family Sedan",
+      "emoji": "🚗",
+      "price": 75000,
+      "sellPrice": 37500,
+      "description": "Reliable daily driver.",
+      "type": "vehicle",
+      "rarity": "uncommon",
+      "category": "vehicles",
+      "levelReq": 12,
+      "usable": false
+    },
+    {
       "id": "boost_hunt_yield",
       "name": "Hunter's Scent",
       "emoji": "👃",
@@ -1741,6 +1675,558 @@
         "multiplier": 2,
         "durationMs": 3600000
       }
+    },
+    {
+      "id": "tool_pro_rod",
+      "name": "Pro Fishing Rod",
+      "emoji": "🎣",
+      "price": 12000,
+      "sellPrice": 6000,
+      "description": "Great rod. 75 uses.",
+      "type": "tool",
+      "rarity": "rare",
+      "category": "tools",
+      "levelReq": 12,
+      "stackable": false,
+      "tradeable": true,
+      "usable": false,
+      "data": {
+        "durability": 75,
+        "slot": "fish"
+      }
+    },
+    {
+      "id": "prot_alarm",
+      "name": "House Alarm",
+      "emoji": "🚨",
+      "price": 20000,
+      "sellPrice": 10000,
+      "description": "Alerts you and blocks 2 robs.",
+      "type": "protection",
+      "rarity": "rare",
+      "category": "protection",
+      "levelReq": 12,
+      "stackable": true,
+      "tradeable": true,
+      "usable": false,
+      "data": {
+        "blocks": 2
+      }
+    },
+    {
+      "id": "pet_bird",
+      "name": "Parrot",
+      "emoji": "🦜",
+      "price": 60000,
+      "sellPrice": 30000,
+      "description": "A smart parrot. +5% passive work.",
+      "type": "pet",
+      "rarity": "rare",
+      "category": "pets",
+      "levelReq": 12,
+      "stackable": false,
+      "tradeable": true,
+      "usable": false,
+      "data": {
+        "passive": "work",
+        "boost": 0.05
+      }
+    },
+    {
+      "id": "tool_metal_detector",
+      "name": "Metal Detector",
+      "emoji": "📡",
+      "price": 20000,
+      "sellPrice": 10000,
+      "description": "Find rare items while searching. 15 uses.",
+      "type": "tool",
+      "rarity": "epic",
+      "category": "tools",
+      "levelReq": 15,
+      "stackable": false,
+      "tradeable": true,
+      "data": {
+        "durability": 15,
+        "slot": "search_bonus"
+      },
+      "usable": false
+    },
+    {
+      "id": "prot_safe",
+      "name": "Uranium Safe",
+      "emoji": "🔐",
+      "price": 50000,
+      "sellPrice": 25000,
+      "description": "Hide up to 50,000 Atoms from robbers permanently.",
+      "type": "protection",
+      "rarity": "epic",
+      "category": "protection",
+      "levelReq": 15,
+      "stackable": false,
+      "tradeable": false,
+      "data": {
+        "stash_limit": 50000
+      },
+      "usable": false
+    },
+    {
+      "id": "prot_mask",
+      "name": "Robber Mask",
+      "emoji": "🎭",
+      "price": 50000,
+      "sellPrice": 25000,
+      "description": "Increases rob success rate by 20% for 1 hour.",
+      "type": "booster",
+      "rarity": "epic",
+      "category": "protection",
+      "levelReq": 15,
+      "stackable": true,
+      "tradeable": true,
+      "data": {
+        "key": "rob_success",
+        "multiplier": 1.2,
+        "durationMs": 3600000
+      },
+      "usable": false
+    },
+    {
+      "id": "bank_tier_5",
+      "name": "Bank Tier V",
+      "emoji": "💳",
+      "price": 120000,
+      "sellPrice": 0,
+      "description": "Jump to Bank Tier 5.",
+      "type": "bank_upgrade",
+      "rarity": "rare",
+      "category": "bank",
+      "levelReq": 15,
+      "stackable": false,
+      "tradeable": false,
+      "data": {
+        "tier": 5
+      },
+      "usable": false
+    },
+    {
+      "id": "title_grinder",
+      "name": "Title: The Grinder",
+      "emoji": "⚙️",
+      "price": 150000,
+      "sellPrice": 0,
+      "description": "\"The Grinder\" — you never stop.",
+      "type": "title",
+      "rarity": "epic",
+      "category": "cosmetics",
+      "levelReq": 15,
+      "stackable": false,
+      "tradeable": false,
+      "data": {
+        "title": "⚙️ The Grinder"
+      },
+      "usable": false
+    },
+    {
+      "id": "collect_trophy",
+      "name": "Gold Trophy",
+      "emoji": "🏆",
+      "price": 45000,
+      "sellPrice": 22500,
+      "description": "A shiny gold trophy for your collection.",
+      "type": "collectible",
+      "rarity": "epic",
+      "category": "collectibles",
+      "levelReq": 15,
+      "stackable": true,
+      "tradeable": true,
+      "data": {
+        "collection": "trophies"
+      },
+      "usable": false
+    },
+    {
+      "id": "veh_truck",
+      "name": "Monster Truck",
+      "emoji": "🚙",
+      "price": 150000,
+      "sellPrice": 75000,
+      "description": "Crush the competition.",
+      "type": "vehicle",
+      "rarity": "rare",
+      "category": "vehicles",
+      "levelReq": 15,
+      "usable": false
+    },
+    {
+      "id": "pet_owl",
+      "name": "Snowy Owl",
+      "emoji": "🦉",
+      "price": 80000,
+      "sellPrice": 40000,
+      "description": "Wise predator of the night.",
+      "type": "pet",
+      "rarity": "rare",
+      "category": "pets",
+      "levelReq": 15,
+      "usable": false
+    },
+    {
+      "id": "rel_idol",
+      "name": "Jade Dragon Idol",
+      "emoji": "🐲",
+      "price": 75000,
+      "sellPrice": 37500,
+      "description": "Said to grant luck.",
+      "type": "relic",
+      "rarity": "rare",
+      "category": "relics",
+      "levelReq": 15,
+      "usable": false
+    },
+    {
+      "id": "prot_safe_box",
+      "name": "Steel Safe Box",
+      "emoji": "🗄️",
+      "price": 75000,
+      "sellPrice": 37500,
+      "description": "Higher capacity safe.",
+      "type": "protection",
+      "rarity": "rare",
+      "category": "protection",
+      "levelReq": 15,
+      "data": {
+        "stash_limit": 150000
+      },
+      "usable": false
+    },
+    {
+      "id": "boost_quest_xp",
+      "name": "Quest XP Elixir",
+      "emoji": "🧪",
+      "price": 20000,
+      "sellPrice": 10000,
+      "description": "2x Quest XP for 2h.",
+      "type": "booster",
+      "rarity": "rare",
+      "category": "boosters",
+      "levelReq": 15
+    },
+    {
+      "id": "tool_crossbow",
+      "name": "Crossbow",
+      "emoji": "🏹",
+      "price": 15000,
+      "sellPrice": 7500,
+      "description": "For big game. 50 uses.",
+      "type": "tool",
+      "rarity": "rare",
+      "category": "tools",
+      "levelReq": 15,
+      "stackable": false,
+      "tradeable": true,
+      "usable": false,
+      "data": {
+        "durability": 50,
+        "slot": "hunt"
+      }
+    },
+    {
+      "id": "prot_guard_dog",
+      "name": "Guard Dog",
+      "emoji": "🐕",
+      "price": 30000,
+      "sellPrice": 15000,
+      "description": "Blocks 3 rob attempts.",
+      "type": "protection",
+      "rarity": "epic",
+      "category": "protection",
+      "levelReq": 15,
+      "stackable": true,
+      "tradeable": true,
+      "usable": false,
+      "data": {
+        "blocks": 3
+      }
+    },
+    {
+      "id": "con_brain_pill",
+      "name": "Brain Pill",
+      "emoji": "🧠",
+      "price": 15000,
+      "sellPrice": 7500,
+      "description": "Reduces hack cooldowns.",
+      "type": "consumable",
+      "rarity": "rare",
+      "category": "consumables",
+      "levelReq": 15,
+      "stackable": true,
+      "tradeable": true,
+      "usable": true,
+      "data": {
+        "effect": "reduce_cooldown",
+        "target": "HACK",
+        "ms": 1200000
+      }
+    },
+    {
+      "id": "crate_legendary",
+      "name": "Legendary Crate",
+      "emoji": "🌟",
+      "price": 75000,
+      "sellPrice": 37500,
+      "description": "Extremely rare items and massive coin drops.",
+      "type": "lootbox",
+      "rarity": "legendary",
+      "category": "lootboxes",
+      "levelReq": 20,
+      "stackable": true,
+      "tradeable": true,
+      "data": {
+        "tier": "legendary",
+        "Atoms": [
+          15000,
+          75000
+        ]
+      }
+    },
+    {
+      "id": "title_rich",
+      "name": "Title: The Rich",
+      "emoji": "👑",
+      "price": 250000,
+      "sellPrice": 0,
+      "description": "Flex with \"The Rich\" on your profile.",
+      "type": "title",
+      "rarity": "legendary",
+      "category": "cosmetics",
+      "levelReq": 20,
+      "stackable": false,
+      "tradeable": false,
+      "data": {
+        "title": "👑 The Rich"
+      },
+      "usable": false
+    },
+    {
+      "id": "veh_sports",
+      "name": "Sports Car",
+      "emoji": "🏎️",
+      "price": 300000,
+      "sellPrice": 150000,
+      "description": "Sleek and incredibly fast.",
+      "type": "vehicle",
+      "rarity": "rare",
+      "category": "vehicles",
+      "levelReq": 20,
+      "usable": false
+    },
+    {
+      "id": "pet_eagle",
+      "name": "Bald Eagle",
+      "emoji": "🦅",
+      "price": 150000,
+      "sellPrice": 75000,
+      "description": "Majestic bird of prey.",
+      "type": "pet",
+      "rarity": "rare",
+      "category": "pets",
+      "levelReq": 20,
+      "usable": false
+    },
+    {
+      "id": "rel_chalice",
+      "name": "Silver Chalice",
+      "emoji": "🍷",
+      "price": 150000,
+      "sellPrice": 75000,
+      "description": "Used in royal banquets.",
+      "type": "relic",
+      "rarity": "rare",
+      "category": "relics",
+      "levelReq": 20,
+      "usable": false
+    },
+    {
+      "id": "prot_laser",
+      "name": "Laser Grid",
+      "emoji": "🚨",
+      "price": 120000,
+      "sellPrice": 60000,
+      "description": "Blocks 5 robs. High tech.",
+      "type": "protection",
+      "rarity": "epic",
+      "category": "protection",
+      "levelReq": 20,
+      "data": {
+        "blocks": 5
+      },
+      "usable": false
+    },
+    {
+      "id": "con_xp_vial",
+      "name": "XP Overdrive Vial",
+      "emoji": "🧪",
+      "price": 30000,
+      "sellPrice": 15000,
+      "description": "Gain 5000 XP instantly.",
+      "type": "consumable",
+      "rarity": "epic",
+      "category": "consumables",
+      "levelReq": 20
+    },
+    {
+      "id": "prot_jammer",
+      "name": "Signal Jammer",
+      "emoji": "📡",
+      "price": 50000,
+      "sellPrice": 25000,
+      "description": "Reduces rob success against you by 50%.",
+      "type": "protection",
+      "rarity": "rare",
+      "category": "protection",
+      "levelReq": 20,
+      "usable": false
+    },
+    {
+      "id": "con_net_heavy",
+      "name": "Titanium Net",
+      "emoji": "🥅",
+      "price": 15000,
+      "sellPrice": 7500,
+      "description": "Catch legendary animals easily.",
+      "type": "consumable",
+      "rarity": "epic",
+      "category": "consumables",
+      "levelReq": 20
+    },
+    {
+      "id": "pet_monkey",
+      "name": "Thief Monkey",
+      "emoji": "🐒",
+      "price": 120000,
+      "sellPrice": 60000,
+      "description": "+10% crime earnings.",
+      "type": "pet",
+      "rarity": "epic",
+      "category": "pets",
+      "levelReq": 20,
+      "stackable": false,
+      "tradeable": true,
+      "usable": false,
+      "data": {
+        "passive": "crime",
+        "boost": 0.1
+      }
+    },
+    {
+      "id": "tool_golden_rod",
+      "name": "Golden Fishing Rod",
+      "emoji": "🏆",
+      "price": 50000,
+      "sellPrice": 25000,
+      "description": "Legendary rod! 50 uses, +40% rare fish.",
+      "type": "tool",
+      "rarity": "legendary",
+      "category": "tools",
+      "levelReq": 25,
+      "stackable": false,
+      "tradeable": true,
+      "data": {
+        "durability": 50,
+        "slot": "fish",
+        "bonus": 0.4
+      },
+      "usable": false
+    },
+    {
+      "id": "frame_diamond",
+      "name": "Diamond Frame",
+      "emoji": "💎",
+      "price": 200000,
+      "sellPrice": 0,
+      "description": "Stunning diamond profile frame.",
+      "type": "frame",
+      "rarity": "legendary",
+      "category": "cosmetics",
+      "levelReq": 25,
+      "stackable": false,
+      "tradeable": false,
+      "data": {
+        "frame": "💎 Diamond"
+      },
+      "usable": false
+    },
+    {
+      "id": "collect_dragon_scale",
+      "name": "Dragon Scale",
+      "emoji": "🐉",
+      "price": 100000,
+      "sellPrice": 50000,
+      "description": "Scale of an ancient dragon. Extremely rare.",
+      "type": "collectible",
+      "rarity": "legendary",
+      "category": "collectibles",
+      "levelReq": 25,
+      "stackable": true,
+      "tradeable": true,
+      "data": {
+        "collection": "dragon"
+      },
+      "usable": false
+    },
+    {
+      "id": "veh_limo",
+      "name": "Luxury Limo",
+      "emoji": "🚘",
+      "price": 600000,
+      "sellPrice": 300000,
+      "description": "Ride in pure style.",
+      "type": "vehicle",
+      "rarity": "epic",
+      "category": "vehicles",
+      "levelReq": 25,
+      "usable": false
+    },
+    {
+      "id": "pet_tiger",
+      "name": "Bengal Tiger",
+      "emoji": "🐅",
+      "price": 350000,
+      "sellPrice": 175000,
+      "description": "Fierce and powerful.",
+      "type": "pet",
+      "rarity": "epic",
+      "category": "pets",
+      "levelReq": 25,
+      "usable": false
+    },
+    {
+      "id": "rel_skull",
+      "name": "Crystal Skull",
+      "emoji": "💀",
+      "price": 350000,
+      "sellPrice": 175000,
+      "description": "Mysterious origin.",
+      "type": "relic",
+      "rarity": "epic",
+      "category": "relics",
+      "levelReq": 25,
+      "usable": false
+    },
+    {
+      "id": "prot_guard",
+      "name": "Security Bot",
+      "emoji": "🤖",
+      "price": 250000,
+      "sellPrice": 125000,
+      "description": "Passive protection from all theft.",
+      "type": "protection",
+      "rarity": "epic",
+      "category": "protection",
+      "levelReq": 25,
+      "data": {
+        "durationMs": 86400000
+      },
+      "usable": false
     },
     {
       "id": "boost_work_mega",
@@ -1760,6 +2246,403 @@
       }
     },
     {
+      "id": "con_bait_mega",
+      "name": "Omega Bait",
+      "emoji": "🐛",
+      "price": 20000,
+      "sellPrice": 10000,
+      "description": "Guaranteed rare fish on next use.",
+      "type": "consumable",
+      "rarity": "epic",
+      "category": "consumables",
+      "levelReq": 25
+    },
+    {
+      "id": "veh_car",
+      "name": "Used Car",
+      "emoji": "🚗",
+      "price": 200000,
+      "sellPrice": 100000,
+      "description": "A reliable car.",
+      "type": "vehicle",
+      "rarity": "epic",
+      "category": "vehicles",
+      "levelReq": 25,
+      "stackable": false,
+      "tradeable": true,
+      "usable": false,
+      "data": {
+        "speed": 1.5
+      }
+    },
+    {
+      "id": "bank_tier_10",
+      "name": "Bank Tier X (MAX)",
+      "emoji": "🏦",
+      "price": 500000,
+      "sellPrice": 0,
+      "description": "Max bank capacity!",
+      "type": "bank_upgrade",
+      "rarity": "legendary",
+      "category": "bank",
+      "levelReq": 30,
+      "stackable": false,
+      "tradeable": false,
+      "data": {
+        "tier": 10
+      },
+      "usable": false
+    },
+    {
+      "id": "collect_phoenix",
+      "name": "Phoenix Feather",
+      "emoji": "🔥",
+      "price": 150000,
+      "sellPrice": 75000,
+      "description": "A feather from a reborn phoenix.",
+      "type": "collectible",
+      "rarity": "legendary",
+      "category": "collectibles",
+      "levelReq": 30,
+      "stackable": true,
+      "tradeable": true,
+      "data": {
+        "collection": "mythical"
+      },
+      "usable": false
+    },
+    {
+      "id": "veh_super",
+      "name": "Exotic Supercar",
+      "emoji": "🏎️",
+      "price": 1200000,
+      "sellPrice": 600000,
+      "description": "A masterpiece of engineering.",
+      "type": "vehicle",
+      "rarity": "epic",
+      "category": "vehicles",
+      "levelReq": 30,
+      "usable": false
+    },
+    {
+      "id": "pet_wolf",
+      "name": "Dire Wolf",
+      "emoji": "🐺",
+      "price": 600000,
+      "sellPrice": 300000,
+      "description": "Leader of the pack.",
+      "type": "pet",
+      "rarity": "epic",
+      "category": "pets",
+      "levelReq": 30,
+      "usable": false
+    },
+    {
+      "id": "rel_tablet",
+      "name": "Golden Tablet",
+      "emoji": "📜",
+      "price": 800000,
+      "sellPrice": 400000,
+      "description": "Inscribed with ancient secrets.",
+      "type": "relic",
+      "rarity": "epic",
+      "category": "relics",
+      "levelReq": 30,
+      "usable": false
+    },
+    {
+      "id": "boost_earn_2x",
+      "name": "Double Earn Potion",
+      "emoji": "🌀",
+      "price": 100000,
+      "sellPrice": 50000,
+      "description": "2x all earnings for 30m.",
+      "type": "booster",
+      "rarity": "epic",
+      "category": "boosters",
+      "levelReq": 30
+    },
+    {
+      "id": "boost_xp_huge",
+      "name": "Huge XP Booster (3x)",
+      "emoji": "🌟",
+      "price": 100000,
+      "sellPrice": 50000,
+      "description": "3x XP for 2 hours.",
+      "type": "booster",
+      "rarity": "epic",
+      "category": "boosters",
+      "levelReq": 30,
+      "stackable": true,
+      "tradeable": true,
+      "usable": true,
+      "data": {
+        "key": "xp",
+        "multiplier": 3,
+        "durationMs": 7200000
+      }
+    },
+    {
+      "id": "crate_mythic",
+      "name": "Uranium Core Crate",
+      "emoji": "☢️",
+      "price": 200000,
+      "sellPrice": 100000,
+      "description": "The rarest crate. Contains mythic items!",
+      "type": "lootbox",
+      "rarity": "mythic",
+      "category": "lootboxes",
+      "levelReq": 35,
+      "stackable": true,
+      "tradeable": true,
+      "data": {
+        "tier": "mythic",
+        "Atoms": [
+          50000,
+          250000
+        ]
+      }
+    },
+    {
+      "id": "title_shadow",
+      "name": "Title: Shadow Walker",
+      "emoji": "👤",
+      "price": 300000,
+      "sellPrice": 0,
+      "description": "\"Shadow Walker\" — mysterious and feared.",
+      "type": "title",
+      "rarity": "legendary",
+      "category": "cosmetics",
+      "levelReq": 35,
+      "stackable": false,
+      "tradeable": false,
+      "data": {
+        "title": "👤 Shadow Walker"
+      },
+      "usable": false
+    },
+    {
+      "id": "collect_crown",
+      "name": "Royal Crown",
+      "emoji": "👑",
+      "price": 250000,
+      "sellPrice": 125000,
+      "description": "A crown fit for royalty. Ultimate flex.",
+      "type": "collectible",
+      "rarity": "legendary",
+      "category": "collectibles",
+      "levelReq": 35,
+      "stackable": false,
+      "tradeable": true,
+      "data": {
+        "collection": "royalty"
+      },
+      "usable": false
+    },
+    {
+      "id": "veh_sports_car",
+      "name": "Sports Car",
+      "emoji": "🏎️",
+      "price": 800000,
+      "sellPrice": 400000,
+      "description": "Extremely fast!",
+      "type": "vehicle",
+      "rarity": "legendary",
+      "category": "vehicles",
+      "levelReq": 35,
+      "stackable": false,
+      "tradeable": true,
+      "usable": false,
+      "data": {
+        "speed": 2
+      }
+    },
+    {
+      "id": "badge_legend",
+      "name": "Badge: Legend",
+      "emoji": "🏅",
+      "price": 500000,
+      "sellPrice": 0,
+      "description": "Legendary badge — true champion.",
+      "type": "badge",
+      "rarity": "mythic",
+      "category": "cosmetics",
+      "levelReq": 40,
+      "stackable": false,
+      "tradeable": false,
+      "data": {
+        "badge": "🏅 Legend"
+      },
+      "usable": false
+    },
+    {
+      "id": "veh_hyper",
+      "name": "Hypercar Prototype",
+      "emoji": "🔥",
+      "price": 3000000,
+      "sellPrice": 1500000,
+      "description": "Beyond the limits of physics.",
+      "type": "vehicle",
+      "rarity": "legendary",
+      "category": "vehicles",
+      "levelReq": 40,
+      "usable": false
+    },
+    {
+      "id": "pet_griffin",
+      "name": "Ancient Griffin",
+      "emoji": "🦅",
+      "price": 1500000,
+      "sellPrice": 750000,
+      "description": "Legendary half-eagle, half-lion.",
+      "type": "pet",
+      "rarity": "legendary",
+      "category": "pets",
+      "levelReq": 40,
+      "usable": false
+    },
+    {
+      "id": "rel_crown",
+      "name": "Pharaoh's Crown",
+      "emoji": "👑",
+      "price": 2000000,
+      "sellPrice": 1000000,
+      "description": "Ultimate royal artifact.",
+      "type": "relic",
+      "rarity": "legendary",
+      "category": "relics",
+      "levelReq": 40,
+      "usable": false
+    },
+    {
+      "id": "prot_bunker",
+      "name": "Lead Bunker",
+      "emoji": "🏢",
+      "price": 1000000,
+      "sellPrice": 500000,
+      "description": "Immune to all robs for 3 days.",
+      "type": "protection",
+      "rarity": "legendary",
+      "category": "protection",
+      "levelReq": 40,
+      "data": {
+        "durationMs": 259200000
+      },
+      "usable": false
+    },
+    {
+      "id": "tool_diamond_pickaxe",
+      "name": "Diamond Pickaxe",
+      "emoji": "⛏️",
+      "price": 150000,
+      "sellPrice": 75000,
+      "description": "Ultimate pickaxe. 250 uses.",
+      "type": "tool",
+      "rarity": "legendary",
+      "category": "tools",
+      "levelReq": 40,
+      "stackable": false,
+      "tradeable": true,
+      "usable": false,
+      "data": {
+        "durability": 250,
+        "slot": "mine"
+      }
+    },
+    {
+      "id": "col_alien_artifact",
+      "name": "Alien Artifact",
+      "emoji": "🛸",
+      "price": 500000,
+      "sellPrice": 250000,
+      "description": "Found in a crater.",
+      "type": "collectible",
+      "rarity": "legendary",
+      "category": "collectibles",
+      "levelReq": 40,
+      "stackable": true,
+      "tradeable": true,
+      "usable": false,
+      "data": {}
+    },
+    {
+      "id": "tool_sniper",
+      "name": "Sniper Rifle",
+      "emoji": "🎯",
+      "price": 200000,
+      "sellPrice": 100000,
+      "description": "Never miss. 150 uses.",
+      "type": "tool",
+      "rarity": "legendary",
+      "category": "tools",
+      "levelReq": 45,
+      "stackable": false,
+      "tradeable": true,
+      "usable": false,
+      "data": {
+        "durability": 150,
+        "slot": "hunt",
+        "bonus": 0.5
+      }
+    },
+    {
+      "id": "collect_uranium",
+      "name": "Uranium Core",
+      "emoji": "☢️",
+      "price": 500000,
+      "sellPrice": 250000,
+      "description": "The rarest item. Pure concentrated uranium.",
+      "type": "collectible",
+      "rarity": "mythic",
+      "category": "collectibles",
+      "levelReq": 50,
+      "stackable": false,
+      "tradeable": false,
+      "data": {
+        "collection": "ultimate"
+      },
+      "usable": false
+    },
+    {
+      "id": "veh_jet",
+      "name": "Private Jet",
+      "emoji": "🛩️",
+      "price": 10000000,
+      "sellPrice": 5000000,
+      "description": "The sky is your playground.",
+      "type": "vehicle",
+      "rarity": "legendary",
+      "category": "vehicles",
+      "levelReq": 50,
+      "usable": false
+    },
+    {
+      "id": "pet_dragon",
+      "name": "Fire Drake",
+      "emoji": "🐉",
+      "price": 5000000,
+      "sellPrice": 2500000,
+      "description": "A small but deadly dragon.",
+      "type": "pet",
+      "rarity": "legendary",
+      "category": "pets",
+      "levelReq": 50,
+      "usable": false
+    },
+    {
+      "id": "rel_sword",
+      "name": "Excalibur Shard",
+      "emoji": "⚔️",
+      "price": 5000000,
+      "sellPrice": 2500000,
+      "description": "A fragment of legend.",
+      "type": "relic",
+      "rarity": "legendary",
+      "category": "relics",
+      "levelReq": 50,
+      "usable": false
+    },
+    {
       "id": "boost_all_2x",
       "name": "Global 2x Booster",
       "emoji": "🌀",
@@ -1777,90 +2660,6 @@
       }
     },
     {
-      "id": "con_fix_kit",
-      "name": "Advanced Repair Kit",
-      "emoji": "🛠️",
-      "price": 15000,
-      "sellPrice": 7500,
-      "description": "Repair any tool +50 durability.",
-      "type": "consumable",
-      "rarity": "rare",
-      "category": "consumables",
-      "levelReq": 10
-    },
-    {
-      "id": "con_xp_vial",
-      "name": "XP Overdrive Vial",
-      "emoji": "🧪",
-      "price": 30000,
-      "sellPrice": 15000,
-      "description": "Gain 5000 XP instantly.",
-      "type": "consumable",
-      "rarity": "epic",
-      "category": "consumables",
-      "levelReq": 20
-    },
-    {
-      "id": "con_luck_dice",
-      "name": "Weighted Dice",
-      "emoji": "🎲",
-      "price": 5000,
-      "sellPrice": 2500,
-      "description": "Next gamble win chance +20%.",
-      "type": "consumable",
-      "rarity": "uncommon",
-      "category": "consumables",
-      "levelReq": 5
-    },
-    {
-      "id": "boost_quest_xp",
-      "name": "Quest XP Elixir",
-      "emoji": "🧪",
-      "price": 20000,
-      "sellPrice": 10000,
-      "description": "2x Quest XP for 2h.",
-      "type": "booster",
-      "rarity": "rare",
-      "category": "boosters",
-      "levelReq": 15
-    },
-    {
-      "id": "boost_gamble_luck",
-      "name": "Loaded Dice",
-      "emoji": "🎲",
-      "price": 15000,
-      "sellPrice": 7500,
-      "description": "Slightly higher gamble wins for 1h.",
-      "type": "booster",
-      "rarity": "rare",
-      "category": "boosters",
-      "levelReq": 10
-    },
-    {
-      "id": "boost_earn_2x",
-      "name": "Double Earn Potion",
-      "emoji": "🌀",
-      "price": 100000,
-      "sellPrice": 50000,
-      "description": "2x all earnings for 30m.",
-      "type": "booster",
-      "rarity": "epic",
-      "category": "boosters",
-      "levelReq": 30
-    },
-    {
-      "id": "prot_jammer",
-      "name": "Signal Jammer",
-      "emoji": "📡",
-      "price": 50000,
-      "sellPrice": 25000,
-      "description": "Reduces rob success against you by 50%.",
-      "type": "protection",
-      "rarity": "rare",
-      "category": "protection",
-      "levelReq": 20
-    },
-    {
       "id": "prot_vault",
       "name": "Underground Vault",
       "emoji": "🏗️",
@@ -1870,67 +2669,313 @@
       "type": "protection",
       "rarity": "mythic",
       "category": "protection",
-      "levelReq": 50
+      "levelReq": 50,
+      "usable": false
     },
     {
-      "id": "con_medkit",
-      "name": "Advanced Medkit",
-      "emoji": "🩹",
-      "price": 5000,
-      "sellPrice": 2500,
-      "description": "Heal from any injury.",
-      "type": "consumable",
-      "rarity": "uncommon",
-      "category": "consumables",
-      "levelReq": 5
+      "id": "veh_heli",
+      "name": "Helicopter",
+      "emoji": "🚁",
+      "price": 2500000,
+      "sellPrice": 1250000,
+      "description": "Fly over everything.",
+      "type": "vehicle",
+      "rarity": "mythic",
+      "category": "vehicles",
+      "levelReq": 50,
+      "stackable": false,
+      "tradeable": true,
+      "usable": false,
+      "data": {
+        "speed": 3
+      }
     },
     {
-      "id": "con_energy_bar",
-      "name": "Protein Bar",
-      "emoji": "🍫",
-      "price": 2000,
-      "sellPrice": 1000,
-      "description": "Short work cooldown reduction.",
-      "type": "consumable",
-      "rarity": "common",
-      "category": "consumables",
-      "levelReq": 2
+      "id": "title_uranium",
+      "name": "Title: Uranium Baron",
+      "emoji": "☢️",
+      "price": 1000000,
+      "sellPrice": 0,
+      "description": "The ultimate flex title.",
+      "type": "title",
+      "rarity": "mythic",
+      "category": "cosmetics",
+      "levelReq": 50,
+      "stackable": false,
+      "tradeable": false,
+      "usable": false,
+      "data": {
+        "title": "☢️ Uranium Baron"
+      }
     },
     {
-      "id": "con_smoke_bomb",
-      "name": "Smoke Bomb",
-      "emoji": "💨",
-      "price": 8000,
-      "sellPrice": 4000,
-      "description": "Guaranteed escape from adventure ambush.",
-      "type": "consumable",
-      "rarity": "rare",
-      "category": "consumables",
-      "levelReq": 10
+      "id": "crate_omega",
+      "name": "Omega Crate",
+      "emoji": "🌌",
+      "price": 1000000,
+      "sellPrice": 500000,
+      "description": "Guaranteed Mythic item.",
+      "type": "lootbox",
+      "rarity": "mythic",
+      "category": "lootboxes",
+      "levelReq": 50,
+      "stackable": true,
+      "tradeable": true,
+      "usable": true,
+      "data": {
+        "tier": "mythic",
+        "Atoms": [
+          250000,
+          1000000
+        ]
+      }
     },
     {
-      "id": "con_net_heavy",
-      "name": "Titanium Net",
-      "emoji": "🥅",
-      "price": 15000,
-      "sellPrice": 7500,
-      "description": "Catch legendary animals easily.",
-      "type": "consumable",
-      "rarity": "epic",
-      "category": "consumables",
-      "levelReq": 20
+      "id": "bank_tier_15",
+      "name": "Bank Tier 15",
+      "emoji": "🏦",
+      "price": 2500000,
+      "sellPrice": 0,
+      "description": "Upgrade bank to Tier 15.",
+      "type": "bank_upgrade",
+      "rarity": "mythic",
+      "category": "bank",
+      "levelReq": 50,
+      "stackable": false,
+      "tradeable": false,
+      "usable": false,
+      "data": {
+        "tier": 15
+      }
     },
     {
-      "id": "con_bait_mega",
-      "name": "Omega Bait",
-      "emoji": "🐛",
-      "price": 20000,
-      "sellPrice": 10000,
-      "description": "Guaranteed rare fish on next use.",
-      "type": "consumable",
-      "rarity": "epic",
-      "category": "consumables",
-      "levelReq": 25
+      "id": "veh_yacht",
+      "name": "Mega Yacht",
+      "emoji": "🚢",
+      "price": 25000000,
+      "sellPrice": 12500000,
+      "description": "A floating palace.",
+      "type": "vehicle",
+      "rarity": "mythic",
+      "category": "vehicles",
+      "levelReq": 60,
+      "usable": false
+    },
+    {
+      "id": "pet_phoenix",
+      "name": "Eternal Phoenix",
+      "emoji": "🔥",
+      "price": 12000000,
+      "sellPrice": 6000000,
+      "description": "Never truly dies.",
+      "type": "pet",
+      "rarity": "mythic",
+      "category": "pets",
+      "levelReq": 60,
+      "usable": false
+    },
+    {
+      "id": "rel_eye",
+      "name": "Eye of Ra",
+      "emoji": "👁️",
+      "price": 12000000,
+      "sellPrice": 6000000,
+      "description": "See through the veil.",
+      "type": "relic",
+      "rarity": "mythic",
+      "category": "relics",
+      "levelReq": 60,
+      "usable": false
+    },
+    {
+      "id": "prot_satellite",
+      "name": "Stealth Satellite",
+      "emoji": "🛰️",
+      "price": 5000000,
+      "sellPrice": 2500000,
+      "description": "You are invisible to /search.",
+      "type": "protection",
+      "rarity": "mythic",
+      "category": "protection",
+      "levelReq": 60,
+      "usable": false
+    },
+    {
+      "id": "col_uranium_rod",
+      "name": "Pure Uranium Rod",
+      "emoji": "☢️",
+      "price": 2000000,
+      "sellPrice": 1000000,
+      "description": "Highly radioactive.",
+      "type": "collectible",
+      "rarity": "mythic",
+      "category": "collectibles",
+      "levelReq": 60,
+      "stackable": true,
+      "tradeable": true,
+      "usable": false,
+      "data": {}
+    },
+    {
+      "id": "veh_sub",
+      "name": "Attack Submarine",
+      "emoji": "🛥️",
+      "price": 50000000,
+      "sellPrice": 25000000,
+      "description": "Control the depths.",
+      "type": "vehicle",
+      "rarity": "mythic",
+      "category": "vehicles",
+      "levelReq": 70,
+      "usable": false
+    },
+    {
+      "id": "rel_star",
+      "name": "Fallen Star",
+      "emoji": "🌟",
+      "price": 30000000,
+      "sellPrice": 15000000,
+      "description": "Pure celestial energy.",
+      "type": "relic",
+      "rarity": "mythic",
+      "category": "relics",
+      "levelReq": 70,
+      "usable": false
+    },
+    {
+      "id": "pet_cyber",
+      "name": "Cybernetic Hound",
+      "emoji": "🤖",
+      "price": 30000000,
+      "sellPrice": 15000000,
+      "description": "Advanced AI companion.",
+      "type": "pet",
+      "rarity": "mythic",
+      "category": "pets",
+      "levelReq": 75,
+      "usable": false
+    },
+    {
+      "id": "prot_cloak",
+      "name": "Void Cloak",
+      "emoji": "🧥",
+      "price": 15000000,
+      "sellPrice": 7500000,
+      "description": "100% rob block chance for 1 week.",
+      "type": "protection",
+      "rarity": "mythic",
+      "category": "protection",
+      "levelReq": 75,
+      "usable": false
+    },
+    {
+      "id": "veh_space",
+      "name": "Interstellar Spaceship",
+      "emoji": "🚀",
+      "price": 150000000,
+      "sellPrice": 75000000,
+      "description": "Explore the galaxy.",
+      "type": "vehicle",
+      "rarity": "mythic",
+      "category": "vehicles",
+      "levelReq": 80,
+      "usable": false
+    },
+    {
+      "id": "rel_void",
+      "name": "Void Core",
+      "emoji": "🌑",
+      "price": 75000000,
+      "sellPrice": 37500000,
+      "description": "Darkness concentrated.",
+      "type": "relic",
+      "rarity": "mythic",
+      "category": "relics",
+      "levelReq": 80,
+      "usable": false
+    },
+    {
+      "id": "rel_sing",
+      "name": "Frozen Singularity",
+      "emoji": "🕳️",
+      "price": 200000000,
+      "sellPrice": 100000000,
+      "description": "The center of a black hole.",
+      "type": "relic",
+      "rarity": "mythic",
+      "category": "relics",
+      "levelReq": 90,
+      "usable": false
+    },
+    {
+      "id": "veh_uranium",
+      "name": "Uranium Rover",
+      "emoji": "☢️",
+      "price": 500000000,
+      "sellPrice": 250000000,
+      "description": "The ultimate survival machine.",
+      "type": "vehicle",
+      "rarity": "mythic",
+      "category": "vehicles",
+      "levelReq": 100,
+      "usable": false
+    },
+    {
+      "id": "pet_uranium",
+      "name": "Uranium Dragon",
+      "emoji": "☢️",
+      "price": 100000000,
+      "sellPrice": 50000000,
+      "description": "The pinnacle of evolution.",
+      "type": "pet",
+      "rarity": "mythic",
+      "category": "pets",
+      "levelReq": 100,
+      "usable": false
+    },
+    {
+      "id": "rel_time",
+      "name": "Epoch Clock",
+      "emoji": "⌚",
+      "price": 500000000,
+      "sellPrice": 250000000,
+      "description": "Control time itself.",
+      "type": "relic",
+      "rarity": "mythic",
+      "category": "relics",
+      "levelReq": 100,
+      "usable": false
+    },
+    {
+      "id": "bank_tier_20",
+      "name": "Bank Tier 20 (ABSOLUTE MAX)",
+      "emoji": "🏛️",
+      "price": 10000000,
+      "sellPrice": 0,
+      "description": "The highest possible bank tier.",
+      "type": "bank_upgrade",
+      "rarity": "mythic",
+      "category": "bank",
+      "levelReq": 100,
+      "stackable": false,
+      "tradeable": false,
+      "usable": false,
+      "data": {
+        "tier": 20
+      }
+    },
+    {
+      "id": "rel_uranium",
+      "name": "Primordial Uranium",
+      "emoji": "☢️",
+      "price": 1000000000,
+      "sellPrice": 500000000,
+      "description": "The first element.",
+      "type": "relic",
+      "rarity": "mythic",
+      "category": "relics",
+      "levelReq": 120,
+      "usable": false
     }
   ]
 }

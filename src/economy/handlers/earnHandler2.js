@@ -1,5 +1,6 @@
 // src/economy/handlers/earnHandler2.js — New Earning Mini-Games
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const wait = require('node:timers/promises').setTimeout;
 const { addWalletSafe, canUseCooldown, setUsedCooldown } = require('../helpers');
 const { bumpStat, getBalance } = require('../../utils/economyStorage');
 const { errorEmbed, successEmbed, cooldownEmbed } = require('../embeds');
@@ -516,7 +517,70 @@ async function handleHeistButton(interaction) {
   return interaction.editReply({ embeds: [embed], components: [row] });
 }
 
+// ═══ CHOP ═══
+async function chop(interaction) {
+  const userId = interaction.user.id;
+  const cd = await canUseCooldown(userId, 'CHOP');
+  if (!cd.ok) return interaction.reply({ embeds: [cooldownEmbed(cd.remaining)], flags: 64 });
+  await interaction.deferReply();
+  await setUsedCooldown(userId, 'CHOP');
+
+  await interaction.editReply({ content: '🪓 You walk up to a large tree...' });
+  await wait(1000);
+  await interaction.editReply({ content: '🪓 **CHOP!** (1/3)' });
+  await wait(1000);
+  await interaction.editReply({ content: '🪓 **CHOP!!** (2/3)' });
+  await wait(1000);
+  await interaction.editReply({ content: '🪓 **TIMBER!!!** (3/3)' });
+  await wait(1000);
+
+  const value = rollRange(200, 600);
+  await addWalletSafe(userId, value);
+  await bumpStat(userId, 'chop_used', 1);
+  const xp = await awardActionXP(userId, 'chop');
+
+  const embed = new EmbedBuilder()
+    .setColor(0x27ae60)
+    .setTitle('🌲 Tree Felled!')
+    .setDescription(`You chopped down the tree and sold the wood for \`${value.toLocaleString()}\` Atoms!\n🧪 +${xp.xpGained} XP`);
+
+  await interaction.editReply({ content: null, embeds: [embed] });
+}
+
+// ═══ DRILL ═══
+async function drill(interaction) {
+  const userId = interaction.user.id;
+  const cd = await canUseCooldown(userId, 'DRILL');
+  if (!cd.ok) return interaction.reply({ embeds: [cooldownEmbed(cd.remaining)], flags: 64 });
+  await interaction.deferReply();
+  await setUsedCooldown(userId, 'DRILL');
+
+  await interaction.editReply({ content: '⚙️ Starting the heavy drill...' });
+  await wait(1000);
+  await interaction.editReply({ content: '⚙️ Drilling at 10m depth... 🟩⬛⬛⬛⬛' });
+  await wait(1000);
+  await interaction.editReply({ content: '⚙️ Drilling at 50m depth... 🟩🟩🟩⬛⬛' });
+  await wait(1000);
+  await interaction.editReply({ content: '⚙️ Drilling at 100m depth... 🟩🟩🟩🟩🟩' });
+  await wait(1000);
+
+  const value = rollRange(500, 1500);
+  const gems = rollChance(0.2) ? '💎 Found a rare gem (+500 Atoms)!' : '';
+  if (gems) await addWalletSafe(userId, 500);
+
+  await addWalletSafe(userId, value);
+  await bumpStat(userId, 'drill_used', 1);
+  const xp = await awardActionXP(userId, 'drill');
+
+  const embed = new EmbedBuilder()
+    .setColor(0x34495e)
+    .setTitle('🕳️ Drill Complete')
+    .setDescription(`You extracted minerals worth \`${value.toLocaleString()}\` Atoms!\n${gems}\n🧪 +${xp.xpGained} XP`);
+
+  await interaction.editReply({ content: null, embeds: [embed] });
+}
+
 module.exports = {
-  mine, hack, duel, heist, scavenge, reactor, bounty, dig,
+  mine, hack, duel, heist, scavenge, reactor, bounty, dig, chop, drill,
   handleDuelButton, handleHeistButton, activeDuels, activeHeists
 };

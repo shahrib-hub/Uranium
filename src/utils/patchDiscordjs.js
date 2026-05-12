@@ -29,15 +29,19 @@ CommandInteraction.prototype.reply = async function(options) {
     if (!this.deferred && !this.replied) {
       // Determine if the original reply was meant to be ephemeral
       const isEphemeral = options && (options.ephemeral === true || options.flags === 64);
-      await this.deferReply({ ephemeral: isEphemeral }).catch(() => {});
-      deferredByUs = true;
+      try {
+        await this.deferReply({ ephemeral: isEphemeral });
+        deferredByUs = true;
+      } catch (e) {
+        // failed to defer (e.g. timeout or already deferred)
+      }
     }
 
     options = await translateMessagePayload(options, this.guildId);
     if (typeof options === 'object') markTranslated(options);
 
-    // If we deferred it, we MUST edit instead of reply
-    if (deferredByUs) {
+    // If we successfully deferred it, we MUST edit instead of reply
+    if (deferredByUs || this.deferred) {
       return originalEditReply.call(this, options);
     }
   }
@@ -72,14 +76,16 @@ if (BaseInteraction.prototype.reply && BaseInteraction.prototype.reply !== origi
             // but for Buttons/Selects it works. We check if deferReply exists.
             if (!this.deferred && !this.replied && typeof this.deferReply === 'function') {
                 const isEphemeral = options && (options.ephemeral === true || options.flags === 64);
-                await this.deferReply({ ephemeral: isEphemeral }).catch(() => {});
-                deferredByUs = true;
+                try {
+                    await this.deferReply({ ephemeral: isEphemeral });
+                    deferredByUs = true;
+                } catch (e) { }
             }
 
             options = await translateMessagePayload(options, this.guildId);
             if (typeof options === 'object') markTranslated(options);
 
-            if (deferredByUs) {
+            if (deferredByUs || this.deferred) {
                 return originalBaseEditReply.call(this, options);
             }
         }

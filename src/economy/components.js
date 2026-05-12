@@ -185,7 +185,9 @@ function economyHelpSelect() {
 function inventoryItemSelect(inventory, itemIndex) {
   const usable = inventory.filter(row => {
     const item = itemIndex[row.itemId];
-    return item && ['consumable', 'booster', 'lootbox', 'tool'].includes(item.type);
+    if (!item) return false;
+    if (item.usable === false) return false;
+    return ['consumable', 'booster', 'lootbox', 'tool'].includes(item.type);
   }).slice(0, 25);
 
   if (!usable.length) return null;

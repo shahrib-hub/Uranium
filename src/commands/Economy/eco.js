@@ -57,6 +57,8 @@ module.exports = {
       .addSubcommand(s => s.setName('dig').setDescription('Dig for archaeology finds'))
       .addSubcommand(s => s.setName('bounty').setDescription('Hunt a bounty target'))
       .addSubcommand(s => s.setName('reactor').setDescription('Run the nuclear reactor'))
+      .addSubcommand(s => s.setName('chop').setDescription('Chop some wood'))
+      .addSubcommand(s => s.setName('drill').setDescription('Drill deep underground'))
     )
 
     // ═══ FUN GROUP ═══
@@ -68,11 +70,9 @@ module.exports = {
       .addSubcommand(s => s.setName('crash').setDescription('Crash game').addIntegerOption(o => o.setName('bet').setDescription('Bet').setRequired(true)))
     )
 
-    // ═══ SHOP GROUP ═══
-    .addSubcommandGroup(g => g.setName('shop').setDescription('Buy & sell items')
-      .addSubcommand(s => s.setName('browse').setDescription('Browse the shop'))
-      .addSubcommand(s => s.setName('sell').setDescription('Sell an item').addStringOption(o => o.setName('item').setDescription('Item ID').setRequired(false).setAutocomplete(true)).addIntegerOption(o => o.setName('quantity').setDescription('Qty')))
-    )
+    // ═══ SHOP & SELL ═══
+    .addSubcommand(s => s.setName('shop').setDescription('Browse the shop'))
+    .addSubcommand(s => s.setName('sell').setDescription('Sell an item').addStringOption(o => o.setName('item').setDescription('Item ID').setRequired(false).setAutocomplete(true)).addIntegerOption(o => o.setName('quantity').setDescription('Qty')))
 
     // ═══ ADVENTURE GROUP ═══
     .addSubcommandGroup(g => g.setName('adventure').setDescription('Adventures & activities')
@@ -210,6 +210,8 @@ module.exports = {
         if (sub === 'dig') return earnHandler2.dig(interaction);
         if (sub === 'bounty') return earnHandler2.bounty(interaction);
         if (sub === 'reactor') return earnHandler2.reactor(interaction);
+        if (sub === 'chop') return earnHandler2.chop(interaction);
+        if (sub === 'drill') return earnHandler2.drill(interaction);
       }
 
       // ═══ FUN ═══
@@ -222,64 +224,62 @@ module.exports = {
       }
 
       // ═══ SHOP ═══
-      if (group === 'shop') {
-        if (sub === 'browse') {
-          const shopData = getShopData();
-          const category = shopData.categories[0];
-          const perPage = 5;
-          const totalPages = Math.max(1, Math.ceil(category.items.length / perPage));
-          const items = category.items.slice(0, perPage);
-          const embed = shopPageEmbed(interaction.user, category, items, 0, totalPages);
-          const rows = [shopCategorySelect(shopData.categories, category.id), shopPaginationButtons(category.id, 0, totalPages), ...shopBuyButtons(items)];
-          return interaction.reply({ embeds: [embed], components: rows });
-        }
+      if (sub === 'shop') {
+        const shopData = getShopData();
+        const category = shopData.categories[0];
+        const perPage = 5;
+        const totalPages = Math.max(1, Math.ceil(category.items.length / perPage));
+        const items = category.items.slice(0, perPage);
+        const embed = shopPageEmbed(interaction.user, category, items, 0, totalPages);
+        const rows = [shopCategorySelect(shopData.categories, category.id), shopPaginationButtons(category.id, 0, totalPages), ...shopBuyButtons(items)];
+        return interaction.reply({ embeds: [embed], components: rows });
+      }
 
-        if (sub === 'sell') {
-          const itemId = interaction.options.getString('item');
-          const qty = interaction.options.getInteger('quantity') || 1;
+      if (sub === 'sell') {
+        const itemId = interaction.options.getString('item');
+        const qty = interaction.options.getInteger('quantity') || 1;
+        
+        if (!itemId) {
+          // Premium interactive sell menu
+          const { getInventory } = require('../../utils/economyStorage');
+          const inv = await getInventory(interaction.user.id);
+          const sellable = inv.filter(i => {
+            const info = findItem(i.id);
+            return info && info.sellPrice > 0 && i.amount >= qty;
+          });
+          if (!sellable.length) return interaction.reply({ embeds: [errorEmbed('You have nothing sellable in your inventory.')], flags: 64 });
           
-          if (!itemId) {
-            // Premium interactive sell menu
-            const { getInventory } = require('../../utils/economyStorage');
-            const inv = await getInventory(interaction.user.id);
-            const sellable = inv.filter(i => {
-              const info = findItem(i.id);
-              return info && info.sellPrice > 0 && i.amount >= qty;
-            });
-            if (!sellable.length) return interaction.reply({ embeds: [errorEmbed('You have nothing sellable in your inventory.')], flags: 64 });
-            
-            const { ActionRowBuilder, StringSelectMenuBuilder, EmbedBuilder } = require('discord.js');
-            const options = sellable.slice(0, 25).map(i => {
-              const info = findItem(i.id);
-              return {
-                label: `Sell ${qty}x ${info.name}`,
-                description: `For ${((info.sellPrice || 0) * qty).toLocaleString()} Atoms`,
-                emoji: info.emoji,
-                value: `${i.id}_${qty}`
-              };
-            });
-            
-            const row = new ActionRowBuilder().addComponents(
-              new StringSelectMenuBuilder()
-                .setCustomId('eco:sell:menu')
-                .setPlaceholder('Select an item to sell...')
-                .addOptions(options)
-            );
-            const em = new EmbedBuilder().setColor(0xf1c40f).setTitle('🛒 Sell Items').setDescription(`Choose an item below to sell **${qty}x** of it.\n\n*If you have many items, use the \`/eco shop sell item:...\` option directly!*`);
-            return interaction.reply({ embeds: [em], components: [row] });
-          }
-
-          const item = findItem(itemId);
-          if (!item) return interaction.reply({ embeds: [errorEmbed('Item not found.')], flags: 64 });
-          if (!item.sellPrice) return interaction.reply({ embeds: [errorEmbed('This item cannot be sold.')], flags: 64 });
-          const { consumeInventoryItem } = require('../../utils/economyStorage');
-          const removed = await consumeInventoryItem(interaction.user.id, itemId, qty);
-          if (!removed) return interaction.reply({ embeds: [errorEmbed('You don\'t have enough of that item.')], flags: 64 });
-          const total = item.sellPrice * qty;
-          await addWalletSafe(interaction.user.id, total);
-          await awardActionXP(interaction.user.id, 'sell');
-          return interaction.reply({ embeds: [successEmbed(`Sold ${qty}x **${item.name}** for \`${total.toLocaleString()}\` Atoms!`)] });
+          const { ActionRowBuilder, StringSelectMenuBuilder, EmbedBuilder } = require('discord.js');
+          const options = sellable.slice(0, 25).map(i => {
+            const info = findItem(i.id);
+            return {
+              label: `Sell ${qty}x ${info.name}`,
+              description: `For ${((info.sellPrice || 0) * qty).toLocaleString()} Atoms`,
+              emoji: info.emoji,
+              value: `${i.id}_${qty}`
+            };
+          });
+          
+          const row = new ActionRowBuilder().addComponents(
+            new StringSelectMenuBuilder()
+              .setCustomId('eco:sell:menu')
+              .setPlaceholder('Select an item to sell...')
+              .addOptions(options)
+          );
+          const em = new EmbedBuilder().setColor(0xf1c40f).setTitle('🛒 Sell Items').setDescription(`Choose an item below to sell **${qty}x** of it.\n\n*If you have many items, use the \`/eco sell item:...\` option directly!*`);
+          return interaction.reply({ embeds: [em], components: [row] });
         }
+
+        const item = findItem(itemId);
+        if (!item) return interaction.reply({ embeds: [errorEmbed('Item not found.')], flags: 64 });
+        if (!item.sellPrice) return interaction.reply({ embeds: [errorEmbed('This item cannot be sold.')], flags: 64 });
+        const { consumeInventoryItem } = require('../../utils/economyStorage');
+        const removed = await consumeInventoryItem(interaction.user.id, itemId, qty);
+        if (!removed) return interaction.reply({ embeds: [errorEmbed('You don\'t have enough of that item.')], flags: 64 });
+        const total = item.sellPrice * qty;
+        await addWalletSafe(interaction.user.id, total);
+        await awardActionXP(interaction.user.id, 'sell');
+        return interaction.reply({ embeds: [successEmbed(`Sold ${qty}x **${item.name}** for \`${total.toLocaleString()}\` Atoms!`)] });
       }
 
       // ═══ ADVENTURE ═══

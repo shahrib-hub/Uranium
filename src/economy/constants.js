@@ -18,7 +18,8 @@ const COOLDOWNS = {
   ADVENTURE: 300000, EXPLORE: 120000, GAMBLE: 5000,
   QUEST_REFRESH: 86400000,
   MINE: 60000, HACK: 120000, DUEL: 90000, HEIST: 300000,
-  SCAVENGE: 45000, REACTOR: 180000, BOUNTY: 240000, DIG: 60000
+  SCAVENGE: 45000, REACTOR: 180000, BOUNTY: 240000, DIG: 60000,
+  CHOP: 45000, DRILL: 120000
 };
 
 // ═══════════════════════════════════════
@@ -46,7 +47,7 @@ const LEVEL = {
     rob_success: 15, rob_fail: 5, buy: 5, sell: 3,
     mine: 18, hack: 25, duel_win: 30, duel_lose: 8,
     heist_success: 40, heist_fail: 10, scavenge: 12,
-    reactor: 35, bounty: 28, dig: 14
+    reactor: 35, bounty: 28, dig: 14, chop: 12, drill: 25
   }
 };
 
@@ -315,7 +316,30 @@ const QUEST_TEMPLATES = [
   { id: 'q_crime200', name: 'Crime Lord', desc: 'Attempt 200 crimes.', key: 'crime_used', target: 200, Atoms: 400000, xp: 2000, diff: 'extreme' },
   { id: 'q_earn10m', name: 'Multimillionaire', desc: 'Earn 10,000,000 Atoms total.', key: 'money_earned', target: 10000000, Atoms: 1000000, xp: 5000, diff: 'extreme' },
   { id: 'q_adv100', name: 'God of Adventure', desc: 'Complete 100 adventures.', key: 'adventure_used', target: 100, Atoms: 500000, xp: 3000, diff: 'extreme' },
-  { id: 'q_streak100', name: 'Centennial Streak', desc: 'Reach a 100-day daily streak.', key: 'daily_streak', target: 100, Atoms: 2500000, xp: 10000, diff: 'extreme' }
+  { id: 'q_streak100', name: 'Centennial Streak', desc: 'Reach a 100-day daily streak.', key: 'daily_streak', target: 100, Atoms: 2500000, xp: 10000, diff: 'extreme' },
+  
+  // New earn subcommands (Medium)
+  { id: 'q_mine10', name: 'Miner', desc: 'Mine 10 times.', key: 'mine_used', target: 10, Atoms: 3000, xp: 40, diff: 'medium' },
+  { id: 'q_hack5', name: 'Hacker', desc: 'Hack 5 times.', key: 'hack_used', target: 5, Atoms: 5000, xp: 50, diff: 'medium' },
+  { id: 'q_duel5', name: 'Gladiator', desc: 'Duel 5 times.', key: 'duel_used', target: 5, Atoms: 4000, xp: 50, diff: 'medium' },
+  { id: 'q_heist3', name: 'Heister', desc: 'Attempt Heist 3 times.', key: 'heist_used', target: 3, Atoms: 6000, xp: 60, diff: 'medium' },
+  { id: 'q_scav10', name: 'Scavenger', desc: 'Scavenge 10 times.', key: 'scavenge_used', target: 10, Atoms: 3000, xp: 40, diff: 'medium' },
+  { id: 'q_reactor5', name: 'Operator', desc: 'Run Reactor 5 times.', key: 'reactor_used', target: 5, Atoms: 4000, xp: 50, diff: 'medium' },
+  { id: 'q_bounty5', name: 'Bounty Hunter', desc: 'Claim Bounty 5 times.', key: 'bounty_used', target: 5, Atoms: 5000, xp: 50, diff: 'medium' },
+  { id: 'q_dig10', name: 'Archaeologist', desc: 'Dig 10 times.', key: 'dig_used', target: 10, Atoms: 3000, xp: 40, diff: 'medium' },
+  { id: 'q_chop10', name: 'Lumberjack', desc: 'Chop wood 10 times.', key: 'chop_used', target: 10, Atoms: 3000, xp: 40, diff: 'medium' },
+  { id: 'q_drill5', name: 'Driller', desc: 'Drill 5 times.', key: 'drill_used', target: 5, Atoms: 4000, xp: 50, diff: 'medium' },
+  // New earn subcommands (Hard)
+  { id: 'q_mine25', name: 'Deep Miner', desc: 'Mine 25 times.', key: 'mine_used', target: 25, Atoms: 10000, xp: 100, diff: 'hard' },
+  { id: 'q_hack15', name: 'Master Hacker', desc: 'Hack 15 times.', key: 'hack_used', target: 15, Atoms: 15000, xp: 150, diff: 'hard' },
+  { id: 'q_duel15', name: 'Champion', desc: 'Duel 15 times.', key: 'duel_used', target: 15, Atoms: 12000, xp: 120, diff: 'hard' },
+  { id: 'q_heist10', name: 'Master Heister', desc: 'Attempt Heist 10 times.', key: 'heist_used', target: 10, Atoms: 25000, xp: 200, diff: 'hard' },
+  { id: 'q_scav25', name: 'Master Scavenger', desc: 'Scavenge 25 times.', key: 'scavenge_used', target: 25, Atoms: 10000, xp: 100, diff: 'hard' },
+  { id: 'q_reactor15', name: 'Chief Operator', desc: 'Run Reactor 15 times.', key: 'reactor_used', target: 15, Atoms: 15000, xp: 150, diff: 'hard' },
+  { id: 'q_bounty15', name: 'Master Hunter', desc: 'Claim Bounty 15 times.', key: 'bounty_used', target: 15, Atoms: 20000, xp: 180, diff: 'hard' },
+  { id: 'q_dig25', name: 'Master Archaeologist', desc: 'Dig 25 times.', key: 'dig_used', target: 25, Atoms: 10000, xp: 100, diff: 'hard' },
+  { id: 'q_chop25', name: 'Deforester', desc: 'Chop wood 25 times.', key: 'chop_used', target: 25, Atoms: 10000, xp: 100, diff: 'hard' },
+  { id: 'q_drill15', name: 'Deep Driller', desc: 'Drill 15 times.', key: 'drill_used', target: 15, Atoms: 15000, xp: 150, diff: 'hard' }
 ];
 
 // ═══════════════════════════════════════
