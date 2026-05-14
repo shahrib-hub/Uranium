@@ -145,7 +145,7 @@ async function nextTicketId(guildId) {
     const doc = await TicketCounter.findOneAndUpdate(
       { guildId },
       { $inc: { nextId: 1 } },
-      { upsert: true, new: false } // new: false returns the doc *before* update
+      { upsert: true, returnDocument: 'before' } // returns the doc *before* update
     );
     if (!doc) {
       // First ticket for guild

@@ -108,12 +108,16 @@ async function initEconomy() {
 
 async function ensureUserRow(userId) {
   if (isMongoReady()) {
-    const doc = await EcoUser.findOne({ userId });
-    if (!doc) {
-      const now = Date.now();
-      await EcoUser.create({ userId, wallet: 0, bank: 0, createdAt: now, updatedAt: now });
+    try {
+      const doc = await EcoUser.findOne({ userId });
+      if (!doc) {
+        const now = Date.now();
+        await EcoUser.create({ userId, wallet: 0, bank: 0, createdAt: now, updatedAt: now });
+      }
+      return;
+    } catch (e) {
+      logger.error('[Economy] MongoDB ensureUserRow failed: %s', e.message);
     }
-    return;
   }
 
   const now = Date.now();
@@ -129,11 +133,15 @@ async function ensureUserRow(userId) {
 async function getBalance(userId) {
   await ensureUserRow(userId);
   if (isMongoReady()) {
-    const doc = await EcoUser.findOne({ userId });
-    return {
-      wallet: doc?.wallet ?? 0,
-      bank: doc?.bank ?? 0
-    };
+    try {
+      const doc = await EcoUser.findOne({ userId });
+      return {
+        wallet: doc?.wallet ?? 0,
+        bank: doc?.bank ?? 0
+      };
+    } catch (e) {
+      logger.error('[Economy] MongoDB getBalance failed: %s', e.message);
+    }
   }
 
   await initEconomy();
@@ -153,11 +161,15 @@ async function setBalance(userId, { wallet, bank }) {
   const now = Date.now();
 
   if (isMongoReady()) {
-    const bal = await getBalance(userId);
-    const newWallet = typeof wallet === 'number' ? wallet : bal.wallet;
-    const newBank = typeof bank === 'number' ? bank : bal.bank;
-    await EcoUser.updateOne({ userId }, { wallet: newWallet, bank: newBank, updatedAt: now });
-    return { wallet: newWallet, bank: newBank };
+    try {
+      const bal = await getBalance(userId);
+      const newWallet = typeof wallet === 'number' ? wallet : bal.wallet;
+      const newBank = typeof bank === 'number' ? bank : bal.bank;
+      await EcoUser.updateOne({ userId }, { wallet: newWallet, bank: newBank, updatedAt: now });
+      return { wallet: newWallet, bank: newBank };
+    } catch (e) {
+      logger.error('[Economy] MongoDB setBalance failed: %s', e.message);
+    }
   }
 
   await initEconomy();
@@ -182,8 +194,12 @@ async function addWallet(userId, delta) {
   const now = Date.now();
 
   if (isMongoReady()) {
-    await EcoUser.updateOne({ userId }, { $inc: { wallet: delta }, $set: { updatedAt: now } });
-    return getBalance(userId);
+    try {
+      await EcoUser.updateOne({ userId }, { $inc: { wallet: delta }, $set: { updatedAt: now } });
+      return getBalance(userId);
+    } catch (e) {
+      logger.error('[Economy] MongoDB addWallet failed: %s', e.message);
+    }
   }
 
   await initEconomy();
@@ -204,8 +220,12 @@ async function addBank(userId, delta) {
   const now = Date.now();
 
   if (isMongoReady()) {
-    await EcoUser.updateOne({ userId }, { $inc: { bank: delta }, $set: { updatedAt: now } });
-    return getBalance(userId);
+    try {
+      await EcoUser.updateOne({ userId }, { $inc: { bank: delta }, $set: { updatedAt: now } });
+      return getBalance(userId);
+    } catch (e) {
+      logger.error('[Economy] MongoDB addBank failed: %s', e.message);
+    }
   }
 
   await initEconomy();
@@ -225,10 +245,14 @@ async function addBank(userId, delta) {
 
 async function getStats(userId) {
   if (isMongoReady()) {
-    const docs = await EcoStat.find({ userId });
-    const out = {};
-    for (const doc of docs) out[doc.key] = doc.value;
-    return out;
+    try {
+      const docs = await EcoStat.find({ userId });
+      const out = {};
+      for (const doc of docs) out[doc.key] = doc.value;
+      return out;
+    } catch (e) {
+      logger.error('[Economy] MongoDB getStats failed: %s', e.message);
+    }
   }
 
   await initEconomy();
@@ -246,8 +270,12 @@ async function getStats(userId) {
 
 async function bumpStat(userId, key, delta = 1) {
   if (isMongoReady()) {
-    await EcoStat.findOneAndUpdate({ userId, key }, { $inc: { value: delta } }, { upsert: true });
-    return;
+    try {
+      await EcoStat.findOneAndUpdate({ userId, key }, { $inc: { value: delta } }, { upsert: true });
+      return;
+    } catch (e) {
+      logger.error('[Economy] MongoDB bumpStat failed: %s', e.message);
+    }
   }
 
   await initEconomy();
@@ -264,8 +292,12 @@ async function bumpStat(userId, key, delta = 1) {
 
 async function setStat(userId, key, value) {
   if (isMongoReady()) {
-    await EcoStat.findOneAndUpdate({ userId, key }, { value }, { upsert: true });
-    return;
+    try {
+      await EcoStat.findOneAndUpdate({ userId, key }, { value }, { upsert: true });
+      return;
+    } catch (e) {
+      logger.error('[Economy] MongoDB setStat failed: %s', e.message);
+    }
   }
 
   await initEconomy();
@@ -282,8 +314,12 @@ async function setStat(userId, key, value) {
 
 async function getStat(userId, key) {
   if (isMongoReady()) {
-    const doc = await EcoStat.findOne({ userId, key });
-    return doc ? doc.value : 0;
+    try {
+      const doc = await EcoStat.findOne({ userId, key });
+      return doc ? doc.value : 0;
+    } catch (e) {
+      logger.error('[Economy] MongoDB getStat failed: %s', e.message);
+    }
   }
 
   await initEconomy();
@@ -298,8 +334,12 @@ async function getStat(userId, key) {
 
 async function getInventory(userId) {
   if (isMongoReady()) {
-    const docs = await EcoInventory.find({ userId, quantity: { $gt: 0 } });
-    return docs.map(d => ({ itemId: d.itemId, quantity: d.quantity }));
+    try {
+      const docs = await EcoInventory.find({ userId, quantity: { $gt: 0 } });
+      return docs.map(d => ({ itemId: d.itemId, quantity: d.quantity }));
+    } catch (e) {
+      logger.error('[Economy] MongoDB getInventory failed: %s', e.message);
+    }
   }
 
   await initEconomy();
@@ -314,13 +354,17 @@ async function addInventoryItem(userId, itemId, qty = 1) {
   if (qty === 0) return;
 
   if (isMongoReady()) {
-    await EcoInventory.findOneAndUpdate(
-      { userId, itemId },
-      { $inc: { quantity: qty } },
-      { upsert: true }
-    );
-    await EcoInventory.deleteMany({ userId, itemId, quantity: { $lte: 0 } });
-    return;
+    try {
+      await EcoInventory.findOneAndUpdate(
+        { userId, itemId },
+        { $inc: { quantity: qty } },
+        { upsert: true }
+      );
+      await EcoInventory.deleteMany({ userId, itemId, quantity: { $lte: 0 } });
+      return;
+    } catch (e) {
+      logger.error('[Economy] MongoDB addInventoryItem failed: %s', e.message);
+    }
   }
 
   await initEconomy();
@@ -342,15 +386,19 @@ async function addInventoryItem(userId, itemId, qty = 1) {
 
 async function consumeInventoryItem(userId, itemId, qty = 1) {
   if (isMongoReady()) {
-    const doc = await EcoInventory.findOne({ userId, itemId });
-    if (!doc || doc.quantity < qty) return false;
-    const newQty = doc.quantity - qty;
-    if (newQty > 0) {
-      await EcoInventory.updateOne({ userId, itemId }, { quantity: newQty });
-    } else {
-      await EcoInventory.deleteOne({ userId, itemId });
+    try {
+      const doc = await EcoInventory.findOne({ userId, itemId });
+      if (!doc || doc.quantity < qty) return false;
+      const newQty = doc.quantity - qty;
+      if (newQty > 0) {
+        await EcoInventory.updateOne({ userId, itemId }, { quantity: newQty });
+      } else {
+        await EcoInventory.deleteOne({ userId, itemId });
+      }
+      return true;
+    } catch (e) {
+      logger.error('[Economy] MongoDB consumeInventoryItem failed: %s', e.message);
     }
-    return true;
   }
 
   await initEconomy();
@@ -381,8 +429,12 @@ async function consumeInventoryItem(userId, itemId, qty = 1) {
 
 async function getCooldown(userId, key) {
   if (isMongoReady()) {
-    const doc = await EcoCooldown.findOne({ userId, key });
-    return doc ? doc.lastUsed : null;
+    try {
+      const doc = await EcoCooldown.findOne({ userId, key });
+      return doc ? doc.lastUsed : null;
+    } catch (e) {
+      logger.error('[Economy] MongoDB getCooldown failed: %s', e.message);
+    }
   }
 
   await initEconomy();
@@ -395,8 +447,12 @@ async function getCooldown(userId, key) {
 
 async function setCooldown(userId, key, timestampMs) {
   if (isMongoReady()) {
-    await EcoCooldown.findOneAndUpdate({ userId, key }, { lastUsed: timestampMs }, { upsert: true });
-    return;
+    try {
+      await EcoCooldown.findOneAndUpdate({ userId, key }, { lastUsed: timestampMs }, { upsert: true });
+      return;
+    } catch (e) {
+      logger.error('[Economy] MongoDB setCooldown failed: %s', e.message);
+    }
   }
 
   await initEconomy();
@@ -415,17 +471,21 @@ async function setCooldown(userId, key, timestampMs) {
 
 async function getLeaderboard(type = 'net', limit = 10) {
   if (isMongoReady()) {
-    let sortObj = {};
-    if (type === 'wallet') sortObj = { wallet: -1 };
-    else if (type === 'bank') sortObj = { bank: -1 };
-    else sortObj = { net: -1 };
+    try {
+      let sortObj = {};
+      if (type === 'wallet') sortObj = { wallet: -1 };
+      else if (type === 'bank') sortObj = { bank: -1 };
+      else sortObj = { net: -1 };
 
-    const docs = await EcoUser.aggregate([
-      { $project: { userId: 1, wallet: 1, bank: 1, net: { $add: ["$wallet", "$bank"] } } },
-      { $sort: sortObj },
-      { $limit: limit }
-    ]);
-    return docs.map(d => ({ userId: d.userId, wallet: d.wallet, bank: d.bank, net: d.net }));
+      const docs = await EcoUser.aggregate([
+        { $project: { userId: 1, wallet: 1, bank: 1, net: { $add: ["$wallet", "$bank"] } } },
+        { $sort: sortObj },
+        { $limit: limit }
+      ]);
+      return docs.map(d => ({ userId: d.userId, wallet: d.wallet, bank: d.bank, net: d.net }));
+    } catch (e) {
+      logger.error('[Economy] MongoDB getLeaderboard failed: %s', e.message);
+    }
   }
 
   await initEconomy();
@@ -461,8 +521,12 @@ async function getLeaderboard(type = 'net', limit = 10) {
 
 async function getCosmetics(userId) {
   if (isMongoReady()) {
-    const doc = await EcoCosmetic.findOne({ userId });
-    return doc ? { title: doc.title, badge: doc.badge, frame: doc.frame, color: doc.color } : {};
+    try {
+      const doc = await EcoCosmetic.findOne({ userId });
+      return doc ? { title: doc.title, badge: doc.badge, frame: doc.frame, color: doc.color } : {};
+    } catch (e) {
+      logger.error('[Economy] MongoDB getCosmetics failed: %s', e.message);
+    }
   }
 
   await initEconomy();
@@ -483,8 +547,12 @@ async function setCosmetics(userId, patch = {}) {
   };
 
   if (isMongoReady()) {
-    await EcoCosmetic.findOneAndUpdate({ userId }, merged, { upsert: true });
-    return merged;
+    try {
+      await EcoCosmetic.findOneAndUpdate({ userId }, merged, { upsert: true });
+      return merged;
+    } catch (e) {
+      logger.error('[Economy] MongoDB setCosmetics failed: %s', e.message);
+    }
   }
 
   await initEconomy();
@@ -508,8 +576,12 @@ async function setCosmetics(userId, patch = {}) {
 
 async function getMeta(key) {
   if (isMongoReady()) {
-    const doc = await EcoMeta.findOne({ key });
-    return doc ? doc.value : null;
+    try {
+      const doc = await EcoMeta.findOne({ key });
+      return doc ? doc.value : null;
+    } catch (e) {
+      logger.error('[Economy] MongoDB getMeta failed: %s', e.message);
+    }
   }
 
   await initEconomy();
@@ -519,8 +591,12 @@ async function getMeta(key) {
 
 async function setMeta(key, value) {
   if (isMongoReady()) {
-    await EcoMeta.findOneAndUpdate({ key }, { value: String(value) }, { upsert: true });
-    return;
+    try {
+      await EcoMeta.findOneAndUpdate({ key }, { value: String(value) }, { upsert: true });
+      return;
+    } catch (e) {
+      logger.error('[Economy] MongoDB setMeta failed: %s', e.message);
+    }
   }
 
   await initEconomy();
@@ -548,12 +624,16 @@ async function setGlobalEconomyDisabled(disabled) {
 
 async function resetUserEconomy(userId) {
   if (isMongoReady()) {
-    await EcoStat.deleteMany({ userId });
-    await EcoInventory.deleteMany({ userId });
-    await EcoCooldown.deleteMany({ userId });
-    await EcoCosmetic.deleteOne({ userId });
-    await EcoUser.updateOne({ userId }, { wallet: 0, bank: 0, updatedAt: Date.now() });
-    return;
+    try {
+      await EcoStat.deleteMany({ userId });
+      await EcoInventory.deleteMany({ userId });
+      await EcoCooldown.deleteMany({ userId });
+      await EcoCosmetic.deleteOne({ userId });
+      await EcoUser.updateOne({ userId }, { wallet: 0, bank: 0, updatedAt: Date.now() });
+      return;
+    } catch (e) {
+      logger.error('[Economy] MongoDB resetUserEconomy failed: %s', e.message);
+    }
   }
 
   await initEconomy();

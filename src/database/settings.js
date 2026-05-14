@@ -48,7 +48,7 @@ async function setBotLanguage(guildId, botLanguage) {
     await ServerSettings.findOneAndUpdate(
       { guildId },
       { botLanguage },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
   } else {
     return new Promise((resolve, reject) => {

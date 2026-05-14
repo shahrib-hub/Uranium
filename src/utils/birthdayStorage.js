@@ -31,7 +31,7 @@ async function setBirthday({ guildId, userId, year = null, month, day, note = nu
     const doc = await Birthday.findOneAndUpdate(
       { guildId, userId },
       { year, month, day, note, createdAt: ts },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
     return doc._id.toString(); // Just return something truthy for id
   }

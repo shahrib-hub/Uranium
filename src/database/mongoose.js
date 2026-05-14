@@ -661,7 +661,7 @@ async function connectToMongo() {
   try {
     logger.info('[Database] Connecting to MongoDB...');
     await mongoose.connect(mongoURI, {
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 2500,
       family: 4 // Force IPv4 to avoid certain DNS resolution issues
     });
     isConnected = true;

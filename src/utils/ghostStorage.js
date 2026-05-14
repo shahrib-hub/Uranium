@@ -139,7 +139,7 @@ const storage = {
       const doc = await GhostCount.findOneAndUpdate(
         { guildId, userId },
         { $inc: { count: by } },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
       );
       return doc.count;
     }
