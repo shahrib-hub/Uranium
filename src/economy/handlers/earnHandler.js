@@ -1,54 +1,113 @@
-// src/economy/handlers/earnHandler.js
-const { getBalance, bumpStat, getInventory, consumeInventoryItem } = require('../../utils/economyStorage');
-const { canUseCooldown, setUsedCooldown, addWalletSafe, updateDailyStreak, getDailyStreak, formatMs } = require('../helpers');
-const { errorEmbed, successEmbed, cooldownEmbed, questEmbed, huntEmbed, fishEmbed } = require('../embeds');
+const {
+  bumpStat,
+  addInventoryItem,
+  getStats,
+  getBalance,
+  clearExpiredEffects,
+  getActiveEffects,
+  updateEffect,
+  deleteEffect
+} = require('../../utils/economyStorage');
+const {
+  canUseCooldown,
+  setUsedCooldown,
+  addWalletSafe,
+  updateDailyStreak,
+  getActionMultiplier,
+  useToolForAction,
+  applyCrimeFailureProtection
+} = require('../service');
+const {
+  errorEmbed,
+  successEmbed,
+  cooldownEmbed,
+  questEmbed,
+  huntEmbed,
+  fishEmbed
+} = require('../embeds');
 const { questButtons } = require('../components');
-const { JOBS, CRIMES, BEG_RESPONSES, SEARCH_LOCATIONS, ANIMALS, FISH, QUEST_TEMPLATES, ZONES } = require('../constants');
-const { rollRange, rollChance, pickRandom, rollFromTable, rollRandomEvent, rollAdventure } = require('../rng');
+const { JOBS, CRIMES, BEG_RESPONSES, SEARCH_LOCATIONS, ANIMALS, FISH, ZONES } = require('../constants');
+const { rollRange, rollChance, pickRandom, rollFromTable, rollRandomEvent } = require('../rng');
 const { awardActionXP, getUserLevel } = require('../levelSystem');
-const { findItem } = require('../items');
+
+async function maybeUseEffect(userId, key) {
+  await clearExpiredEffects(userId);
+  const effects = await getActiveEffects(userId);
+  const effect = effects.find((entry) => entry.key === key);
+  if (!effect) return null;
+
+  if (effect.usesRemaining !== null && effect.usesRemaining !== undefined) {
+    if (effect.usesRemaining <= 1) await deleteEffect(effect.effectId);
+    else await updateEffect(effect.effectId, { usesRemaining: effect.usesRemaining - 1 });
+  }
+
+  return effect;
+}
 
 async function handleRandomEvent(userId, interaction) {
-  const evt = rollRandomEvent();
-  if (evt) {
-    await addWalletSafe(userId, evt.coins);
-    await interaction.followUp({ content: evt.text + ` (${evt.coins >= 0 ? '+' : ''}${evt.Atoms.toLocaleString()} Atoms)`, flags: 64 }).catch(() => {});
-  }
+  const event = rollRandomEvent();
+  if (!event) return;
+  await addWalletSafe(userId, event.Atoms);
+  await interaction.followUp({
+    content: `${event.text} (${event.Atoms >= 0 ? '+' : ''}${event.Atoms.toLocaleString()} Atoms)`,
+    flags: 64
+  }).catch(() => {});
 }
 
 async function handleLevelUp(result, interaction) {
-  if (result.leveledUp) {
-    const { levelUpEmbed } = require('../embeds');
-    await interaction.followUp({ embeds: [levelUpEmbed(interaction.user, result.oldLevel, result.newLevel, 0)] }).catch(() => {});
+  if (!result?.leveledUp) return;
+  const { levelUpEmbed } = require('../embeds');
+  await interaction.followUp({
+    embeds: [levelUpEmbed(interaction.user, result.oldLevel, result.newLevel, 0)]
+  }).catch(() => {});
+}
+
+function formatToolMessage(toolUse) {
+  if (!toolUse?.instance) return null;
+  if (toolUse.broke) return `Your **${toolUse.item?.name || toolUse.instance.itemId}** broke after that run.`;
+  if (toolUse.instance.maxDurability) {
+    return `Tool durability: \`${toolUse.instance.durability}/${toolUse.instance.maxDurability}\``;
   }
+  return null;
+}
+
+async function getRarityOverride(userId, key) {
+  const effect = await maybeUseEffect(userId, key);
+  return effect?.metadata?.guaranteedRarity || null;
 }
 
 module.exports = {
   async daily(interaction) {
     const userId = interaction.user.id;
-    const now = Date.now();
-    const cd = await canUseCooldown(userId, 'DAILY', now);
-    if (!cd.ok) return interaction.reply({ embeds: [cooldownEmbed(cd.remaining)], flags: 64 });
+    const cooldown = await canUseCooldown(userId, 'DAILY');
+    if (!cooldown.ok) return interaction.reply({ embeds: [cooldownEmbed(cooldown.remaining)], flags: 64 });
 
-    let amount = rollRange(2000, 3500);
     const streakInfo = await updateDailyStreak(userId);
-    amount = Math.floor(amount * streakInfo.multiplier);
+    const levelInfo = await getUserLevel(userId);
+    const actionBoost = await getActionMultiplier(userId, 'daily');
+    const dailyEffect = await maybeUseEffect(userId, 'daily');
+    const dailyMultiplier = Number(dailyEffect?.metadata?.multiplier || 1);
+    const amount = Math.max(
+      1,
+      Math.floor(rollRange(2000, 3500) * streakInfo.multiplier * levelInfo.multiplier * actionBoost.multiplier * dailyMultiplier)
+    );
 
     await addWalletSafe(userId, amount);
-    await setUsedCooldown(userId, 'DAILY', now);
+    await setUsedCooldown(userId, 'DAILY');
     await bumpStat(userId, 'daily_claims', 1);
     const xp = await awardActionXP(userId, 'daily');
 
     const lines = [
-      `⚛️ You claimed your daily and received **\`${amount.toLocaleString()}\`** Atoms!`,
-      `🔥 **Streak:** \`${streakInfo.streak}\` days (${streakInfo.multiplier}x bonus)`,
-      `🧪 **+${xp.xpGained} XP**`
+      `You claimed your daily and received **\`${amount.toLocaleString()}\`** Atoms.`,
+      `Streak: \`${streakInfo.streak}\` day(s) (${streakInfo.multiplier}x).`,
+      `+${xp.xpGained} XP`
     ];
 
+    if (dailyMultiplier > 1) lines.push(`Daily Doubler triggered at **${dailyMultiplier}x**.`);
+
     if (rollChance(0.02)) {
-      const { addInventoryItem } = require('../../utils/economyStorage');
       await addInventoryItem(userId, 'adv_ticket', 1);
-      lines.push('🎫 **WOW! You found a rare Adventure Ticket!**');
+      lines.push('You found an **Adventure Ticket**.');
     }
 
     await interaction.reply({ embeds: [successEmbed(lines.join('\n'))] });
@@ -58,181 +117,255 @@ module.exports = {
 
   async work(interaction) {
     const userId = interaction.user.id;
-    const cd = await canUseCooldown(userId, 'WORK');
-    if (!cd.ok) return interaction.reply({ embeds: [cooldownEmbed(cd.remaining)], flags: 64 });
+    const cooldown = await canUseCooldown(userId, 'WORK');
+    if (!cooldown.ok) return interaction.reply({ embeds: [cooldownEmbed(cooldown.remaining)], flags: 64 });
 
-    const lvl = await getUserLevel(userId);
-    const available = JOBS.filter(j => j.lvl <= lvl.level);
-    const job = pickRandom(available.length ? available : [JOBS[0]]);
-    let amount = rollRange(job.min, job.max);
-    amount = Math.floor(amount * lvl.multiplier);
+    const levelInfo = await getUserLevel(userId);
+    const jobs = JOBS.filter((job) => job.lvl <= levelInfo.level);
+    const job = pickRandom(jobs.length ? jobs : [JOBS[0]]);
+    const actionBoost = await getActionMultiplier(userId, 'work');
+    const amount = Math.max(1, Math.floor(rollRange(job.min, job.max) * levelInfo.multiplier * actionBoost.multiplier));
 
     await addWalletSafe(userId, amount);
     await setUsedCooldown(userId, 'WORK');
     await bumpStat(userId, 'work_used', 1);
     const xp = await awardActionXP(userId, 'work');
 
-    let text = `${job.emoji} You worked as a **${job.name}** and earned **\`${amount.toLocaleString()}\`** Atoms!\n🧪 **+${xp.xpGained} XP**`;
-    
+    const lines = [
+      `${job.emoji} You worked as **${job.name}** and earned **\`${amount.toLocaleString()}\`** Atoms.`,
+      `+${xp.xpGained} XP`
+    ];
+
+    if (actionBoost.multiplier > 1) lines.push(`Boosts applied: \`${actionBoost.multiplier.toFixed(2)}x\``);
     if (rollChance(0.02)) {
-      const { addInventoryItem } = require('../../utils/economyStorage');
       await addInventoryItem(userId, 'adv_ticket', 1);
-      text += '\n🎫 **WOW! You found a rare Adventure Ticket on the job!**';
+      lines.push('You found an **Adventure Ticket** on the job.');
     }
 
-    await interaction.reply({ embeds: [successEmbed(text)] });
+    await interaction.reply({ embeds: [successEmbed(lines.join('\n'))] });
     await handleLevelUp(xp, interaction);
     await handleRandomEvent(userId, interaction);
   },
 
   async crime(interaction) {
     const userId = interaction.user.id;
-    const cd = await canUseCooldown(userId, 'CRIME');
-    if (!cd.ok) return interaction.reply({ embeds: [cooldownEmbed(cd.remaining)], flags: 64 });
+    const cooldown = await canUseCooldown(userId, 'CRIME');
+    if (!cooldown.ok) return interaction.reply({ embeds: [cooldownEmbed(cooldown.remaining)], flags: 64 });
 
-    const lvl = await getUserLevel(userId);
-    const available = CRIMES.filter(c => c.lvl <= lvl.level);
-    const crime = pickRandom(available.length ? available : [CRIMES[0]]);
+    const levelInfo = await getUserLevel(userId);
+    const crimes = CRIMES.filter((entry) => entry.lvl <= levelInfo.level);
+    const crime = pickRandom(crimes.length ? crimes : [CRIMES[0]]);
+    const actionBoost = await getActionMultiplier(userId, 'crime');
     await setUsedCooldown(userId, 'CRIME');
+    await bumpStat(userId, 'crime_used', 1);
 
     if (rollChance(crime.chance)) {
-      let gain = rollRange(crime.min, crime.max);
-      gain = Math.floor(gain * lvl.multiplier);
+      const gain = Math.max(1, Math.floor(rollRange(crime.min, crime.max) * levelInfo.multiplier * actionBoost.multiplier));
       await addWalletSafe(userId, gain);
       await bumpStat(userId, 'crime_success', 1);
-      await bumpStat(userId, 'crime_used', 1);
       const xp = await awardActionXP(userId, 'crime_success');
-      await interaction.reply({ embeds: [successEmbed(`${crime.emoji} **${crime.name}** successful!\nYou earned **\`${gain.toLocaleString()}\`** Atoms! 🧪 +${xp.xpGained} XP`)] });
-      await handleLevelUp(xp, interaction);
-    } else {
-      const fine = rollRange(crime.fine[0], crime.fine[1]);
-      const bal = await getBalance(userId);
-      const loss = Math.min(bal.wallet, fine);
-      await addWalletSafe(userId, -loss);
-      await bumpStat(userId, 'crime_fail', 1);
-      await bumpStat(userId, 'crime_used', 1);
-      await awardActionXP(userId, 'crime_fail');
-      await interaction.reply({ embeds: [errorEmbed(`${crime.emoji} **${crime.name}** failed!\nYou paid a fine of **\`${loss.toLocaleString()}\`** Atoms.`)] });
+      const lines = [
+        `${crime.emoji} **${crime.name}** succeeded.`,
+        `You earned **\`${gain.toLocaleString()}\`** Atoms.`,
+        `+${xp.xpGained} XP`
+      ];
+      if (actionBoost.multiplier > 1) lines.push(`Boosts applied: \`${actionBoost.multiplier.toFixed(2)}x\``);
+      await interaction.reply({ embeds: [successEmbed(lines.join('\n'))] });
+      return handleLevelUp(xp, interaction);
     }
+
+    const fineBase = rollRange(crime.fine[0], crime.fine[1]);
+    const reducedFine = await applyCrimeFailureProtection(userId, fineBase);
+    const balance = await getBalance(userId);
+    const loss = Math.min(balance.wallet, reducedFine);
+    await addWalletSafe(userId, -loss);
+    await bumpStat(userId, 'crime_fail', 1);
+    const xp = await awardActionXP(userId, 'crime_fail');
+    await interaction.reply({
+      embeds: [errorEmbed(`${crime.emoji} **${crime.name}** failed.\nYou paid **\`${loss.toLocaleString()}\`** Atoms in fines.\n+${xp.xpGained} XP`)]
+    });
+    await handleLevelUp(xp, interaction);
   },
 
   async beg(interaction) {
     const userId = interaction.user.id;
-    const cd = await canUseCooldown(userId, 'BEG');
-    if (!cd.ok) return interaction.reply({ embeds: [cooldownEmbed(cd.remaining)], flags: 64 });
+    const cooldown = await canUseCooldown(userId, 'BEG');
+    if (!cooldown.ok) return interaction.reply({ embeds: [cooldownEmbed(cooldown.remaining)], flags: 64 });
 
-    // Weighted selection
     let roll = Math.random();
     let response = BEG_RESPONSES[BEG_RESPONSES.length - 1];
-    for (const r of BEG_RESPONSES) { roll -= r.chance; if (roll <= 0) { response = r; break; } }
+    for (const entry of BEG_RESPONSES) {
+      roll -= entry.chance;
+      if (roll <= 0) {
+        response = entry;
+        break;
+      }
+    }
 
-    const amount = rollRange(response.min, response.max);
+    const actionBoost = await getActionMultiplier(userId, 'beg');
+    const amount = Math.max(0, Math.floor(rollRange(response.min, response.max) * actionBoost.multiplier));
     if (amount > 0) await addWalletSafe(userId, amount);
     await setUsedCooldown(userId, 'BEG');
     await bumpStat(userId, 'beg_used', 1);
     const xp = await awardActionXP(userId, 'beg');
 
-    const text = amount > 0 ? `🙏 ${response.text}\n⚛️ **+\`${amount.toLocaleString()}\`** Atoms • 🧪 +${xp.xpGained} XP` : `🙏 ${response.text}`;
+    const text = amount > 0
+      ? `${response.text}\n+\`${amount.toLocaleString()}\` Atoms | +${xp.xpGained} XP`
+      : `${response.text}\n+${xp.xpGained} XP`;
     await interaction.reply({ embeds: [amount > 0 ? successEmbed(text) : errorEmbed(text)] });
     await handleLevelUp(xp, interaction);
   },
 
   async search(interaction) {
     const userId = interaction.user.id;
-    const cd = await canUseCooldown(userId, 'SEARCH');
-    if (!cd.ok) return interaction.reply({ embeds: [cooldownEmbed(cd.remaining)], flags: 64 });
+    const cooldown = await canUseCooldown(userId, 'SEARCH');
+    if (!cooldown.ok) return interaction.reply({ embeds: [cooldownEmbed(cooldown.remaining)], flags: 64 });
 
-    const loc = pickRandom(SEARCH_LOCATIONS);
-    const amount = rollRange(loc.min, loc.max);
+    const location = pickRandom(SEARCH_LOCATIONS);
+    const actionBoost = await getActionMultiplier(userId, 'search');
+    const toolUse = await useToolForAction(userId, 'SEARCH');
+    if (!toolUse.ok) return interaction.reply({ embeds: [errorEmbed(toolUse.reason)], flags: 64 });
+
+    const amount = Math.max(
+      1,
+      Math.floor(rollRange(location.min, location.max) * actionBoost.multiplier * (toolUse.bonusMultiplier || 1))
+    );
     await addWalletSafe(userId, amount);
     await setUsedCooldown(userId, 'SEARCH');
     await bumpStat(userId, 'search_used', 1);
     const xp = await awardActionXP(userId, 'search');
 
-    await interaction.reply({ embeds: [successEmbed(`${loc.emoji} You searched the **${loc.name}** and found **\`${amount.toLocaleString()}\`** Atoms!\n🧪 +${xp.xpGained} XP`)] });
+    const lines = [
+      `${location.emoji} You searched **${location.name}** and found **\`${amount.toLocaleString()}\`** Atoms.`,
+      `+${xp.xpGained} XP`
+    ];
+    const toolText = formatToolMessage(toolUse);
+    if (toolText) lines.push(toolText);
+
+    await interaction.reply({ embeds: [successEmbed(lines.join('\n'))] });
     await handleLevelUp(xp, interaction);
     await handleRandomEvent(userId, interaction);
   },
 
   async hunt(interaction) {
     const userId = interaction.user.id;
-    const cd = await canUseCooldown(userId, 'HUNT');
-    if (!cd.ok) return interaction.reply({ embeds: [cooldownEmbed(cd.remaining)], flags: 64 });
+    const cooldown = await canUseCooldown(userId, 'HUNT');
+    if (!cooldown.ok) return interaction.reply({ embeds: [cooldownEmbed(cooldown.remaining)], flags: 64 });
 
-    const animal = rollFromTable(ANIMALS);
-    await addWalletSafe(userId, animal.value);
+    const toolUse = await useToolForAction(userId, 'HUNT', { required: true });
+    if (!toolUse.ok) return interaction.reply({ embeds: [errorEmbed(toolUse.reason)], flags: 64 });
+
+    const forcedRarity = await getRarityOverride(userId, 'hunt_rarity');
+    const animal = rollFromTable(ANIMALS, forcedRarity);
+    const actionBoost = await getActionMultiplier(userId, 'hunt');
+    const amount = Math.max(1, Math.floor(animal.value * actionBoost.multiplier * (toolUse.bonusMultiplier || 1)));
+    await addWalletSafe(userId, amount);
     await setUsedCooldown(userId, 'HUNT');
     await bumpStat(userId, 'hunt_used', 1);
     const xp = await awardActionXP(userId, 'hunt');
 
-    await interaction.reply({ embeds: [huntEmbed(interaction.user, animal)] });
+    const extraLines = [`Final value: \`${amount.toLocaleString()}\` Atoms`, `+${xp.xpGained} XP`];
+    const toolText = formatToolMessage(toolUse);
+    if (forcedRarity) extraLines.push(`Guaranteed rarity consumed: **${forcedRarity}**.`);
+    if (toolText) extraLines.push(toolText);
+
+    await interaction.reply({ embeds: [huntEmbed(interaction.user, { ...animal, value: amount }, extraLines)] });
     await handleLevelUp(xp, interaction);
   },
 
   async fish(interaction) {
     const userId = interaction.user.id;
-    const cd = await canUseCooldown(userId, 'FISH');
-    if (!cd.ok) return interaction.reply({ embeds: [cooldownEmbed(cd.remaining)], flags: 64 });
+    const cooldown = await canUseCooldown(userId, 'FISH');
+    if (!cooldown.ok) return interaction.reply({ embeds: [cooldownEmbed(cooldown.remaining)], flags: 64 });
 
-    const caught = rollFromTable(FISH);
-    await addWalletSafe(userId, caught.value);
+    const toolUse = await useToolForAction(userId, 'FISH', { required: true });
+    if (!toolUse.ok) return interaction.reply({ embeds: [errorEmbed(toolUse.reason)], flags: 64 });
+
+    const forcedRarity = await getRarityOverride(userId, 'fish_rarity');
+    const caught = rollFromTable(FISH, forcedRarity);
+    const actionBoost = await getActionMultiplier(userId, 'fish');
+    const amount = Math.max(1, Math.floor(caught.value * actionBoost.multiplier * (toolUse.bonusMultiplier || 1)));
+    await addWalletSafe(userId, amount);
     await setUsedCooldown(userId, 'FISH');
     await bumpStat(userId, 'fish_used', 1);
     const xp = await awardActionXP(userId, 'fish');
 
-    await interaction.reply({ embeds: [fishEmbed(interaction.user, caught)] });
+    const extraLines = [`Final value: \`${amount.toLocaleString()}\` Atoms`, `+${xp.xpGained} XP`];
+    const toolText = formatToolMessage(toolUse);
+    if (forcedRarity) extraLines.push(`Guaranteed rarity consumed: **${forcedRarity}**.`);
+    if (toolText) extraLines.push(toolText);
+
+    await interaction.reply({ embeds: [fishEmbed(interaction.user, { ...caught, value: amount }, extraLines)] });
     await handleLevelUp(xp, interaction);
   },
 
   async quest(interaction) {
     const userId = interaction.user.id;
-    const { getStats } = require('../../utils/economyStorage');
     const { getActiveQuests, getQuestRefreshTime } = require('../questEngine');
-    
-    const stats = await getStats(userId);
-    const active = await getActiveQuests(userId);
-    const refreshMs = await getQuestRefreshTime(userId);
-    
-    const embed = questEmbed(interaction.user, active, stats, refreshMs);
-    const row = questButtons();
-    return interaction.reply({ embeds: [embed], components: [row], flags: 64 });
+    const [stats, active, refreshMs] = await Promise.all([
+      getStats(userId),
+      getActiveQuests(userId),
+      getQuestRefreshTime(userId)
+    ]);
+    return interaction.reply({
+      embeds: [questEmbed(interaction.user, active, stats, refreshMs)],
+      components: [questButtons()],
+      flags: 64
+    });
   },
 
   async adventure(interaction) {
     const userId = interaction.user.id;
-    const cd = await canUseCooldown(userId, 'ADVENTURE');
-    if (!cd.ok) return interaction.reply({ embeds: [cooldownEmbed(cd.remaining)], flags: 64 });
+    const cooldown = await canUseCooldown(userId, 'ADVENTURE');
+    if (!cooldown.ok) return interaction.reply({ embeds: [cooldownEmbed(cooldown.remaining)], flags: 64 });
 
     const { adventureZoneSelect } = require('../components');
-    const lvl = await getUserLevel(userId);
-    const row = adventureZoneSelect(lvl.level);
-    return interaction.reply({ content: '🗺️ **Choose your adventure zone:**', components: [row], flags: 64 });
+    const levelInfo = await getUserLevel(userId);
+    return interaction.reply({
+      content: 'Choose your adventure zone:',
+      components: [adventureZoneSelect(levelInfo.level)],
+      flags: 64
+    });
   },
 
   async explore(interaction) {
     const userId = interaction.user.id;
-    const cd = await canUseCooldown(userId, 'EXPLORE');
-    if (!cd.ok) return interaction.reply({ embeds: [cooldownEmbed(cd.remaining)], flags: 64 });
+    const cooldown = await canUseCooldown(userId, 'EXPLORE');
+    if (!cooldown.ok) return interaction.reply({ embeds: [cooldownEmbed(cooldown.remaining)], flags: 64 });
 
-    const loc = pickRandom(SEARCH_LOCATIONS);
-    const Atoms = rollRange(loc.min * 2, loc.max * 2);
-    const foundItem = rollChance(0.10);
-    await addWalletSafe(userId, Atoms);
+    const location = pickRandom(SEARCH_LOCATIONS);
+    const actionBoost = await getActionMultiplier(userId, 'explore');
+    const toolUse = await useToolForAction(userId, 'EXPLORE');
+    if (!toolUse.ok) return interaction.reply({ embeds: [errorEmbed(toolUse.reason)], flags: 64 });
+
+    const amount = Math.max(
+      1,
+      Math.floor(rollRange(location.min * 2, location.max * 2) * actionBoost.multiplier * (toolUse.bonusMultiplier || 1))
+    );
+    const foundItem = rollChance(0.1);
+    await addWalletSafe(userId, amount);
     await setUsedCooldown(userId, 'EXPLORE');
     await bumpStat(userId, 'explore_used', 1);
     const xp = await awardActionXP(userId, 'explore');
 
-    let text = `${loc.emoji} You explored the **${loc.name}** and found **\`${Atoms.toLocaleString()}\`** Atoms!\n🧪 +${xp.xpGained} XP`;
-    if (foundItem) text += '\n🎁 You also found a **Common Crate**!';
-    if (foundItem) { const { addInventoryItem } = require('../../utils/economyStorage'); await addInventoryItem(userId, 'crate_common', 1); }
+    const lines = [
+      `${location.emoji} You explored **${location.name}** and found **\`${amount.toLocaleString()}\`** Atoms.`,
+      `+${xp.xpGained} XP`
+    ];
 
+    if (foundItem) {
+      await addInventoryItem(userId, 'crate_common', 1);
+      lines.push('You also found a **Common Crate**.');
+    }
     if (rollChance(0.02)) {
-      const { addInventoryItem } = require('../../utils/economyStorage');
       await addInventoryItem(userId, 'adv_ticket', 1);
-      text += '\n🎫 **WOW! You found a rare Adventure Ticket hidden in the dirt!**';
+      lines.push('You found an **Adventure Ticket** hidden in the dirt.');
     }
 
-    await interaction.reply({ embeds: [successEmbed(text)] });
+    const toolText = formatToolMessage(toolUse);
+    if (toolText) lines.push(toolText);
+
+    await interaction.reply({ embeds: [successEmbed(lines.join('\n'))] });
     await handleLevelUp(xp, interaction);
   }
 };

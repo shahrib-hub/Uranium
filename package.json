@@ -2,7 +2,8 @@
   "scripts": {
     "start": "node src/index.js",
     "build": "cd src/dashboard/frontend && npm run build",
-    "prod": "npm run build && npm start"
+    "prod": "npm run build && npm start",
+    "test:economy": "node scripts/economy-sanity.js"
   },
   "dependencies": {
     "@iamtraction/google-translate": "^2.0.1",

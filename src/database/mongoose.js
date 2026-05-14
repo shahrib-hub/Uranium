@@ -135,6 +135,54 @@ const EcoMetaSchema = new mongoose.Schema({
   value: { type: String, required: true }
 });
 
+const EcoItemInstanceSchema = new mongoose.Schema({
+  userId: { type: String, required: true },
+  instanceId: { type: String, required: true, unique: true },
+  itemId: { type: String, required: true },
+  durability: { type: Number, default: null },
+  maxDurability: { type: Number, default: null },
+  equippedSlot: { type: String, default: null },
+  metadata: { type: mongoose.Schema.Types.Mixed, default: {} },
+  createdAt: { type: Number, default: Date.now },
+  updatedAt: { type: Number, default: Date.now }
+});
+EcoItemInstanceSchema.index({ userId: 1, itemId: 1 });
+EcoItemInstanceSchema.index({ userId: 1, equippedSlot: 1 });
+
+const EcoEffectSchema = new mongoose.Schema({
+  userId: { type: String, required: true },
+  effectId: { type: String, required: true, unique: true },
+  key: { type: String, required: true },
+  itemId: { type: String, default: null },
+  sourceType: { type: String, default: 'item' },
+  expiresAt: { type: Number, default: null },
+  usesRemaining: { type: Number, default: null },
+  stacks: { type: Number, default: 1 },
+  metadata: { type: mongoose.Schema.Types.Mixed, default: {} },
+  createdAt: { type: Number, default: Date.now },
+  updatedAt: { type: Number, default: Date.now }
+});
+EcoEffectSchema.index({ userId: 1, key: 1 });
+EcoEffectSchema.index({ userId: 1, expiresAt: 1 });
+
+const EcoLoadoutSchema = new mongoose.Schema({
+  userId: { type: String, required: true },
+  slot: { type: String, required: true },
+  itemId: { type: String, required: true },
+  instanceId: { type: String, default: null },
+  metadata: { type: mongoose.Schema.Types.Mixed, default: {} },
+  updatedAt: { type: Number, default: Date.now }
+});
+EcoLoadoutSchema.index({ userId: 1, slot: 1 }, { unique: true });
+
+const EcoQuestStateSchema = new mongoose.Schema({
+  userId: { type: String, required: true, unique: true },
+  activeIds: { type: [String], default: [] },
+  claimedIds: { type: [String], default: [] },
+  lastRefresh: { type: Number, default: 0 },
+  updatedAt: { type: Number, default: Date.now }
+});
+
 
 // 7. Embed Templates Schema (from embed_templates)
 const EmbedTemplateSchema = new mongoose.Schema({
@@ -720,6 +768,10 @@ exports.EcoInventory = mongoose.model('EcoInventory', EcoInventorySchema);
 exports.EcoCooldown = mongoose.model('EcoCooldown', EcoCooldownSchema);
 exports.EcoCosmetic = mongoose.model('EcoCosmetic', EcoCosmeticSchema);
 exports.EcoMeta = mongoose.model('EcoMeta', EcoMetaSchema);
+exports.EcoItemInstance = mongoose.model('EcoItemInstance', EcoItemInstanceSchema);
+exports.EcoEffect = mongoose.model('EcoEffect', EcoEffectSchema);
+exports.EcoLoadout = mongoose.model('EcoLoadout', EcoLoadoutSchema);
+exports.EcoQuestState = mongoose.model('EcoQuestState', EcoQuestStateSchema);
 exports.EmbedTemplate = mongoose.model('EmbedTemplate', EmbedTemplateSchema);
 exports.Giveaway = mongoose.model('Giveaway', GiveawaySchema);
 exports.JoinPingConfig = mongoose.model('JoinPingConfig', JoinPingConfigSchema);

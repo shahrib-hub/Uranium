@@ -5,7 +5,7 @@
 // ═══════════════════════════════════════
 const BANK_BASE = 10000;
 const BANK_GROWTH = 1.35;
-const BANK_MAX_TIER = 10;
+const BANK_MAX_TIER = 20;
 // maxBank(tier) = floor(BANK_BASE * BANK_GROWTH^tier)
 // Tier 0: 10,000 | Tier 5: 44,840 | Tier 10: 201,135
 
@@ -540,6 +540,56 @@ const DIG_LAYERS = [
   ]}
 ];
 
+// ═══════════════════════════════════════
+// 💣 MINES GAME GRID
+// ═══════════════════════════════════════
+const MINES_CONFIG = {
+  GRID_SIZE: 25, // 5x5
+  MIN_MINES: 1,
+  MAX_MINES: 20,
+  // payout multiplier per gem found, grows with mine count
+  gemMultiplier: (mines, gemsFound) => {
+    const safe = 25 - mines;
+    let mult = 1.0;
+    for (let i = 0; i < gemsFound; i++) {
+      mult *= (safe - i) / (25 - i);
+    }
+    return mult <= 0 ? 1 : parseFloat((1 / mult).toFixed(2));
+  }
+};
+
+// ═══════════════════════════════════════
+// 🎡 ROULETTE CONFIG
+// ═══════════════════════════════════════
+const ROULETTE_NUMBERS = Array.from({ length: 37 }, (_, i) => i); // 0–36
+const ROULETTE_REDS = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+
+// ═══════════════════════════════════════
+// 🃏 HIGH-LOW CONFIG
+// ═══════════════════════════════════════
+const HIGHLOW_DECK = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const HIGHLOW_VALUES = { A:1, '2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10, J:11, Q:12, K:13 };
+
+// ═══════════════════════════════════════
+// 🎟️ SCRATCH CARD CONFIG
+// ═══════════════════════════════════════
+const SCRATCH_SYMBOLS = ['⭐','💎','🍀','🔔','7️⃣','🍒','☢️','🌙'];
+const SCRATCH_PAYOUTS = {
+  3: { '💎': 10, '7️⃣': 7, '☢️': 5, '⭐': 4, '🍀': 3, '🔔': 2.5, '🍒': 2, '🌙': 1.5 },
+  2: { '💎': 1.5, '7️⃣': 1.25 }
+};
+
+// ═══════════════════════════════════════
+// 🗼 TOWER CLIMB CONFIG
+// ═══════════════════════════════════════
+const TOWER_CONFIG = {
+  MAX_FLOORS: 10,
+  // survival chance per floor (decreases each floor)
+  floorChance: (floor) => Math.max(0.30, 0.82 - (floor * 0.05)),
+  // multiplier for cashing out at floor N
+  cashoutMult: (floor) => parseFloat((1.0 + (floor * 0.35)).toFixed(2))
+};
+
 module.exports = {
   BANK_BASE, BANK_GROWTH, BANK_MAX_TIER, COOLDOWNS, RARITIES,
   LEVEL, PRESTIGE, STREAKS, getStreakMultiplier, ZONES,
@@ -550,5 +600,9 @@ module.exports = {
   MINE_ORES, MINE_EVENTS, HACK_TARGETS, HACK_STEPS,
   DUEL_NPCS, HEIST_STAGES, HEIST_TARGETS,
   SCAVENGE_AREAS, SCAVENGE_VALUES, REACTOR_FUELS,
-  BOUNTY_TARGETS, DIG_LAYERS
+  BOUNTY_TARGETS, DIG_LAYERS,
+  MINES_CONFIG, ROULETTE_NUMBERS, ROULETTE_REDS,
+  HIGHLOW_DECK, HIGHLOW_VALUES,
+  SCRATCH_SYMBOLS, SCRATCH_PAYOUTS,
+  TOWER_CONFIG
 };

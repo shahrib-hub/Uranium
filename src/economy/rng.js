@@ -72,8 +72,8 @@ function rollRandomEvent() {
   if (!rollChance(RANDOM_EVENT_CHANCE)) return null;
   const event = pickRandom(RANDOM_EVENTS);
   const Atoms = rollRange(
-    Math.min(event.coins[0], event.coins[1]),
-    Math.max(event.coins[0], event.coins[1])
+    Math.min(event.Atoms[0], event.Atoms[1]),
+    Math.max(event.Atoms[0], event.Atoms[1])
   );
   return { text: event.text, Atoms };
 }

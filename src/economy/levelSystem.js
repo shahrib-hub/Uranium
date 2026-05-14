@@ -1,6 +1,7 @@
 // src/economy/levelSystem.js — Uranium XP, Leveling & Prestige Engine
 const { LEVEL, PRESTIGE } = require('./constants');
-const { getStat, setStat, bumpStat } = require('../utils/economyStorage');
+const { getStat, setStat, bumpStat, getActiveEffects, clearExpiredEffects, getLoadout } = require('../utils/economyStorage');
+const { getRuntimeItem } = require('./runtimeItems');
 
 /** Calculate total XP needed for a given level */
 function xpForLevel(level) {
@@ -35,8 +36,30 @@ async function getUserLevel(userId) {
  */
 async function addXP(userId, amount) {
   const prestige = await getStat(userId, 'prestige') || 0;
-  const mult = 1 + prestige * PRESTIGE.MULT_PER;
-  const adjusted = Math.floor(amount * mult);
+  await clearExpiredEffects(userId);
+  const [effects, loadout] = await Promise.all([getActiveEffects(userId), getLoadout(userId)]);
+
+  let mult = 1 + prestige * PRESTIGE.MULT_PER;
+  for (const effect of effects) {
+    if (!['xp', 'all'].includes(effect.key)) continue;
+    mult *= Number(effect.metadata?.multiplier || 1);
+  }
+
+  if (loadout.pet?.itemId) {
+    const pet = getRuntimeItem(loadout.pet.itemId);
+    if (pet?.data?.passive === 'xp' || pet?.data?.passive === 'all') {
+      mult *= 1 + Number(pet.data.boost || 0);
+    }
+  }
+
+  if (loadout.vehicle?.itemId) {
+    const vehicle = getRuntimeItem(loadout.vehicle.itemId);
+    if (vehicle?.data?.passive === 'xp' || vehicle?.data?.passive === 'all') {
+      mult *= 1 + Number(vehicle.data.boost || 0);
+    }
+  }
+
+  const adjusted = Math.max(0, Math.floor(amount * mult));
 
   const oldXP = await getStat(userId, 'xp') || 0;
   const oldInfo = levelFromXP(oldXP);
