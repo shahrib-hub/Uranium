@@ -2,15 +2,15 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "http://212.227.166.131:10857/api/$1"
+      "destination": "http://93.115.101.157:10857/api/$1"
     },
     {
       "source": "/auth/(.*)",
-      "destination": "http://212.227.166.131:10857/auth/$1"
+      "destination": "http://93.115.101.157:10857/auth/$1"
     },
     {
       "source": "/socket.io/(.*)",
-      "destination": "http://212.227.166.131:10857/socket.io/$1"
+      "destination": "http://93.115.101.157:10857/socket.io/$1"
     }
   ]
 }
