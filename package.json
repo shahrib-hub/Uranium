@@ -36,5 +36,11 @@
     "tesseract.js": "^6.0.1",
     "winston": "^3.11.0",
     "zustand": "^5.0.13"
+  },
+  "allowScripts": {
+    "canvas@3.2.3": true,
+    "sharp@0.34.5": true,
+    "sqlite3@5.1.7": true,
+    "tesseract.js@6.0.1": true
   }
 }
