@@ -1,224 +1,69 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { useStore } from '@/store';
-import { useSearchParams } from 'next/navigation';
-import MusicControls from '@/components/MusicControls';
-import SearchPicker from '@/components/SearchPicker';
 
-import QueueManager from '@/components/QueueManager';
-import FilterSelector from '@/components/FilterSelector';
-import VoiceSelector from '@/components/VoiceSelector';
-import { Code, LayoutGrid, Terminal, Shield, Calendar, Zap, Activity, Users, Globe } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Activity, CalendarDays, CheckCircle2, Headphones, Music2, RefreshCw, Server, Users } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { useStore } from '@/store';
 
 export default function DashboardPage() {
-  const searchParams = useSearchParams();
+  const params = useSearchParams();
   const { player } = useStore();
-  const effectiveGuildId = player.guildId || searchParams.get('guild');
-  
-  const [guildInfo, setGuildInfo] = useState(null);
-  const [botStats, setBotStats] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const guildId = player.guildId || params.get('guild');
+  const [guild, setGuild] = useState(null);
+  const [stats, setStats] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchData = async () => {
-    if (!effectiveGuildId) return;
-    
-    // Fetch Guild Info
-    fetch(`/api/guild/${effectiveGuildId}/info`)
-      .then(r => r.json())
-      .then(data => setGuildInfo(data))
-      .catch(console.error);
-
-    // Fetch Global Bot Stats
-    fetch('/api/bot/stats')
-      .then(r => r.json())
-      .then(data => setBotStats(data))
-      .catch(console.error);
+  const load = async () => {
+    if (!guildId) return;
+    const [guildResponse, statsResponse] = await Promise.all([
+      fetch('/api/guild/' + guildId + '/info'),
+      fetch('/api/bot/stats')
+    ]);
+    if (guildResponse.ok) setGuild(await guildResponse.json());
+    if (statsResponse.ok) setStats(await statsResponse.json());
   };
 
-  useEffect(() => {
-    if (effectiveGuildId) {
-      setLoading(true);
-      fetchData().finally(() => setLoading(false));
-    }
-  }, [effectiveGuildId]);
+  useEffect(() => { load().catch(() => null); }, [guildId]);
 
-  const handleRefresh = async () => {
+  const refresh = async () => {
     setRefreshing(true);
-    await fetchData();
-    setTimeout(() => setRefreshing(false), 600);
+    await load().catch(() => null);
+    setRefreshing(false);
   };
 
-  if (!effectiveGuildId) return (
-    <div className="flex items-center justify-center h-[80vh] text-white/20 font-black uppercase tracking-[10px]">
-      Select a server to initialize
-    </div>
-  );
+  if (!guildId) return <div className="lucent-page grid min-h-[70vh] place-items-center"><div className="lucent-card max-w-md rounded-[1.5rem] p-8 text-center"><Server className="mx-auto text-rose-200" /><h1 className="mt-5 text-xl font-semibold">Choose a server first</h1><p className="mt-2 text-sm leading-6 text-[var(--muted)]">Use the server picker in the sidebar to open its dashboard.</p></div></div>;
 
   return (
-    <div className="p-8 lg:p-12 space-y-12 max-w-[1800px] mx-auto animate-in fade-in duration-700">
-      {/* Header */}
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8">
-        <div>
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-4 mb-4"
-          >
-            <div className="h-px w-8 bg-red-500" />
-            <span className="text-[10px] font-black uppercase tracking-[4px] text-red-500">System Overview</span>
-          </motion.div>
-          <motion.h1 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="text-6xl font-black tracking-tight mb-4 flex items-center gap-6"
-          >
-            {guildInfo?.icon && <img src={guildInfo.icon} className="w-16 h-16 rounded-3xl shadow-2xl" alt="" />}
-            {guildInfo?.name || 'Loading Server...'}
-          </motion.h1>
-          <div className="flex items-center gap-6 text-white/40 font-medium">
-             <div className="flex items-center gap-2">
-               <Shield size={16} className="text-red-500" />
-               Owner: <span className="text-white font-bold">{guildInfo?.owner?.tag || '...'}</span>
-             </div>
-             <div className="flex items-center gap-2">
-               <Calendar size={16} className="text-red-500" />
-               Created: <span className="text-white font-bold">{guildInfo?.createdAt ? new Date(guildInfo.createdAt).toLocaleDateString() : '...'}</span>
-             </div>
+    <div className="lucent-page mx-auto max-w-7xl">
+      <section className="lucent-card overflow-hidden rounded-[1.8rem] p-6 sm:p-8">
+        <div className="flex flex-col gap-7 md:flex-row md:items-center md:justify-between">
+          <div className="flex min-w-0 items-center gap-4">
+            <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-[1.25rem] bg-rose-400/15 text-2xl font-semibold text-rose-100">{guild?.icon ? <img className="h-full w-full object-cover" src={guild.icon} alt="" /> : (guild?.name?.[0] || <Server />)}</span>
+            <div className="min-w-0"><p className="lucent-kicker mb-2">Server overview</p><h1 className="truncate text-3xl font-semibold tracking-tight sm:text-4xl">{guild?.name || 'Loading your server'}</h1><p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[var(--muted)]"><span className="flex items-center gap-1.5"><Users size={15} />{guild?.memberCount ?? '—'} members</span><span className="flex items-center gap-1.5"><CalendarDays size={15} />Created {guild?.createdAt ? new Date(guild.createdAt).toLocaleDateString() : '—'}</span></p></div>
+          </div>
+          <button onClick={refresh} disabled={refreshing} className="lucent-button h-11 rounded-xl px-4 text-sm font-semibold disabled:opacity-50"><RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />Refresh</button>
+        </div>
+      </section>
+
+      <section className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Metric icon={<Users />} label="Members" value={guild?.memberCount ?? '—'} detail="People in this server" />
+        <Metric icon={<Server />} label="Channels" value={guild?.channels?.total ?? '—'} detail={(guild?.channels?.text ?? 0) + ' text · ' + (guild?.channels?.voice ?? 0) + ' voice'} />
+        <Metric icon={<Music2 />} label="Music" value={player.active ? 'Playing' : 'Idle'} detail={player.active ? (player.channelName || 'In a voice channel') : 'Nothing playing right now'} />
+        <Metric icon={<Activity />} label="Bot response" value={stats?.ping ?? '—'} detail={stats?.uptime ? 'Up for ' + stats.uptime : 'Checking status'} />
+      </section>
+
+      <section className="mt-5 grid gap-5 lg:grid-cols-[1.2fr_.8fr]">
+        <div className="lucent-card rounded-[1.6rem] p-6">
+          <div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-rose-400/15 text-rose-100"><Headphones size={19} /></span><div><h2 className="font-semibold">Music right now</h2><p className="text-sm text-[var(--muted)]">A quick look at the current player.</p></div></div>
+          <div className="mt-6 rounded-2xl border border-white/10 bg-black/10 p-5">
+            {player.active ? <><p className="text-lg font-semibold">{player.current?.title || 'Playing audio'}</p><p className="mt-1 text-sm text-[var(--muted)]">{player.current?.author || 'Unknown artist'} · {player.channelName || 'Voice channel'}</p><div className="mt-5 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-gradient-to-r from-rose-500 to-rose-300" style={{ width: player.current?.duration ? Math.min(100, (player.position / player.current.duration) * 100) + '%' : '0%' }} /></div></> : <p className="text-sm text-[var(--muted)]">Nothing is playing. Open Music when you are ready to start.</p>}
           </div>
         </div>
-        
-        <div className="flex gap-4">
-           <button 
-             onClick={handleRefresh}
-             disabled={refreshing}
-             className="px-6 py-3 bg-red-500 text-black font-black rounded-2xl flex items-center gap-3 hover:scale-105 transition-all shadow-lg shadow-red-500/20 uppercase italic tracking-tighter disabled:opacity-50"
-           >
-             <Zap size={18} className={refreshing ? 'animate-spin' : ''} fill="currentColor" />
-             {refreshing ? 'Refreshing...' : 'Re-Sync Stats'}
-           </button>
-        </div>
-      </header>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-        <StatCard 
-          icon={<Users size={24} className="text-red-500" />} 
-          label="Total Members" 
-          value={guildInfo?.memberCount || '0'} 
-          subtext="Verified Identities"
-        />
-        <StatCard 
-          icon={<LayoutGrid size={24} className="text-red-500" />} 
-          label="Channels" 
-          value={guildInfo?.channels?.total || '0'} 
-          subtext={`${guildInfo?.channels?.text || 0} Text • ${guildInfo?.channels?.voice || 0} Voice`}
-        />
-        <StatCard 
-          icon={<Terminal size={24} className="text-red-500" />} 
-          label="Music Status" 
-          value={player.active ? 'ACTIVE' : 'IDLE'} 
-          subtext={player.active ? 'Server Connected' : 'No active streams'}
-          color={player.active ? 'text-green-500' : 'text-white/20'}
-        />
-        <StatCard 
-          icon={<Globe size={24} className="text-red-500" />} 
-          label="Total Servers" 
-          value={botStats?.totalServers || '0'} 
-          subtext="Global Infrastructure"
-        />
-      </div>
-
-      <div className="grid grid-cols-12 gap-8">
-        {/* Real Resource Monitor */}
-        <div className="col-span-12 xl:col-span-8 space-y-8">
-          <div className="glass p-12 rounded-[50px] border border-white/5 relative overflow-hidden bg-gradient-to-br from-white/[0.02] to-transparent">
-             <div className="relative z-10 space-y-10">
-                <div className="flex justify-between items-end">
-                  <h3 className="text-3xl font-black flex items-center gap-4 italic uppercase">
-                    <Activity size={32} className="text-red-500" />
-                    Resource Monitor
-                  </h3>
-                  <span className="text-[10px] font-black text-white/20 uppercase tracking-[4px]">Live Telemetry</span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  <ResourceItem label="CPU Usage" value={botStats?.cpuUsage || '0%'} />
-                  <ResourceItem label="Memory Heap" value={botStats?.memoryUsage || '0 MB'} />
-                  <ResourceItem label="Node.js" value={botStats?.nodeVersion || 'v...'} />
-                </div>
-
-                <div className="p-8 bg-black/40 border border-white/5 rounded-[32px] space-y-4">
-                   <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-white/20">
-                      <span>Thread Priority</span>
-                      <span className="text-green-500">OPTIMIZED</span>
-                   </div>
-                   <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: '100%' }}
-                        className="h-full bg-gradient-to-r from-red-500 to-orange-500" 
-                      />
-                   </div>
-                </div>
-             </div>
-          </div>
-        </div>
-
-        {/* Bot Status */}
-        <div className="col-span-12 xl:col-span-4 space-y-8">
-          <div className="glass p-8 rounded-[40px] border border-white/5 space-y-6">
-             <div className="flex items-center justify-between">
-                <h3 className="text-xl font-black italic uppercase">Bot Instance</h3>
-                <div className="px-3 py-1 bg-green-500/10 text-green-500 text-[8px] font-black rounded-lg border border-green-500/20">STABLE</div>
-             </div>
-             <div className="space-y-4">
-                <StatusItem label="API Latency" value={botStats?.ping || '0ms'} color="text-green-500" animate />
-                <StatusItem label="Total Shards" value={`Active [1/${botStats?.shards || 1}]`} />
-                <StatusItem label="System Uptime" value={botStats?.uptime || '0d 0h 0m'} />
-             </div>
-          </div>
-        </div>
-      </div>
+        <div className="lucent-card rounded-[1.6rem] p-6"><div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-300/10 text-emerald-200"><CheckCircle2 size={19} /></span><div><h2 className="font-semibold">Bot status</h2><p className="text-sm text-[var(--muted)]">Current details for this bot instance.</p></div></div><dl className="mt-6 space-y-4 text-sm"><Row label="Servers" value={stats?.totalServers ?? '—'} /><Row label="Memory in use" value={stats?.memoryUsage ?? '—'} /><Row label="Node version" value={stats?.nodeVersion ?? '—'} /><Row label="Shards" value={stats?.shards ?? '—'} /></dl></div>
+      </section>
     </div>
   );
 }
 
-function StatCard({ icon, label, value, subtext, color = 'text-white' }) {
-  return (
-    <motion.div 
-      whileHover={{ y: -5 }}
-      className="glass p-8 rounded-[40px] border border-white/5 relative overflow-hidden group"
-    >
-      <div className="relative z-10">
-        <div className="mb-4">{icon}</div>
-        <div className="text-[10px] font-black text-white/20 uppercase tracking-[2px] mb-1">{label}</div>
-        <div className={`text-4xl font-black ${color} tracking-tighter mb-2`}>{value}</div>
-        <div className="text-[10px] text-white/40 font-bold uppercase">{subtext}</div>
-      </div>
-      <div className="absolute -right-4 -bottom-4 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity">
-        {icon}
-      </div>
-    </motion.div>
-  );
-}
-
-function ResourceItem({ label, value }) {
-  return (
-    <div className="space-y-2">
-      <div className="text-[10px] font-black text-white/20 uppercase tracking-widest">{label}</div>
-      <div className="text-2xl font-black text-white italic">{value}</div>
-    </div>
-  );
-}
-
-function StatusItem({ label, value, color = 'text-white', animate = false }) {
-  return (
-    <div className="flex justify-between items-center p-4 bg-white/[0.03] rounded-2xl border border-white/5">
-       <span className="text-xs text-white/40 font-bold uppercase">{label}</span>
-       <span className={`${color} font-black tracking-widest text-sm ${animate ? 'animate-pulse' : ''}`}>{value}</span>
-    </div>
-  );
-}
-
+function Metric({ icon, label, value, detail }) { return <article className="lucent-card rounded-[1.35rem] p-5"><span className="grid h-9 w-9 place-items-center rounded-xl bg-rose-400/15 text-rose-100">{icon}</span><p className="mt-5 text-sm text-[var(--muted)]">{label}</p><p className="mt-1 text-2xl font-semibold tracking-tight">{value}</p><p className="mt-1 truncate text-xs text-[var(--quiet)]">{detail}</p></article>; }
+function Row({ label, value }) { return <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-3 last:border-0 last:pb-0"><dt className="text-[var(--muted)]">{label}</dt><dd className="font-medium">{value}</dd></div>; }
