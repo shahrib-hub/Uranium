@@ -58,6 +58,14 @@
       "destination": "https://uraniumbot.wisp.uno/api/socket-token"
     },
     {
+      "source": "/api/guild/:guildId/:path*/",
+      "destination": "https://uraniumbot.wisp.uno/api/guild/:guildId/:path*"
+    },
+    {
+      "source": "/api/guild/:guildId/:path*",
+      "destination": "https://uraniumbot.wisp.uno/api/guild/:guildId/:path*"
+    },
+    {
       "source": "/api/:path*",
       "destination": "https://uraniumbot.wisp.uno/api/:path*"
     }
