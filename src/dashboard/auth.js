@@ -93,7 +93,7 @@ router.get('/callback', async (req, res) => {
 
     const next = req.query.state || '/servers';
     const safeNext = typeof next === 'string' && next.startsWith('/') ? next : '/servers';
-    const dashboardBase = DASHBOARD_URL.replace(/\\/+$/, '');
+    const dashboardBase = DASHBOARD_URL.replace(/\/+$/, '');
 
     // Persist the Mongo-backed session before redirecting. Without this,
     // the browser can arrive at Vercel before the session write completes,
