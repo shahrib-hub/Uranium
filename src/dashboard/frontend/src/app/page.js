@@ -1,256 +1,94 @@
 'use client';
-import { motion } from 'framer-motion';
-import { Zap, Music, Shield, ChevronRight, Activity, Globe, Menu, X } from 'lucide-react';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { ArrowRight, Check, Headphones, Heart, ShieldCheck, Sparkles, Users, Zap } from 'lucide-react';
+import LucentSwitch from '@/components/LucentSwitch';
 
-export default function LandingPage() {
+export default function HomePage() {
   const [user, setUser] = useState(null);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const [stats, setStats] = useState({ totalServers: '...', ping: '...', uptime: '...', memoryUsage: '...' });
+  const [stats, setStats] = useState(null);
 
   useEffect(() => {
-    fetch('/api/me')
-      .then(r => r.ok ? r.json() : null)
-      .then(setUser)
-      .catch(() => null);
-
-    fetch('/api/bot/stats')
-      .then(r => r.ok ? r.json() : null)
-      .then(data => data && setStats(data))
-      .catch(() => null);
+    fetch('/api/me').then((r) => r.ok ? r.json() : null).then(setUser).catch(() => null);
+    fetch('/api/bot/stats').then((r) => r.ok ? r.json() : null).then(setStats).catch(() => null);
   }, []);
 
+  const dashboardHref = user ? '/servers' : '/auth/login';
+
   return (
-    <div className="bg-[#050505] text-white selection:bg-red-500 selection:text-black min-h-screen overflow-x-hidden">
-      
-      {/* Navbar */}
-      <nav className="fixed top-0 w-full z-50 px-8 py-6 flex items-center justify-between backdrop-blur-xl bg-black/20 border-b border-white/5">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-red-500 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(239,68,68,0.3)]">
-            <Zap fill="black" size={20} />
+    <main className="min-h-screen overflow-hidden">
+      <nav className="fixed inset-x-0 top-0 z-50 px-4 py-4 sm:px-7">
+        <div className="glass mx-auto flex max-w-6xl items-center justify-between rounded-[1.45rem] px-4 py-3 sm:px-5">
+          <Link href="/" className="flex items-center gap-3 font-bold tracking-tight">
+            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-[#ff294f] to-[#ff8499] text-white shadow-[0_10px_26px_rgba(255,45,79,.32)]"><Zap size={19} fill="currentColor" /></span>
+            <span className="text-lg">Uranium</span>
+          </Link>
+          <div className="flex items-center gap-2">
+            <LucentSwitch />
+            <a href={dashboardHref} className="lucent-button lucent-button-primary min-h-10 px-4 text-sm font-semibold sm:px-5">
+              {user ? 'Open dashboard' : 'Sign in'} <ArrowRight size={16} />
+            </a>
           </div>
-          <span className="text-xl font-black tracking-tighter uppercase">Uranium</span>
         </div>
-        <div className="hidden md:flex items-center gap-8 text-sm font-black uppercase tracking-widest text-white/40">
-          <a href="#features" className="hover:text-red-500 transition-colors">Features</a>
-          <a href="#stats" className="hover:text-red-500 transition-colors">Stats</a>
-          {user ? (
-            <Link href="/servers" className="px-6 py-2 bg-red-500 rounded-full text-black hover:scale-105 transition-all font-black">Dashboard</Link>
-          ) : (
-            <a href="/auth/login" className="px-6 py-2 bg-white/5 rounded-full border border-white/10 hover:bg-white/10 transition-all text-white">Login</a>
-          )}
-        </div>
-
-        {/* Mobile Menu Toggle */}
-        <button 
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="md:hidden p-3 rounded-xl bg-white/5 border border-white/10 text-white"
-        >
-          {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
-
-        {/* Mobile Menu Overlay */}
-        {isMobileMenuOpen && (
-          <motion.div 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="absolute top-full left-0 right-0 bg-[#050505] border-b border-white/5 p-8 flex flex-col gap-6 md:hidden z-50 shadow-2xl"
-          >
-            <a href="#features" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-black uppercase tracking-widest text-white/40 hover:text-red-500 transition-colors">Features</a>
-            <a href="#stats" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-black uppercase tracking-widest text-white/40 hover:text-red-500 transition-colors">Stats</a>
-            <div className="h-px bg-white/5" />
-            {user ? (
-              <Link href="/servers" className="px-6 py-4 bg-red-500 rounded-2xl text-black text-center font-black uppercase tracking-widest text-sm">Dashboard</Link>
-            ) : (
-              <a href="/auth/login" className="px-6 py-4 bg-white/5 rounded-2xl border border-white/10 text-white text-center font-black uppercase tracking-widest text-sm">Login</a>
-            )}
-          </motion.div>
-        )}
       </nav>
 
-      {/* Hero Section */}
-      <section className="relative pt-48 pb-32 px-8 overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-red-500/10 blur-[120px] rounded-full pointer-events-none" />
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div className="space-y-8">
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-black uppercase tracking-[2px]"
-              >
-                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_#ef4444]" />
-                The Ultimate Discord Bot
-              </motion.div>
-              
-              <motion.h1 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="text-5xl sm:text-7xl md:text-8xl font-black tracking-tight leading-[0.9]"
-              >
-                Manage Your <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">Discord Server.</span>
-              </motion.h1>
-
-              <motion.p 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="text-xl text-white/40 max-w-xl leading-relaxed"
-              >
-                Uranium makes running your Discord server easy. Play music, moderate chat, and manage everything from a simple dashboard.
-              </motion.p>
-
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="flex flex-col sm:flex-row gap-4"
-              >
-                <a href={user ? "/servers" : "/auth/login"} className="px-10 py-5 bg-red-500 text-black rounded-[24px] font-black uppercase tracking-widest text-sm hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 shadow-[0_20px_40px_rgba(239,68,68,0.2)]">
-                  Launch Dashboard <ChevronRight size={20} />
-                </a>
-                <a href="https://discord.com/oauth2/authorize?client_id=932136827605905489&permissions=8&scope=bot%20applications.commands" className="px-10 py-5 bg-white/5 border border-white/10 text-white rounded-[24px] font-black uppercase tracking-widest text-sm hover:bg-white/10 transition-all flex items-center justify-center gap-3">
-                  Add to Discord
-                </a>
-              </motion.div>
+      <section className="relative mx-auto flex min-h-[760px] max-w-7xl items-center px-6 pb-20 pt-40 sm:px-10">
+        <div className="absolute left-[5%] top-32 h-72 w-72 rounded-full bg-rose-500/20 blur-[115px]" />
+        <div className="absolute right-0 top-44 h-80 w-80 rounded-full bg-red-400/10 blur-[130px]" />
+        <div className="relative grid w-full gap-14 lg:grid-cols-[1.08fr_.92fr] lg:items-center">
+          <div>
+            <p className="lucent-kicker mb-6 flex items-center gap-2"><Sparkles size={14} /> Made for communities</p>
+            <h1 className="lucent-title max-w-3xl">A better home<br />for your Discord server.</h1>
+            <p className="lucent-subtitle mt-7">Manage music, server settings, and reaction roles from one calm, clear dashboard. No clutter. No confusing language.</p>
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+              <a href={dashboardHref} className="lucent-button lucent-button-primary h-14 px-7 font-semibold">Get started <ArrowRight size={18} /></a>
+              <a href="https://discord.com/oauth2/authorize?client_id=932136827605905489&permissions=8&scope=bot%20applications.commands" className="lucent-button h-14 px-7 font-semibold">Add Uranium to Discord</a>
             </div>
-
-            {/* Dashboard Mockup */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8, rotateX: 20 }}
-              animate={{ opacity: 1, scale: 1, rotateX: 0 }}
-              transition={{ delay: 0.4, duration: 1 }}
-              className="relative group hidden lg:block"
-            >
-              <div className="absolute -inset-1 bg-gradient-to-r from-red-500/20 to-blue-500/20 rounded-[40px] blur-2xl opacity-50 group-hover:opacity-100 transition duration-1000" />
-              <div className="relative glass p-4 rounded-[40px] border border-white/10 overflow-hidden shadow-2xl">
-                <img 
-                  src="https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070&auto=format&fit=crop" 
-                  className="w-full h-auto rounded-[32px] opacity-40 mix-blend-luminosity hover:opacity-100 transition-opacity duration-700" 
-                  alt="Dashboard Preview" 
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-transparent" />
-                
-                <motion.div 
-                  animate={{ y: [0, -10, 0] }}
-                  transition={{ duration: 4, repeat: Infinity }}
-                  className="absolute top-12 -left-8 glass p-6 rounded-3xl border border-white/20 shadow-2xl"
-                >
-                  <Music className="text-red-500 mb-2" />
-                  <div className="text-xs font-black uppercase tracking-widest opacity-40">Now Playing</div>
-                  <div className="font-bold">Music Sync</div>
-                </motion.div>
-
-                <motion.div 
-                  animate={{ y: [0, 10, 0] }}
-                  transition={{ duration: 5, repeat: Infinity }}
-                  className="absolute bottom-24 -right-8 glass p-6 rounded-3xl border border-white/20 shadow-2xl"
-                >
-                  <Activity className="text-green-500 mb-2" />
-                  <div className="text-xs font-black uppercase tracking-widest opacity-40">System Status</div>
-                  <div className="font-bold">Ping: {stats.ping}</div>
-                </motion.div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats/Social Proof */}
-      <section id="stats" className="py-24 border-y border-white/5 bg-white/[0.02]">
-        <div className="max-w-7xl mx-auto px-8 grid grid-cols-2 md:grid-cols-4 gap-12">
-           {[
-            { label: 'Total Servers', val: stats.totalServers, icon: Globe },
-            { label: 'Latency', val: stats.ping, icon: Activity },
-            { label: 'Uptime', val: stats.uptime, icon: Zap },
-            { label: 'Memory', val: stats.memoryUsage, icon: Shield },
-          ].map((s, i) => (
-            <motion.div 
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className="text-center space-y-2"
-            >
-              <div className="flex justify-center mb-4">
-                <s.icon className="text-red-500/40" size={32} />
-              </div>
-              <div className="text-4xl font-black tracking-tighter">{s.val}</div>
-              <div className="text-xs font-black uppercase tracking-widest text-white/20">{s.label}</div>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* Features Showcase */}
-      <section id="features" className="py-32 px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center space-y-4 mb-24">
-            <h2 className="text-5xl font-black tracking-tight">Built for Your <span className="text-red-500">Community.</span></h2>
-            <p className="text-white/40 text-xl max-w-2xl mx-auto">Everything you need to keep your server active, safe, and fun for everyone.</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <FeatureCard icon={Music} title="High Quality Music" desc="Play songs with crystal clear audio. Control playback and manage queues directly from the web." color="red" />
-            <FeatureCard icon={Shield} title="Easy Moderation" desc="Keep your server safe. Simple tools to manage members, logs, and automated protection." color="blue" />
-            <FeatureCard icon={Zap} title="Real-time Updates" desc="No more refreshing pages. Our dashboard updates instantly whenever you make a change." color="orange" />
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="py-24 px-8 border-t border-white/5 bg-[#020202]">
-        <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-12 items-center text-center md:text-left">
-          <div className="space-y-4">
-            <div className="flex items-center justify-center md:justify-start gap-3">
-              <div className="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center">
-                <Zap fill="black" size={14} />
-              </div>
-              <span className="font-black uppercase tracking-tighter text-white">Uranium</span>
+            <div className="mt-9 flex flex-wrap gap-x-6 gap-y-3 text-sm text-[var(--muted)]">
+              <span className="flex items-center gap-2"><Check size={16} className="text-rose-300" /> Manage the servers you own</span>
+              <span className="flex items-center gap-2"><Check size={16} className="text-rose-300" /> Keep music in sync</span>
             </div>
-            <p className="text-white/20 text-xs font-bold uppercase tracking-widest">
-              Developed with pride by <span className="text-white">SHM</span>
-            </p>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-8 justify-center items-center text-xs font-black uppercase tracking-[3px] text-white/30">
-            <Link href="/tos" className="hover:text-white transition-colors">Terms of Service</Link>
-            <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
-            <a href="https://discord.gg/26ThFyckFX" className="hover:text-white transition-colors">Support</a>
-          </div>
-
-          <div className="md:text-right space-y-4">
-            <p className="text-[10px] font-black uppercase tracking-[5px] text-white/10">© 2026 Uranium Project.</p>
-            <p className="text-sm italic text-white/20">Made with love by SHM ❤️</p>
+          <div className="lucent-card animate-float rounded-[2rem] p-4 sm:p-6">
+            <div className="rounded-[1.5rem] border border-white/10 bg-black/15 p-5 sm:p-7">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold">Your server, at a glance</p>
+                  <p className="mt-1 text-sm text-[var(--muted)]">Everything you need is in one place.</p>
+                </div>
+                <span className="grid h-11 w-11 place-items-center rounded-2xl bg-rose-400/15 text-rose-200"><Heart size={20} fill="currentColor" /></span>
+              </div>
+              <div className="mt-7 grid grid-cols-2 gap-3">
+                <Stat label="Servers" value={stats?.totalServers ?? '—'} icon={<Users size={17} />} />
+                <Stat label="Response time" value={stats?.ping ?? '—'} icon={<Zap size={17} />} />
+                <Stat label="Uptime" value={stats?.uptime ?? '—'} icon={<ShieldCheck size={17} />} />
+                <Stat label="Memory" value={stats?.memoryUsage ?? '—'} icon={<Headphones size={17} />} />
+              </div>
+              <div className="mt-5 rounded-2xl border border-white/10 bg-white/[.045] p-4">
+                <div className="flex items-center justify-between text-sm"><span className="text-[var(--muted)]">Music</span><span className="rounded-full bg-rose-400/15 px-2.5 py-1 text-xs font-semibold text-rose-100">Ready when you are</span></div>
+                <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full w-[68%] rounded-full bg-gradient-to-r from-rose-500 to-rose-300 shadow-[0_0_14px_rgba(255,79,113,.8)]" /></div>
+              </div>
+            </div>
           </div>
         </div>
-      </footer>
-    </div>
+      </section>
+
+      <section className="mx-auto grid max-w-6xl gap-4 px-6 pb-24 sm:grid-cols-3 sm:px-10">
+        <Feature icon={<Headphones />} title="Music that stays simple" copy="Search, play, queue, and adjust playback without leaving the dashboard." />
+        <Feature icon={<ShieldCheck />} title="Settings you can understand" copy="Update your bot's name and language with straightforward controls." />
+        <Feature icon={<Users />} title="A place for your community" copy="Build reaction-role panels and keep your server organised." />
+      </section>
+
+      <footer className="border-t border-white/10 px-6 py-8 text-center text-sm text-[var(--quiet)]">Uranium • Made for Discord communities</footer>
+    </main>
   );
 }
 
-function FeatureCard({ icon: Icon, title, desc, color }) {
-  const colors = {
-    red: 'group-hover:bg-red-500/10 text-red-500 border-red-500/20',
-    blue: 'group-hover:bg-blue-500/10 text-blue-500 border-blue-500/20',
-    orange: 'group-hover:bg-orange-500/10 text-orange-500 border-orange-500/20',
-  };
-
-  return (
-    <motion.div 
-      whileHover={{ y: -10 }}
-      className="group glass p-10 rounded-[48px] border border-white/5 hover:border-white/20 transition-all duration-500"
-    >
-      <div className={`w-16 h-16 rounded-[24px] flex items-center justify-center mb-8 transition-all duration-500 border ${colors[color]}`}>
-        <Icon size={32} />
-      </div>
-      <h3 className="text-2xl font-black tracking-tight mb-4">{title}</h3>
-      <p className="text-white/40 leading-relaxed">{desc}</p>
-    </motion.div>
-  );
+function Stat({ label, value, icon }) {
+  return <div className="rounded-2xl border border-white/10 bg-white/[.045] p-4"><div className="flex items-center gap-2 text-xs text-[var(--muted)]">{icon}{label}</div><div className="mt-3 text-2xl font-semibold tracking-tight">{value}</div></div>;
+}
+function Feature({ icon, title, copy }) {
+  return <article className="lucent-card rounded-[1.5rem] p-6"><span className="mb-5 grid h-10 w-10 place-items-center rounded-2xl bg-rose-400/15 text-rose-200">{icon}</span><h2 className="text-lg font-semibold">{title}</h2><p className="mt-2 text-sm leading-6 text-[var(--muted)]">{copy}</p></article>;
 }
