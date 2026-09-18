@@ -229,7 +229,7 @@ export default function ReactionRolesPage() {
       }
       setShowBulkModal(false);
       setBulkInput('');
-      showToast(`Injected ${roleIds.length} roles successfully`, 'success');
+      showToast(`Added ${roleIds.length} roles successfully`, 'success');
       fetchItems(setupId);
     } catch (err) { showToast(err.message, 'error'); }
   };
@@ -302,7 +302,7 @@ export default function ReactionRolesPage() {
           <AlertCircle size={40} />
         </div>
         <h2 className="text-2xl font-black uppercase tracking-tight mb-2 italic">Terminal Access Restricted</h2>
-        <p className="text-white/40 font-medium max-w-md">Please select a server from the dashboard to initialize the Reaction Role subsystem.</p>
+        <p className="text-white/40 font-medium max-w-md">Choose a server from the sidebar to manage reaction roles.</p>
       </div>
     );
   }
@@ -356,7 +356,7 @@ export default function ReactionRolesPage() {
       ) : error ? (
         <div className="glass p-12 rounded-[40px] border-red-500/20 text-center space-y-4">
           <AlertCircle className="mx-auto text-red-500" size={48} />
-          <h3 className="text-xl font-bold uppercase tracking-tight text-red-500">Subsystem Error</h3>
+          <h3 className="text-xl font-bold uppercase tracking-tight text-red-500">Could not load reaction roles</h3>
           <p className="text-white/40 font-medium">{error}</p>
           <button onClick={fetchSetups} className="px-6 py-2 bg-red-500/10 text-red-500 border border-red-500/20 rounded-xl font-bold uppercase text-[10px] hover:bg-red-500 hover:text-black transition-all">Retry Link</button>
         </div>
@@ -489,7 +489,7 @@ export default function ReactionRolesPage() {
                       <Settings size={24} />
                     </div>
                     <div>
-                      <p className="text-[10px] font-black uppercase text-red-500 tracking-[3px] mb-1">Configuration Node</p>
+                      <p className="text-[10px] font-black uppercase text-red-500 tracking-[3px] mb-1">Panel settings</p>
                       <h2 className="text-2xl font-black uppercase italic tracking-tighter">Edit Panel <span className="text-white/40">#{selectedSetup.id}</span></h2>
                     </div>
                   </div>
@@ -745,7 +745,7 @@ export default function ReactionRolesPage() {
                 <div className="p-3 rounded-2xl bg-blue-500/10 text-blue-500">
                   <Zap size={20} />
                 </div>
-                <h2 className="text-xl font-bold uppercase tracking-tight italic">Bulk Deployment</h2>
+                <h2 className="text-xl font-bold uppercase tracking-tight italic">Add several roles</h2>
               </div>
 
               <div className="space-y-4">
@@ -765,7 +765,7 @@ export default function ReactionRolesPage() {
                 onClick={() => handleBulkAdd(selectedSetup.id)}
                 className="w-full py-4 rounded-2xl bg-blue-500 text-black font-black uppercase tracking-wider text-xs shadow-lg shadow-blue-500/20 hover:scale-[1.02] transition-all"
               >
-                Inject Roles
+                Add roles
               </button>
             </motion.div>
           </motion.div>
