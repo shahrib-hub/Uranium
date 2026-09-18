@@ -39,7 +39,7 @@ export default function LandingPage() {
           {user ? (
             <Link href="/servers" className="px-6 py-2 bg-red-500 rounded-full text-black hover:scale-105 transition-all font-black">Dashboard</Link>
           ) : (
-            <Link href="/auth/login" className="px-6 py-2 bg-white/5 rounded-full border border-white/10 hover:bg-white/10 transition-all text-white">Login</Link>
+            <a href="/auth/login" className="px-6 py-2 bg-white/5 rounded-full border border-white/10 hover:bg-white/10 transition-all text-white">Login</a>
           )}
         </div>
 
@@ -64,7 +64,7 @@ export default function LandingPage() {
             {user ? (
               <Link href="/servers" className="px-6 py-4 bg-red-500 rounded-2xl text-black text-center font-black uppercase tracking-widest text-sm">Dashboard</Link>
             ) : (
-              <Link href="/auth/login" className="px-6 py-4 bg-white/5 rounded-2xl border border-white/10 text-white text-center font-black uppercase tracking-widest text-sm">Login</Link>
+              <a href="/auth/login" className="px-6 py-4 bg-white/5 rounded-2xl border border-white/10 text-white text-center font-black uppercase tracking-widest text-sm">Login</a>
             )}
           </motion.div>
         )}
