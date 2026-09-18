@@ -1,216 +1,63 @@
 'use client';
-import { useState, useEffect } from 'react';
+
+import { useEffect, useState } from 'react';
+import { Check, Globe2, RefreshCw, Settings2, UserRound } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
-import { Settings, RefreshCw, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 
 const LANGUAGES = [
-  { code: 'en', name: 'English', flag: '🇺🇸' },
-  { code: 'hi', name: 'Hindi', flag: '🇮🇳' },
-  { code: 'bn', name: 'Bangla', flag: '🇧🇩' },
-  { code: 'es', name: 'Spanish', flag: '🇪🇸' },
-  { code: 'fr', name: 'French', flag: '🇫🇷' },
-  { code: 'de', name: 'German', flag: '🇩🇪' },
-  { code: 'ru', name: 'Russian', flag: '🇷🇺' },
-  { code: 'ja', name: 'Japanese', flag: '🇯🇵' },
-  { code: 'ko', name: 'Korean', flag: '🇰🇷' },
-  { code: 'ar', name: 'Arabic', flag: '🇸🇦' },
-  { code: 'pt', name: 'Portuguese', flag: '🇵🇹' },
-  { code: 'it', name: 'Italian', flag: '🇮🇹' },
-  { code: 'tr', name: 'Turkish', flag: '🇹🇷' },
-  { code: 'pl', name: 'Polish', flag: '🇵🇱' },
-  { code: 'vi', name: 'Vietnamese', flag: '🇻🇳' },
-  { code: 'nl', name: 'Dutch', flag: '🇳🇱' }
+  ['en', 'English', '🇺🇸'], ['hi', 'Hindi', '🇮🇳'], ['bn', 'Bangla', '🇧🇩'], ['es', 'Spanish', '🇪🇸'],
+  ['fr', 'French', '🇫🇷'], ['de', 'German', '🇩🇪'], ['ru', 'Russian', '🇷🇺'], ['ja', 'Japanese', '🇯🇵'],
+  ['ko', 'Korean', '🇰🇷'], ['ar', 'Arabic', '🇸🇦'], ['pt', 'Portuguese', '🇵🇹'], ['it', 'Italian', '🇮🇹'],
+  ['tr', 'Turkish', '🇹🇷'], ['pl', 'Polish', '🇵🇱'], ['vi', 'Vietnamese', '🇻🇳'], ['nl', 'Dutch', '🇳🇱']
 ];
 
 export default function BotSettingsPage() {
-  const searchParams = useSearchParams();
-  const guildId = searchParams.get('guild');
+  const guildId = useSearchParams().get('guild');
+  const [language, setLanguage] = useState('en');
+  const [nickname, setNickname] = useState('');
+  const [username, setUsername] = useState('Uranium');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState('');
 
-  const [botLanguage, setBotLanguage] = useState('en');
-  const [botNickname, setBotNickname] = useState('');
-  const [botUsername, setBotUsername] = useState('Uranium');
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSavingLang, setIsSavingLang] = useState(false);
-  const [isSavingNick, setIsSavingNick] = useState(false);
-
-  useEffect(() => {
-    if (guildId) {
-      fetchSettings();
-    }
-  }, [guildId]);
-
-  const fetchSettings = async () => {
-    setIsLoading(true);
+  const load = async () => {
+    if (!guildId) return;
+    setLoading(true);
     try {
-      const [langRes, nickRes] = await Promise.all([
-        fetch(`/api/guild/${guildId}/settings/language`),
-        fetch(`/api/guild/${guildId}/settings/nickname`)
+      const [languageResponse, nicknameResponse] = await Promise.all([
+        fetch('/api/guild/' + guildId + '/settings/language'),
+        fetch('/api/guild/' + guildId + '/settings/nickname')
       ]);
-      
-      const langData = await langRes.json();
-      const nickData = await nickRes.json();
-
-      if (langRes.ok && langData.botLanguage) {
-        setBotLanguage(langData.botLanguage);
-      }
-      
-      if (nickRes.ok) {
-        setBotNickname(nickData.nickname || '');
-        setBotUsername(nickData.username || 'Uranium');
-      } else if (nickRes.status === 403) {
-        toast.error('You do not have permission to view or edit settings for this server.');
-      }
-    } catch (err) {
-      toast.error('Failed to load bot settings');
-    } finally {
-      setIsLoading(false);
-    }
+      if (languageResponse.ok) { const data = await languageResponse.json(); setLanguage(data.botLanguage || 'en'); }
+      if (nicknameResponse.ok) { const data = await nicknameResponse.json(); setNickname(data.nickname || ''); setUsername(data.username || 'Uranium'); }
+      else if (nicknameResponse.status === 403) toast.error('You do not have permission to edit this server.');
+    } catch { toast.error('Could not load these settings.'); } finally { setLoading(false); }
   };
+  useEffect(() => { load(); }, [guildId]);
 
-  const saveLanguage = async (lang) => {
-    setIsSavingLang(true);
+  const saveLanguage = async (next) => {
+    setSaving('language');
     try {
-      const res = await fetch(`/api/guild/${guildId}/settings/language`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ botLanguage: lang })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setBotLanguage(lang);
-        toast.success(`Language updated to ${LANGUAGES.find(l => l.code === lang)?.name}`);
-      } else {
-        toast.error(data.error || 'Failed to update language');
-      }
-    } catch (err) {
-      toast.error('Failed to update language');
-    } finally {
-      setIsSavingLang(false);
-    }
+      const response = await fetch('/api/guild/' + guildId + '/settings/language', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ botLanguage: next }) });
+      if (!response.ok) throw new Error();
+      setLanguage(next); toast.success('Language saved.');
+    } catch { toast.error('Could not save the language.'); } finally { setSaving(''); }
   };
-
   const saveNickname = async () => {
-    setIsSavingNick(true);
+    setSaving('nickname');
     try {
-      const res = await fetch(`/api/guild/${guildId}/settings/nickname`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nickname: botNickname })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        toast.success(`Nickname updated successfully`);
-      } else {
-        toast.error(data.error || 'Failed to update nickname');
-      }
-    } catch (err) {
-      toast.error('Failed to update nickname');
-    } finally {
-      setIsSavingNick(false);
-    }
+      const response = await fetch('/api/guild/' + guildId + '/settings/nickname', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nickname }) });
+      if (!response.ok) throw new Error();
+      toast.success('Nickname saved.');
+    } catch { toast.error('Could not save the nickname.'); } finally { setSaving(''); }
   };
 
-  const handleRefresh = () => {
-    fetchSettings();
-  };
+  if (!guildId) return <div className="lucent-page grid min-h-[70vh] place-items-center"><div className="lucent-card rounded-[1.5rem] p-8 text-center"><Settings2 className="mx-auto text-rose-200" /><h1 className="mt-4 text-xl font-semibold">Choose a server first</h1><p className="mt-2 text-sm text-[var(--muted)]">Pick a server from the sidebar to edit its settings.</p></div></div>;
 
-  if (!guildId) {
-    return (
-      <div className="min-h-screen p-6 pt-24 lg:pt-6 flex flex-col items-center justify-center">
-        <Settings size={48} className="text-white/10 mb-4" />
-        <h2 className="text-xl font-bold text-white/40">Select a server</h2>
-        <p className="text-sm text-white/20 mt-2">Please select a server to manage Bot Settings.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen p-6 pt-24 lg:pt-6 space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col gap-2 relative">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
-            <Settings className="text-purple-500" />
-            Bot Settings
-          </h1>
-          <button 
-            onClick={handleRefresh}
-            disabled={isLoading || isSavingLang || isSavingNick}
-            className="p-3 bg-white/5 hover:bg-purple-500 hover:text-black rounded-xl transition-all duration-300 disabled:opacity-50"
-            title="Refresh Settings"
-          >
-            <RefreshCw size={20} className={isLoading ? "animate-spin" : ""} />
-          </button>
-        </div>
-        <p className="text-white/40 font-medium">Configure global bot preferences for your server.</p>
-      </div>
-
-      <div className="bg-[#0A0A0A] border border-white/5 rounded-3xl p-6 relative overflow-hidden group hover:border-purple-500/30 transition-all duration-500 space-y-10">
-        <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
-          <Globe size={120} />
-        </div>
-        
-        <div className="relative z-10">
-          <div className="mb-6">
-            <h2 className="text-xl font-bold text-white mb-2">Bot Nickname</h2>
-            <p className="text-sm text-white/40">Change {botUsername}&apos;s display name specifically for this server.</p>
-          </div>
-
-          <div className="max-w-md flex gap-3">
-            {isLoading ? (
-              <div className="h-12 w-full bg-white/5 rounded-xl animate-pulse"></div>
-            ) : (
-              <>
-                <input
-                  type="text"
-                  placeholder={botUsername}
-                  value={botNickname}
-                  onChange={(e) => setBotNickname(e.target.value)}
-                  disabled={isSavingNick}
-                  className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all disabled:opacity-50"
-                />
-                <button
-                  onClick={saveNickname}
-                  disabled={isSavingNick || isLoading}
-                  className="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition-all disabled:opacity-50 whitespace-nowrap"
-                >
-                  {isSavingNick ? 'Saving...' : 'Save'}
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-
-        <div className="w-full h-px bg-white/5"></div>
-
-        <div className="relative z-10">
-          <div className="mb-6">
-            <h2 className="text-xl font-bold text-white mb-2">Bot Language</h2>
-            <p className="text-sm text-white/40">Change the default language of {botUsername} in your server.</p>
-          </div>
-
-          <div className="max-w-md">
-            {isLoading ? (
-              <div className="h-12 bg-white/5 rounded-xl animate-pulse"></div>
-            ) : (
-              <select
-                value={botLanguage}
-                onChange={(e) => saveLanguage(e.target.value)}
-                disabled={isSavingLang}
-                className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all appearance-none cursor-pointer disabled:opacity-50"
-                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='rgba(255, 255, 255, 0.4)'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', backgroundSize: '1.2em' }}
-              >
-                {LANGUAGES.map((lang) => (
-                  <option key={lang.code} value={lang.code}>
-                    {lang.flag} {lang.name}
-                  </option>
-                ))}
-              </select>
-            )}
-            {isSavingLang && <p className="text-xs text-purple-500 mt-2 font-medium">Saving preferences...</p>}
-          </div>
-        </div>
-      </div>
+  return <div className="lucent-page mx-auto max-w-5xl"><div className="flex items-start justify-between gap-4"><div><p className="lucent-kicker mb-3">Bot settings</p><h1 className="lucent-title text-4xl sm:text-5xl">Make it feel at home.</h1><p className="lucent-subtitle mt-4">These changes only affect the selected server.</p></div><button onClick={load} className="lucent-button h-10 w-10 rounded-xl p-0" aria-label="Refresh"><RefreshCw size={16} className={loading ? 'animate-spin' : ''} /></button></div>
+    <div className="mt-8 grid gap-5 md:grid-cols-2">
+      <section className="lucent-card rounded-[1.5rem] p-6"><span className="grid h-10 w-10 place-items-center rounded-xl bg-rose-400/15 text-rose-100"><UserRound size={19} /></span><h2 className="mt-5 text-lg font-semibold">Bot nickname</h2><p className="mt-1 text-sm leading-6 text-[var(--muted)]">Choose how {username} appears in this server.</p><input disabled={loading} className="lucent-input mt-6 px-4 py-3 disabled:opacity-50" value={nickname} onChange={(event) => setNickname(event.target.value)} placeholder={username} /><button disabled={loading || saving === 'nickname'} onClick={saveNickname} className="lucent-button lucent-button-primary mt-3 h-11 w-full rounded-xl text-sm font-semibold disabled:opacity-50">{saving === 'nickname' ? 'Saving…' : <><Check size={16} /> Save nickname</>}</button></section>
+      <section className="lucent-card rounded-[1.5rem] p-6"><span className="grid h-10 w-10 place-items-center rounded-xl bg-rose-400/15 text-rose-100"><Globe2 size={19} /></span><h2 className="mt-5 text-lg font-semibold">Language</h2><p className="mt-1 text-sm leading-6 text-[var(--muted)]">Choose the language this server uses for the bot.</p><select disabled={loading || saving === 'language'} className="lucent-input mt-6 px-4 py-3 disabled:opacity-50" value={language} onChange={(event) => saveLanguage(event.target.value)}>{LANGUAGES.map(([code, name, flag]) => <option key={code} value={code}>{flag} {name}</option>)}</select><p className="mt-3 text-xs text-[var(--quiet)]">{saving === 'language' ? 'Saving language…' : 'Changes are saved right away.'}</p></section>
     </div>
-  );
+  </div>;
 }
