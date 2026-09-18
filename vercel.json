@@ -2,68 +2,12 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
-      "source": "/auth/login",
-      "destination": "https://uraniumbot.wisp.uno/auth/login"
+      "source": "/auth/(.*)",
+      "destination": "https://uraniumbot.wisp.uno/auth/$1"
     },
     {
-      "source": "/auth/login/",
-      "destination": "https://uraniumbot.wisp.uno/auth/login"
-    },
-    {
-      "source": "/auth/callback",
-      "destination": "https://uraniumbot.wisp.uno/auth/callback"
-    },
-    {
-      "source": "/auth/callback/",
-      "destination": "https://uraniumbot.wisp.uno/auth/callback"
-    },
-    {
-      "source": "/auth/:path*",
-      "destination": "https://uraniumbot.wisp.uno/auth/:path*"
-    },
-    {
-      "source": "/api/me",
-      "destination": "https://uraniumbot.wisp.uno/api/me"
-    },
-    {
-      "source": "/api/me/",
-      "destination": "https://uraniumbot.wisp.uno/api/me"
-    },
-    {
-      "source": "/api/guilds",
-      "destination": "https://uraniumbot.wisp.uno/api/guilds"
-    },
-    {
-      "source": "/api/guilds/",
-      "destination": "https://uraniumbot.wisp.uno/api/guilds"
-    },
-    {
-      "source": "/api/stats",
-      "destination": "https://uraniumbot.wisp.uno/api/stats"
-    },
-    {
-      "source": "/api/stats/",
-      "destination": "https://uraniumbot.wisp.uno/api/stats"
-    },
-    {
-      "source": "/api/bot/stats",
-      "destination": "https://uraniumbot.wisp.uno/api/bot/stats"
-    },
-    {
-      "source": "/api/bot/stats/",
-      "destination": "https://uraniumbot.wisp.uno/api/bot/stats"
-    },
-    {
-      "source": "/api/socket-token",
-      "destination": "https://uraniumbot.wisp.uno/api/socket-token"
-    },
-    {
-      "source": "/api/guild/:guildId/:path*",
-      "destination": "https://uraniumbot.wisp.uno/api/guild/:guildId/:path*"
-    },
-    {
-      "source": "/api/:path*",
-      "destination": "https://uraniumbot.wisp.uno/api/:path*"
+      "source": "/api/(.*)",
+      "destination": "https://uraniumbot.wisp.uno/api/$1"
     }
   ]
 }
