@@ -364,7 +364,7 @@ function createApiRouter(client) {
     }
   });
 
-  router.get('/bot/stats', async (req, res) => {
+  router.get(['/bot/stats', '/stats'], async (req, res) => {
     try {
       const os = require('os');
       const uptime = client.uptime || 0;
