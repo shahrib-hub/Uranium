@@ -1,94 +1,53 @@
 'use client';
+
 import './globals.css';
-import Sidebar from '@/components/Sidebar';
-import Header from '@/components/Header';
+import { Suspense, useEffect } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { Toaster } from 'sonner';
-import { useSearchParams, usePathname } from 'next/navigation';
-import { useEffect, Suspense } from 'react';
+import Header from '@/components/Header';
+import Sidebar from '@/components/Sidebar';
 import { connectSocket } from '@/socket';
 import { useStore } from '@/store';
 
-function LayoutContent({ children }) {
-  const searchParams = useSearchParams();
+function AppShell({ children }) {
   const pathname = usePathname();
-  const { player, setPlayer, setUser } = useStore();
-  
-  // Get Guild ID from URL or Store (URL takes precedence)
-  const urlGuildId = searchParams.get('guild');
-  const effectiveGuildId = urlGuildId; // Do not fallback to store for effective sync to avoid stickiness
+  const searchParams = useSearchParams();
+  const { setPlayer, setUser } = useStore();
+  const guildId = searchParams.get('guild');
+  const dashboardArea = pathname.startsWith('/dashboard') || pathname.startsWith('/commands');
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const res = await fetch('/api/me');
-        if (!res.ok || res.status === 401) {
-          // If not on landing page or auth pages, redirect to login
-          if (pathname !== '/' && !pathname.startsWith('/auth')) {
-            const next = encodeURIComponent(window.location.pathname + window.location.search);
-            window.location.href = `/auth/login?next=${next}`;
-          }
-        } else {
-          const data = await res.json();
-          if (data && data.id) {
-            setUser(data);
-          }
-        }
-      } catch (e) {
-        console.error('[AUTH] Failed to verify session:', e);
+    fetch('/api/me').then((response) => {
+      if (response.ok) return response.json();
+      if (pathname !== '/' && !pathname.startsWith('/auth')) {
+        window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname + window.location.search);
       }
-    };
-
-    checkAuth();
-  }, [pathname]);
+      return null;
+    }).then((user) => user?.id && setUser(user)).catch(() => null);
+  }, [pathname, setUser]);
 
   useEffect(() => {
-    if (effectiveGuildId) {
-      // Connect/reconnect socket
-      connectSocket(effectiveGuildId);
-
-      // Force Sync Function: Manual check-in with bot every 3 seconds
-      const forceSync = async () => {
-        try {
-          const res = await fetch(`/api/guild/${effectiveGuildId}/player`);
-          const data = await res.json();
-          if (data && data.active !== undefined) {
-             setPlayer(data);
-          }
-        } catch (e) {
-          console.error('[SYNC] Sync failed:', e);
-        }
-      };
-
-      forceSync();
-      const interval = setInterval(forceSync, 3000); // More frequent sync (3s)
-      return () => clearInterval(interval);
-    }
-  }, [effectiveGuildId]);
-
-  const showSidebar = pathname.startsWith('/dashboard') || pathname.startsWith('/commands');
+    if (!guildId) return;
+    connectSocket(guildId);
+    const syncPlayer = () => {
+      fetch('/api/guild/' + guildId + '/player').then((response) => response.ok ? response.json() : null).then((data) => {
+        if (data?.active !== undefined) setPlayer(data);
+      }).catch(() => null);
+    };
+    syncPlayer();
+    const interval = window.setInterval(syncPlayer, 3000);
+    return () => window.clearInterval(interval);
+  }, [guildId, setPlayer]);
 
   return (
-    <div className="flex min-h-screen w-full overflow-x-hidden">
-      {showSidebar && <Sidebar />}
-      <div className="flex-1 flex flex-col bg-[#050505]">
-        {showSidebar && <Header />}
-        <main className={`flex-1 ${showSidebar ? 'pt-24' : ''}`}>
-          {children}
-        </main>
-      </div>
+    <div className="min-h-screen">
+      {dashboardArea && <Sidebar />}
+      {dashboardArea && <Header />}
+      <main className={dashboardArea ? 'min-h-screen pt-[5.35rem] lg:pl-[17.5rem]' : 'min-h-screen'}>{children}</main>
     </div>
   );
 }
 
 export default function RootLayout({ children }) {
-  return (
-    <html lang="en">
-      <body>
-        <Suspense>
-          <LayoutContent>{children}</LayoutContent>
-        </Suspense>
-        <Toaster theme="dark" richColors position="top-right" />
-      </body>
-    </html>
-  );
+  return <html lang="en"><body><Suspense><AppShell>{children}</AppShell></Suspense><Toaster theme="dark" richColors position="top-right" /></body></html>;
 }
