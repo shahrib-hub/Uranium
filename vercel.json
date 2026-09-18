@@ -22,6 +22,42 @@
       "destination": "https://uraniumbot.wisp.uno/auth/:path*"
     },
     {
+      "source": "/api/me",
+      "destination": "https://uraniumbot.wisp.uno/api/me"
+    },
+    {
+      "source": "/api/me/",
+      "destination": "https://uraniumbot.wisp.uno/api/me"
+    },
+    {
+      "source": "/api/guilds",
+      "destination": "https://uraniumbot.wisp.uno/api/guilds"
+    },
+    {
+      "source": "/api/guilds/",
+      "destination": "https://uraniumbot.wisp.uno/api/guilds"
+    },
+    {
+      "source": "/api/stats",
+      "destination": "https://uraniumbot.wisp.uno/api/stats"
+    },
+    {
+      "source": "/api/stats/",
+      "destination": "https://uraniumbot.wisp.uno/api/stats"
+    },
+    {
+      "source": "/api/bot/stats",
+      "destination": "https://uraniumbot.wisp.uno/api/bot/stats"
+    },
+    {
+      "source": "/api/bot/stats/",
+      "destination": "https://uraniumbot.wisp.uno/api/bot/stats"
+    },
+    {
+      "source": "/api/socket-token",
+      "destination": "https://uraniumbot.wisp.uno/api/socket-token"
+    },
+    {
       "source": "/api/:path*",
       "destination": "https://uraniumbot.wisp.uno/api/:path*"
     }
