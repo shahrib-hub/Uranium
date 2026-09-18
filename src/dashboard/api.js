@@ -729,7 +729,7 @@ function serializePlayer(player, client, guildId) {
   if (!player) return { active: false, guildId: guildId || null };
   
   // Try to get channel name from client cache
-  const guild = client.guilds.cache.get(player.guildId);
+  const guild = client?.guilds?.cache?.get(player.guildId);
   const channel = guild?.channels?.cache?.get(player.voiceId);
 
   return { 
