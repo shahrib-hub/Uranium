@@ -110,9 +110,9 @@ export default function LandingPage() {
                 transition={{ delay: 0.3 }}
                 className="flex flex-col sm:flex-row gap-4"
               >
-                <Link href={user ? "/servers" : "/auth/login"} className="px-10 py-5 bg-red-500 text-black rounded-[24px] font-black uppercase tracking-widest text-sm hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 shadow-[0_20px_40px_rgba(239,68,68,0.2)]">
+                <a href={user ? "/servers" : "/auth/login"} className="px-10 py-5 bg-red-500 text-black rounded-[24px] font-black uppercase tracking-widest text-sm hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 shadow-[0_20px_40px_rgba(239,68,68,0.2)]">
                   Launch Dashboard <ChevronRight size={20} />
-                </Link>
+                </a>
                 <a href="https://discord.com/oauth2/authorize?client_id=932136827605905489&permissions=8&scope=bot%20applications.commands" className="px-10 py-5 bg-white/5 border border-white/10 text-white rounded-[24px] font-black uppercase tracking-widest text-sm hover:bg-white/10 transition-all flex items-center justify-center gap-3">
                   Add to Discord
                 </a>
