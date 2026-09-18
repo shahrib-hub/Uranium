@@ -40,7 +40,7 @@ function setupSocket(io, client) {
       // Send immediate state
       const { serializePlayer } = require('./api');
       const player = client.music?.players?.get(guildId);
-      socket.emit('playerUpdate', serializePlayer(player, guildId));
+      socket.emit('playerUpdate', serializePlayer(player, client, guildId));
     });
 
     socket.on('leave-guild', () => {
