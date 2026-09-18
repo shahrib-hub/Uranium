@@ -104,9 +104,6 @@ function startDashboard(client) {
     }
   });
 
-  // Share session with Socket.IO
-  io.engine.use(sessionMiddleware);
-
   // Setup socket event handlers
   setupSocket(io, client);
 

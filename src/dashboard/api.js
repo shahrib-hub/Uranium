@@ -4,6 +4,7 @@ const { PermissionFlagsBits } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const rrStorage = require('../utils/rrStorage');
+const { createSocketToken } = require('./socketAuth');
 
 function createApiRouter(client) {
   const router = Router();
@@ -40,6 +41,15 @@ function createApiRouter(client) {
   router.get('/me', (req, res) => {
     if (!req.session?.user) return res.status(401).json({ authenticated: false });
     res.json(req.session.user);
+  });
+
+  // The dashboard is hosted on Vercel while Socket.IO runs on Wispbyte. Vercel
+  // rewrites do not proxy WebSocket upgrades, so authenticate the direct socket
+  // connection with a short-lived token instead of a cross-site session cookie.
+  router.get('/socket-token', (req, res) => {
+    if (!req.session?.user) return res.status(401).json({ error: 'Not authenticated' });
+    res.set('Cache-Control', 'no-store');
+    res.json({ token: createSocketToken(req.session) });
   });
 
   router.get('/guilds', (req, res) => {

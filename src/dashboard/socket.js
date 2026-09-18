@@ -1,11 +1,22 @@
 // src/dashboard/socket.js — Socket.IO event handling
+const { verifySocketToken } = require('./socketAuth');
+
 function setupSocket(io, client) {
+  io.use((socket, next) => {
+    const token = verifySocketToken(socket.handshake.auth?.token);
+    if (!token) return next(new Error('Unauthorized'));
+
+    // Keep the downstream authorization checks unchanged while avoiding a
+    // cross-site cookie requirement for the direct WebSocket connection.
+    socket.request.session = {
+      user: { id: token.sub },
+      guilds: token.guilds.map(id => ({ id }))
+    };
+    next();
+  });
+
   io.on('connection', (socket) => {
     const session = socket.request.session;
-    if (!session?.user) {
-      socket.disconnect(true);
-      return;
-    }
 
     const userId = session.user.id;
 
