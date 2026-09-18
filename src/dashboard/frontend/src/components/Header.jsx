@@ -1,51 +1,26 @@
 'use client';
+
+import { LogOut, UserRound } from 'lucide-react';
 import { useStore } from '@/store';
-import { useEffect } from 'react';
-import { User, LogOut } from 'lucide-react';
+import LucentSwitch from '@/components/LucentSwitch';
 
 export default function Header() {
   const { user } = useStore();
 
-
-  const handleLogout = () => {
-    window.location.href = '/auth/logout';
-  };
-
   return (
-    <header className="fixed top-0 left-0 right-0 h-24 border-b border-white/5 bg-black/40 backdrop-blur-3xl z-40 px-6 md:px-12 flex items-center justify-between">
-      <div />
-
-
-      <div className="flex items-center gap-6">
-        <div className="flex items-center gap-4 group">
-          <div className="hidden sm:block text-right">
-            <div className="text-xs font-black tracking-tight leading-none mb-1">{user?.username || 'Resolving...'}</div>
-            <div className="text-[10px] text-white/20 font-black uppercase tracking-widest text-right">System Operator</div>
-          </div>
-          <div className="w-12 h-12 rounded-2xl overflow-hidden bg-white/5 border border-white/10 group-hover:border-red-500/50 transition-all shadow-2xl">
-            {user?.avatarUrl ? (
-              <img 
-                src={user.avatarUrl} 
-                className="w-full h-full object-cover" 
-                alt="" 
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-red-500/10 text-red-500">
-                <User size={20} />
-              </div>
-            )}
+    <header className="fixed inset-x-0 top-0 z-40 h-[4.7rem] px-3 pt-3 lg:left-[17.5rem] lg:px-5">
+      <div className="glass flex h-full items-center justify-between rounded-2xl px-4 sm:px-5">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold">Welcome back{user?.username ? ', ' + user.username : ''}</p>
+          <p className="hidden text-xs text-[var(--muted)] sm:block">Choose a server and manage it at your own pace.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <LucentSwitch compact />
+          <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[.045] p-1.5 pl-2">
+            {user?.avatarUrl ? <img src={user.avatarUrl} alt="" className="h-7 w-7 rounded-lg object-cover" /> : <span className="grid h-7 w-7 place-items-center rounded-lg bg-rose-400/15 text-rose-200"><UserRound size={15} /></span>}
+            <button onClick={() => { window.location.href = '/auth/logout'; }} className="lucent-button h-8 w-8 rounded-lg p-0 text-[var(--muted)]" aria-label="Sign out"><LogOut size={15} /></button>
           </div>
         </div>
-
-        <div className="h-10 w-px bg-white/5" />
-
-        <button 
-          onClick={handleLogout}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:border-red-500/50 hover:bg-red-500/10 transition-all group text-[10px] font-black uppercase tracking-widest"
-        >
-          <LogOut size={14} className="text-white/40 group-hover:text-red-500 transition-colors" />
-          <span>Logout</span>
-        </button>
       </div>
     </header>
   );
