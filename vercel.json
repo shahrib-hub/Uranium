@@ -7,10 +7,6 @@
     {
       "source": "/auth/(.*)",
       "destination": "http://78.154.103.23:10857/auth/$1"
-    },
-    {
-      "source": "/socket.io/(.*)",
-      "destination": "http://78.154.103.23:10857/socket.io/$1"
     }
   ]
 }
