@@ -1,16 +1,13 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "http://93.115.101.157:10857/api/$1"
+      "source": "/api/:path*",
+      "destination": "https://uraniumbot.wisp.uno/api/:path*"
     },
     {
-      "source": "/auth/(.*)",
-      "destination": "http://93.115.101.157:10857/auth/$1"
-    },
-    {
-      "source": "/socket.io/(.*)",
-      "destination": "http://93.115.101.157:10857/socket.io/$1"
+      "source": "/auth/:path*",
+      "destination": "https://uraniumbot.wisp.uno/auth/:path*"
     }
   ]
 }
