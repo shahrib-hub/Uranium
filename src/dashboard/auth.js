@@ -92,7 +92,19 @@ router.get('/callback', async (req, res) => {
     req.session.refreshToken = tokens.refresh_token;
 
     const next = req.query.state || '/servers';
-    res.redirect(next);
+    const safeNext = typeof next === 'string' && next.startsWith('/') ? next : '/servers';
+    const dashboardBase = DASHBOARD_URL.replace(/\\/+$/, '');
+
+    // Persist the Mongo-backed session before redirecting. Without this,
+    // the browser can arrive at Vercel before the session write completes,
+    // causing /api/me and /api/guilds to see an unauthenticated request.
+    req.session.save((saveErr) => {
+      if (saveErr) {
+        console.error('[auth] Session save failed:', saveErr);
+        return res.redirect(`${dashboardBase}/?error=session_failed`);
+      }
+      res.redirect(`${dashboardBase}${safeNext}`);
+    });
   } catch (err) {
     console.error('[auth] OAuth2 callback error:', err);
     res.redirect('/?error=auth_failed');
