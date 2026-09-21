@@ -232,6 +232,102 @@ const storage = {
     return runAsync(`UPDATE cases SET ${setClause} WHERE guildId = ? AND caseId = ?`, [...values, guildId, caseId]);
   },
 
+  async getCasesByGuild(guildId, { limit = 50, offset = 0, action = null, search = null } = {}) {
+    if (isMongoReady()) {
+      const query = { guildId };
+      if (action && action !== 'all') query.action = action;
+      if (search) {
+        query.$or = [
+          { caseId: { $regex: search, $options: 'i' } },
+          { targetId: { $regex: search, $options: 'i' } },
+          { moderatorId: { $regex: search, $options: 'i' } },
+          { reason: { $regex: search, $options: 'i' } }
+        ];
+      }
+      const total = await mongooseModels.ModCase.countDocuments(query);
+      const docs = await mongooseModels.ModCase.find(query)
+        .sort({ timestamp: -1 })
+        .skip(offset)
+        .limit(limit)
+        .lean();
+      return {
+        total,
+        cases: docs.map(doc => ({
+          ...doc,
+          references: doc.references_list
+        }))
+      };
+    }
+
+    await storage._ready;
+    let sql = `SELECT * FROM cases WHERE guildId = ?`;
+    const params = [guildId];
+
+    if (action && action !== 'all') {
+      sql += ` AND action = ?`;
+      params.push(action);
+    }
+    if (search) {
+      sql += ` AND (caseId LIKE ? OR targetId LIKE ? OR moderatorId LIKE ? OR reason LIKE ?)`;
+      const s = `%${search}%`;
+      params.push(s, s, s, s);
+    }
+
+    const countSql = sql.replace('SELECT *', 'SELECT COUNT(*) as count');
+    const countRow = await getAsync(countSql, params);
+    const total = Number(countRow?.count || 0);
+
+    sql += ` ORDER BY timestamp DESC LIMIT ? OFFSET ?`;
+    const rows = await allAsync(sql, [...params, limit, offset]);
+    const cases = rows.map(row => ({
+      ...row,
+      references: deserializeArray(row.references_list),
+      evidence: deserializeArray(row.evidence)
+    }));
+
+    return { total, cases };
+  },
+
+  async deleteCase(guildId, caseId) {
+    if (isMongoReady()) {
+      const res = await mongooseModels.ModCase.deleteOne({ guildId, caseId });
+      return res.deletedCount > 0;
+    }
+
+    await storage._ready;
+    const res = await runAsync(`DELETE FROM cases WHERE guildId = ? AND caseId = ?`, [guildId, caseId]);
+    return res.changes > 0;
+  },
+
+  async getModerationStats(guildId) {
+    if (isMongoReady()) {
+      const cases = await mongooseModels.ModCase.find({ guildId }).lean();
+      const stats = { total: cases.length, warns: 0, mutes: 0, kicks: 0, bans: 0, notes: 0 };
+      for (const c of cases) {
+        if (c.action === 'warn') stats.warns++;
+        else if (c.action === 'mute' || c.action === 'timeout') stats.mutes++;
+        else if (c.action === 'kick') stats.kicks++;
+        else if (c.action === 'ban' || c.action === 'tempban' || c.action === 'softban') stats.bans++;
+        else if (c.action === 'note') stats.notes++;
+      }
+      return stats;
+    }
+
+    await storage._ready;
+    const rows = await allAsync(`SELECT action, COUNT(*) as count FROM cases WHERE guildId = ? GROUP BY action`, [guildId]);
+    const stats = { total: 0, warns: 0, mutes: 0, kicks: 0, bans: 0, notes: 0 };
+    for (const r of rows) {
+      const count = Number(r.count || 0);
+      stats.total += count;
+      if (r.action === 'warn') stats.warns += count;
+      else if (r.action === 'mute' || r.action === 'timeout') stats.mutes += count;
+      else if (r.action === 'kick') stats.kicks += count;
+      else if (r.action === 'ban' || r.action === 'tempban' || r.action === 'softban') stats.bans += count;
+      else if (r.action === 'note') stats.notes += count;
+    }
+    return stats;
+  },
+
   // SCHEDULED TASKS
   async saveScheduledTask(task) {
     if (isMongoReady()) {
