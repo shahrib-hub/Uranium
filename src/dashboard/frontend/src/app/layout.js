@@ -19,7 +19,13 @@ function AppShell({ children }) {
   useEffect(() => {
     fetch('/api/me').then((response) => {
       if (response.ok) return response.json();
-      if (pathname !== '/' && !pathname.startsWith('/auth')) {
+      const isPublicRoute = 
+        pathname === '/' || 
+        pathname.startsWith('/auth') || 
+        pathname.startsWith('/tos') || 
+        pathname.startsWith('/privacy') || 
+        pathname.startsWith('/commands');
+      if (!isPublicRoute) {
         window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname + window.location.search);
       }
       return null;
