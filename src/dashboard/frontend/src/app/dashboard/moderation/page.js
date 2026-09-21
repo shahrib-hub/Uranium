@@ -78,13 +78,39 @@ const PENALTY_ACTIONS = [
   { value: 'ban', label: 'Ban Member' }
 ];
 
+async function parseApiResponse(res, fallbackMessage = 'Request failed') {
+  const contentType = res.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      throw new Error(data?.error || `${fallbackMessage} (Status ${res.status})`);
+    }
+    return data;
+  }
+
+  // Handle non-JSON responses (e.g. 404 HTML, 502 Bad Gateway)
+  if (res.status === 404) {
+    throw new Error('API route not found (404). Please restart the Discord bot backend on your host to load the latest code.');
+  }
+  if (res.status === 401) {
+    throw new Error('Authentication expired. Please refresh the page and sign in again.');
+  }
+  if (res.status === 403) {
+    throw new Error('Missing Permissions: You need moderation rights in this server.');
+  }
+  if (res.status >= 500) {
+    throw new Error('Discord bot backend error (500). Please check your bot console logs.');
+  }
+  throw new Error(`${fallbackMessage} (HTTP ${res.status})`);
+}
+
 export default function ModerationPage() {
   const guildId = useSearchParams().get('guild');
 
   const [activeTab, setActiveTab] = useState('actions');
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
-  const [lastSyncTime, setLastSyncTime] = useState(null);
+  const [backendOutdated, setBackendOutdated] = useState(false);
 
   // Overview & Discord Data
   const [overview, setOverview] = useState(null);
@@ -172,9 +198,17 @@ export default function ModerationPage() {
     if (!guildId) return;
     try {
       const res = await fetch(`/api/guild/${guildId}/moderation/overview`);
+      if (res.status === 404) {
+        setBackendOutdated(true);
+        return;
+      }
       if (res.ok) {
-        const data = await res.json();
-        setOverview(data);
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          setOverview(data);
+          setBackendOutdated(false);
+        }
       }
     } catch (e) {
       console.warn('Failed to load moderation overview:', e);
@@ -194,11 +228,14 @@ export default function ModerationPage() {
 
       const res = await fetch(`/api/guild/${guildId}/moderation/cases?${params.toString()}`);
       if (res.ok) {
-        const data = await res.json();
-        setCases(data.cases || []);
-        setCasesTotal(data.total || 0);
-        setCasesPage(data.page || 1);
-        setCasesTotalPages(data.totalPages || 1);
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          setCases(data.cases || []);
+          setCasesTotal(data.total || 0);
+          setCasesPage(data.page || 1);
+          setCasesTotalPages(data.totalPages || 1);
+        }
       }
     } catch (e) {
       console.warn('Failed to load cases:', e);
@@ -212,8 +249,11 @@ export default function ModerationPage() {
     try {
       const res = await fetch(`/api/guild/${guildId}/moderation/bans`);
       if (res.ok) {
-        const data = await res.json();
-        setBans(Array.isArray(data) ? data : []);
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          setBans(Array.isArray(data) ? data : []);
+        }
       }
     } catch (e) {
       console.warn('Failed to load bans:', e);
@@ -228,8 +268,11 @@ export default function ModerationPage() {
     try {
       const res = await fetch(`/api/guild/${guildId}/moderation/automod`);
       if (res.ok) {
-        const data = await res.json();
-        setAutomod(data);
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          setAutomod(data);
+        }
       }
     } catch (e) {
       console.warn('Failed to load automod:', e);
@@ -242,12 +285,15 @@ export default function ModerationPage() {
     try {
       const res = await fetch(`/api/guild/${guildId}/moderation/settings`);
       if (res.ok) {
-        const data = await res.json();
-        setModSettings({
-          logChannel: data.logChannel || '',
-          mutedRole: data.mutedRole || '',
-          modRoles: Array.isArray(data.modRoles) ? data.modRoles : []
-        });
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          setModSettings({
+            logChannel: data.logChannel || '',
+            mutedRole: data.mutedRole || '',
+            modRoles: Array.isArray(data.modRoles) ? data.modRoles : []
+          });
+        }
       }
     } catch (e) {
       console.warn('Failed to load mod settings:', e);
@@ -261,8 +307,11 @@ export default function ModerationPage() {
     try {
       const res = await fetch(`/api/guild/${guildId}/moderation/search-members?q=${encodeURIComponent(query)}`);
       if (res.ok) {
-        const data = await res.json();
-        setSearchResults(Array.isArray(data) ? data : []);
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          setSearchResults(Array.isArray(data) ? data : []);
+        }
       }
     } catch (e) {
       console.warn('Member search failed:', e);
@@ -276,6 +325,19 @@ export default function ModerationPage() {
     if (!guildId) return;
     setSyncing(true);
     try {
+      // Check moderation API availability
+      const probeRes = await fetch(`/api/guild/${guildId}/moderation/overview`);
+      if (probeRes.status === 404) {
+        setBackendOutdated(true);
+        if (showToast) {
+          toast.error('Bot backend missing moderation routes (404). Please restart your Discord bot on Wispbyte.');
+        }
+        setSyncing(false);
+        setLoading(false);
+        return;
+      }
+      setBackendOutdated(false);
+
       await Promise.all([
         loadGuildStructure(),
         loadOverview(),
@@ -285,8 +347,6 @@ export default function ModerationPage() {
         loadModSettings(),
         searchMembers('')
       ]);
-      const now = new Date();
-      setLastSyncTime(now.toLocaleTimeString());
       if (showToast) {
         toast.success('Moderation data synchronized with Discord.');
       }
@@ -312,11 +372,7 @@ export default function ModerationPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to execute moderation action');
-      }
+      const data = await parseApiResponse(res, 'Failed to execute moderation action');
 
       toast.success(`Action ${payload.action.toUpperCase()} completed successfully.`);
       setActionModalOpen(false);
@@ -339,8 +395,7 @@ export default function ModerationPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'purge', channelId, count, filter })
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Purge failed');
+      const data = await parseApiResponse(res, 'Purge failed');
 
       toast.success(`Successfully purged ${data.deleted} messages.`);
       setPurgeModalOpen(false);
@@ -360,7 +415,7 @@ export default function ModerationPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'slowmode', channelId: selectedChannelId, seconds })
       });
-      if (!res.ok) throw new Error('Failed to set slowmode');
+      await parseApiResponse(res, 'Failed to set slowmode');
       setCurrentSlowmode(seconds);
       toast.success(seconds === 0 ? 'Slowmode disabled.' : `Slowmode set to ${seconds}s.`);
     } catch (err) {
@@ -381,7 +436,7 @@ export default function ModerationPage() {
           reason: lock ? 'Channel lockdown via dashboard' : 'Channel unlock via dashboard'
         })
       });
-      if (!res.ok) throw new Error('Lockdown operation failed');
+      await parseApiResponse(res, 'Lockdown operation failed');
       setIsLocked(lock);
       toast.success(lock ? 'Channel locked down.' : 'Channel unlocked.');
     } catch (err) {
@@ -395,7 +450,7 @@ export default function ModerationPage() {
       const res = await fetch(`/api/guild/${guildId}/moderation/cases/${caseId}`, {
         method: 'DELETE'
       });
-      if (!res.ok) throw new Error('Failed to delete case');
+      await parseApiResponse(res, 'Failed to delete case');
       toast.success('Case removed successfully.');
       loadCases(casesPage);
       loadOverview();
@@ -413,7 +468,7 @@ export default function ModerationPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reason: editReasonModal.reason.trim() })
       });
-      if (!res.ok) throw new Error('Failed to update reason');
+      await parseApiResponse(res, 'Failed to update reason');
       toast.success('Case reason updated.');
       setEditReasonModal({ isOpen: false, caseId: null, reason: '' });
       loadCases(casesPage);
@@ -435,7 +490,7 @@ export default function ModerationPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'unban', targetId: user.id, reason: 'Ban revoked from dashboard' })
           });
-          if (!res.ok) throw new Error('Failed to unban user');
+          await parseApiResponse(res, 'Failed to unban user');
           toast.success(`Unbanned ${user.tag || user.username}.`);
           loadBans();
           loadOverview();
@@ -457,7 +512,7 @@ export default function ModerationPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(automod)
       });
-      if (!res.ok) throw new Error('Failed to save automod configuration');
+      await parseApiResponse(res, 'Failed to save automod configuration');
       toast.success('Automod rules updated successfully.');
       loadOverview();
     } catch (err) {
@@ -476,7 +531,7 @@ export default function ModerationPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(modSettings)
       });
-      if (!res.ok) throw new Error('Failed to save settings');
+      await parseApiResponse(res, 'Failed to save settings');
       toast.success('Moderation settings saved successfully.');
       loadOverview();
     } catch (err) {
@@ -510,15 +565,7 @@ export default function ModerationPage() {
       {/* Top Header Bar */}
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="lucent-kicker">Moderation Suite</span>
-            {lastSyncTime && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300 ring-1 ring-emerald-500/20">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Live Sync: {lastSyncTime}
-              </span>
-            )}
-          </div>
+          <p className="lucent-kicker mb-2">Moderation Suite</p>
           <h1 className="lucent-title text-3xl sm:text-5xl">Server Defense & Mod Hub</h1>
           <p className="lucent-subtitle mt-2 text-sm sm:text-base">
             Control infractions, automod rules, locks, and live moderation actions directly on Discord.
@@ -551,6 +598,31 @@ export default function ModerationPage() {
           </button>
         </div>
       </div>
+
+      {/* Bot Backend Update Required Banner */}
+      {backendOutdated && (
+        <div className="mt-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg shadow-amber-500/5">
+          <div className="flex items-center gap-3">
+            <span className="p-2.5 rounded-xl bg-amber-500/20 text-amber-300 shrink-0">
+              <AlertTriangle size={20} />
+            </span>
+            <div>
+              <p className="font-bold text-sm text-white">Bot Backend Update Required</p>
+              <p className="text-xs text-amber-200/80 mt-0.5 leading-relaxed">
+                The web dashboard frontend is up to date, but your Discord bot host is currently running an older build missing the moderation API routes (404).
+                Please run <code className="px-1.5 py-0.5 rounded bg-black/40 font-mono text-amber-300">git pull</code> and restart your bot on Wispbyte to enable live moderation control.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => syncAll(true)}
+            disabled={syncing}
+            className="lucent-button h-9 px-4 rounded-xl text-xs font-semibold shrink-0 bg-amber-500/20 border-amber-500/40 text-amber-100 hover:bg-amber-500/30 transition"
+          >
+            Retry Connection
+          </button>
+        </div>
+      )}
 
       {/* Metrics Overview Bar */}
       <section className="mt-7 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

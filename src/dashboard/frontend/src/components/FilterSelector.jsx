@@ -2,7 +2,7 @@
 import { useStore } from '@/store';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Sliders, Check, Zap } from 'lucide-react';
+import { Check, Zap } from 'lucide-react';
 
 export default function FilterSelector() {
   const { player } = useStore();
@@ -16,7 +16,8 @@ export default function FilterSelector() {
         .then(data => {
           setFilters(data.available || []);
           setCurrent(data.current || 'clear');
-        });
+        })
+        .catch(() => null);
     }
   }, [player.guildId, player.filter]);
 
@@ -26,13 +27,13 @@ export default function FilterSelector() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'filter', value: f })
-    });
+    }).catch(() => null);
   };
 
   const FILTER_LABELS = {
-    clear: 'Normal / Clear',
+    clear: 'Normal',
     nightcore: 'Nightcore',
-    bassboost: 'Bassboost',
+    bassboost: 'Bass Boost',
     vaporwave: 'Vaporwave',
     soft: 'Soft',
     karaoke: 'Karaoke',
@@ -41,47 +42,60 @@ export default function FilterSelector() {
     daycore: 'Daycore'
   };
 
+  const DEFAULT_FILTERS = [
+    'clear',
+    'nightcore',
+    'bassboost',
+    'vaporwave',
+    'soft',
+    'karaoke',
+    'rotation',
+    'chipmunk',
+    'daycore'
+  ];
+
+  const activeFilterList = filters.length > 0 
+    ? Array.from(new Set(['clear', ...filters]))
+    : DEFAULT_FILTERS;
+
   const isActive = !!player?.active;
 
   return (
-    <div className={`glass p-8 rounded-[40px] ambient-red-border space-y-6 transition-all duration-500 ${!isActive ? 'opacity-40 grayscale-[0.5] cursor-not-allowed' : ''}`}>
-      <div className="flex items-center justify-between">
-        <h3 className="text-xl font-black flex items-center gap-3">
-          <Sliders className={isActive ? 'text-red-500' : 'text-white/20'} size={24} />
-          Audio Filters
-        </h3>
-        {isActive && current !== 'clear' && (
-          <span className="px-3 py-1 bg-red-500/20 text-red-500 text-[10px] font-black rounded-full uppercase animate-pulse">
+    <div className={`space-y-3.5 ${!isActive ? 'opacity-50 grayscale-[0.3]' : ''}`}>
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--quiet)]">Sound Profile</span>
+        {isActive && current !== 'clear' ? (
+          <span className="px-2.5 py-0.5 bg-rose-500/20 text-rose-300 text-[10px] font-bold rounded-full uppercase ring-1 ring-rose-500/30">
             {FILTER_LABELS[current] || current} Active
           </span>
-        )}
-        {!isActive && (
-          <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">
-            Player Required
+        ) : (
+          <span className="text-[10px] font-bold text-[var(--quiet)] uppercase tracking-wider">
+            {isActive ? 'Standard Audio' : 'Standby'}
           </span>
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        {['clear', ...filters].map((f) => (
-          <motion.button
-            key={f}
-            whileHover={isActive ? { scale: 1.02 } : {}}
-            whileTap={isActive ? { scale: 0.98 } : {}}
-            onClick={() => isActive && applyFilter(f)}
-            disabled={!isActive}
-            className={`p-4 rounded-2xl border transition-all text-left flex items-center justify-between group ${
-              isActive && current === f 
-                ? 'bg-red-500 border-red-500 text-black font-black' 
-                : 'bg-white/5 border-white/5 hover:border-white/20 text-white/40 hover:text-white'
-            } ${!isActive ? 'pointer-events-none' : ''}`}
-          >
-            <span className="text-xs uppercase tracking-widest font-bold">
-              {FILTER_LABELS[f] || f}
-            </span>
-            {isActive && current === f ? <Check size={16} /> : <Zap size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />}
-          </motion.button>
-        ))}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        {activeFilterList.map((f) => {
+          const isSelected = isActive && current === f;
+          return (
+            <motion.button
+              key={f}
+              whileHover={isActive ? { scale: 1.02 } : {}}
+              whileTap={isActive ? { scale: 0.98 } : {}}
+              onClick={() => isActive && applyFilter(f)}
+              disabled={!isActive}
+              className={`h-10 px-3 rounded-xl border transition-all text-left flex items-center justify-between text-xs font-semibold ${
+                isSelected
+                  ? 'bg-rose-500/20 border-rose-400/50 text-white shadow-md shadow-rose-500/10 ring-1 ring-rose-400/30'
+                  : 'bg-white/5 border-white/10 hover:border-white/20 text-[var(--muted)] hover:text-white'
+              } ${!isActive ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+            >
+              <span className="truncate">{FILTER_LABELS[f] || f}</span>
+              {isSelected ? <Check size={13} className="text-rose-300 shrink-0 ml-1" /> : null}
+            </motion.button>
+          );
+        })}
       </div>
     </div>
   );

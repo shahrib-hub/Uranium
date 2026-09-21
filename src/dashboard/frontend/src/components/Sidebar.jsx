@@ -169,6 +169,15 @@ export default function Sidebar() {
             Manage servers
           </Link>
         </div>
+
+        {/* Footer Legal Links */}
+        <div className="mt-3 flex items-center justify-between px-1 text-[11px] text-[var(--quiet)]">
+          <Link href="/tos" onClick={() => setOpen(false)} className="hover:text-rose-300 transition-colors">Terms of Service</Link>
+          <span>•</span>
+          <Link href="/privacy" onClick={() => setOpen(false)} className="hover:text-rose-300 transition-colors">Privacy</Link>
+          <span>•</span>
+          <a href="https://discord.gg/26ThFyckFX" target="_blank" rel="noopener noreferrer" className="hover:text-rose-300 transition-colors">Support</a>
+        </div>
       </aside>
     </>
   );

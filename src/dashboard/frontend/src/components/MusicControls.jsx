@@ -37,13 +37,13 @@ export default function MusicControls() {
 
   if (!player?.active) {
     return (
-      <div className="glass p-12 rounded-[40px] flex flex-col items-center justify-center text-center space-y-6 ambient-red-border min-h-[300px]">
-        <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center animate-pulse">
-          <Activity className="text-white/20" size={32} />
+      <div className="lucent-card p-8 rounded-[1.5rem] flex flex-col items-center justify-center text-center space-y-4 min-h-[220px]">
+        <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-rose-300 animate-pulse">
+          <Activity size={24} />
         </div>
         <div>
-          <h3 className="text-2xl font-black text-white/40 uppercase">No Active Session</h3>
-          <p className="text-sm text-white/20 font-medium px-4">Join a voice channel to initialize the Uranium player.</p>
+          <h3 className="text-base font-semibold text-white uppercase tracking-wider">No Active Music Session</h3>
+          <p className="text-xs text-[var(--muted)] mt-1 max-w-sm">Join a voice channel in your Discord server to initialize playback with Uranium.</p>
         </div>
       </div>
     );
@@ -51,13 +51,13 @@ export default function MusicControls() {
 
   if (!player.current) {
     return (
-      <div className="glass p-12 rounded-[40px] flex flex-col items-center justify-center text-center space-y-6 ambient-red-border min-h-[300px] border-green-500/20 bg-green-500/[0.01]">
-        <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center">
-          <Zap className="text-green-500 animate-pulse" size={32} />
+      <div className="lucent-card p-8 rounded-[1.5rem] flex flex-col items-center justify-center text-center space-y-4 min-h-[220px]">
+        <div className="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-2xl flex items-center justify-center">
+          <Zap size={24} className="animate-pulse" />
         </div>
         <div>
-          <h3 className="text-2xl font-black text-green-500 uppercase italic">Uranium Standby</h3>
-          <p className="text-sm text-white/40 font-medium px-4">Synchronized with <span className="text-white">#{player.channelName || 'Voice Channel'}</span>. Search for a track to begin playback.</p>
+          <h3 className="text-base font-semibold text-emerald-300 uppercase tracking-wider">Player Connected & Ready</h3>
+          <p className="text-xs text-[var(--muted)] mt-1 max-w-sm">Synchronized with <span className="text-white font-medium">#{player.channelName || 'Voice Channel'}</span>. Search or queue a song to begin.</p>
         </div>
       </div>
     );
@@ -71,7 +71,7 @@ export default function MusicControls() {
   };
 
   return (
-    <div className="glass p-10 rounded-[40px] ambient-red-border space-y-8">
+    <div className="lucent-card p-6 sm:p-7 rounded-[1.5rem] space-y-6">
       {/* Track Info */}
       <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 items-center sm:items-start text-center sm:text-left">
         <div className="w-40 h-40 sm:w-32 sm:h-32 rounded-3xl overflow-hidden shadow-2xl border border-white/10 group relative flex-shrink-0">

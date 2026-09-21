@@ -62,13 +62,13 @@ export default function SearchPicker() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="relative group">
-        <div className="absolute left-5 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
           {loading ? (
-            <Loader2 className="text-red-500 animate-spin" size={20} />
+            <Loader2 className="text-rose-400 animate-spin" size={16} />
           ) : (
-            <Search className="text-white/20 group-focus-within:text-red-500 transition-colors" size={20} />
+            <Search className="text-[var(--muted)] group-focus-within:text-rose-400 transition-colors" size={16} />
           )}
         </div>
         <input
@@ -76,73 +76,72 @@ export default function SearchPicker() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Track title, artist or URL..."
-          className="w-full bg-white/5 border border-white/10 rounded-[24px] py-5 pl-14 pr-16 outline-none focus:border-red-500/50 transition-all font-medium text-lg placeholder:text-white/10"
+          placeholder="Track title, artist, or audio URL…"
+          className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-11 pr-12 outline-none focus:border-rose-400/50 transition-all font-medium text-sm text-white placeholder:text-[var(--quiet)]"
         />
         <button 
           onClick={executeSearch}
           disabled={loading || !query.trim()}
-          className="absolute right-3 top-1/2 -translate-y-1/2 p-3 bg-red-500 text-black rounded-2xl hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 shadow-lg shadow-red-500/20"
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-rose-500 text-white rounded-xl hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 shadow-md shadow-rose-500/20"
         >
-          <Search size={20} />
+          <Search size={16} />
         </button>
       </div>
 
       {error && (
-        <div className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 text-sm animate-in fade-in zoom-in duration-300">
-          <AlertCircle size={18} />
-          <span className="font-bold">{error}</span>
+        <div className="flex items-center gap-3 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-300 text-xs">
+          <AlertCircle size={15} className="shrink-0" />
+          <span className="font-semibold">{error}</span>
         </div>
       )}
 
       {results.length > 0 && (
-        <div className="grid gap-2 animate-in fade-in slide-in-from-top-4 duration-500 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+        <div className="grid gap-1.5 max-h-[340px] overflow-y-auto pr-1">
           {results.map((track, i) => (
             <div 
               key={`${track.uri || i}-${i}`}
-              className="flex items-center gap-4 p-3 rounded-2xl bg-white/[0.02] border border-transparent hover:border-red-500/20 hover:bg-red-500/[0.05] transition-all group"
+              className="flex items-center gap-3 p-2.5 rounded-xl bg-white/[0.03] border border-white/5 hover:border-rose-500/30 hover:bg-rose-500/[0.06] transition-all group"
             >
-              <div className="w-14 h-14 rounded-xl overflow-hidden relative flex-shrink-0 bg-white/5">
+              <div className="w-11 h-11 rounded-lg overflow-hidden relative flex-shrink-0 bg-white/5">
                 {track.thumbnail ? (
                   <img src={track.thumbnail} className="w-full h-full object-cover" alt="" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-white/10">
-                    <Music size={24} />
+                  <div className="w-full h-full flex items-center justify-center text-white/20">
+                    <Music size={18} />
                   </div>
                 )}
               </div>
-              <div className="flex-1">
-                <div className="font-bold line-clamp-1">{track.title}</div>
-                <div className="text-sm text-white/40 line-clamp-1">by {track.author}</div>
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold text-xs text-white truncate">{track.title}</div>
+                <div className="text-[11px] text-[var(--muted)] truncate">by {track.author}</div>
               </div>
               
-              <div className="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-all">
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-mono text-[var(--quiet)] mr-1">
+                  <Clock size={11} />
+                  {formatDuration(track.duration)}
+                </span>
                 <button 
                   onClick={() => performAction(track, 'play')}
-                  className="p-2 sm:p-3 rounded-xl bg-red-500 text-black hover:scale-110 transition-all shadow-lg shadow-red-500/20"
+                  className="p-2 rounded-xl bg-rose-500 hover:bg-rose-400 text-white transition-all shadow-sm shadow-rose-500/20 active:scale-95"
                   title="Play Now"
                 >
-                  <Play size={16} fill="currentColor" />
+                  <Play size={13} fill="currentColor" />
                 </button>
                 <button 
                   onClick={() => performAction(track, 'next')}
-                  className="hidden sm:block p-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all"
+                  className="hidden sm:inline-flex p-2 rounded-xl bg-white/[0.07] hover:bg-white/[0.14] text-white transition-all active:scale-95"
                   title="Play Next"
                 >
-                  <FastForward size={16} />
+                  <FastForward size={13} />
                 </button>
                 <button 
                   onClick={() => performAction(track, 'queue')}
-                  className="p-2 sm:p-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all"
+                  className="p-2 rounded-xl bg-white/[0.07] hover:bg-white/[0.14] text-white transition-all active:scale-95"
                   title="Add to Queue"
                 >
-                  <ListPlus size={16} />
+                  <ListPlus size={13} />
                 </button>
-              </div>
-
-              <div className="flex items-center gap-2 text-white/20 font-mono text-xs ml-2">
-                <Clock size={12} />
-                {formatDuration(track.duration)}
               </div>
             </div>
           ))}
@@ -150,9 +149,14 @@ export default function SearchPicker() {
       )}
 
       {results.length === 0 && !loading && !error && (
-        <div className="text-center py-12 opacity-20">
-          <Music size={48} className="mx-auto mb-4" />
-          <p className="font-medium text-sm uppercase tracking-widest">Search the Uranium network</p>
+        <div className="flex flex-col items-center justify-center text-center py-6 px-4 rounded-2xl border border-dashed border-white/10 bg-white/[0.02]">
+          <div className="h-10 w-10 rounded-2xl bg-rose-400/10 text-rose-300 grid place-items-center mb-2.5">
+            <Music size={18} />
+          </div>
+          <p className="text-xs font-semibold text-white">Search Music or Paste URL</p>
+          <p className="mt-1 text-[11px] text-[var(--muted)] max-w-xs">
+            Type song titles, artists, or direct links to stream instantly in your voice channel.
+          </p>
         </div>
       )}
     </div>

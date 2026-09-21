@@ -13,9 +13,32 @@ export default function MusicPage() {
     <div className="grid gap-5 xl:grid-cols-[1.2fr_.8fr]">
       <div className="space-y-5">
         <MusicControls />
-        <div className="grid gap-5 md:grid-cols-2">
-          <section className="lucent-card rounded-[1.5rem] p-6"><div className="mb-5 flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-xl bg-rose-400/15 text-rose-100"><SlidersHorizontal size={18} /></span><div><h2 className="font-semibold">Sound options</h2><p className="text-sm text-[var(--muted)]">Choose a sound effect for the current player.</p></div></div><FilterSelector /></section>
-          <section className="lucent-card rounded-[1.5rem] p-6"><div className="mb-5 flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-xl bg-rose-400/15 text-rose-100"><Headphones size={18} /></span><div><h2 className="font-semibold">Find music</h2><p className="text-sm text-[var(--muted)]">Search and add something to the queue.</p></div></div><SearchPicker /></section>
+        <div className="grid gap-5 md:grid-cols-2 items-stretch">
+          <section className="lucent-card rounded-[1.5rem] p-6 flex flex-col justify-start">
+            <div className="mb-4 flex items-center gap-3">
+              <span className="grid h-9 w-9 place-items-center rounded-xl bg-rose-400/15 text-rose-100 shrink-0">
+                <SlidersHorizontal size={18} />
+              </span>
+              <div>
+                <h2 className="font-semibold text-white">Sound Filters</h2>
+                <p className="text-xs text-[var(--muted)]">Apply audio DSP effects to playback.</p>
+              </div>
+            </div>
+            <FilterSelector />
+          </section>
+
+          <section className="lucent-card rounded-[1.5rem] p-6 flex flex-col justify-start">
+            <div className="mb-4 flex items-center gap-3">
+              <span className="grid h-9 w-9 place-items-center rounded-xl bg-rose-400/15 text-rose-100 shrink-0">
+                <Headphones size={18} />
+              </span>
+              <div>
+                <h2 className="font-semibold text-white">Sound Search</h2>
+                <p className="text-xs text-[var(--muted)]">Find tracks and add them to queue.</p>
+              </div>
+            </div>
+            <SearchPicker />
+          </section>
         </div>
       </div>
       <div className="space-y-5"><QueueManager /><section className="lucent-card rounded-[1.5rem] p-6"><div className="mb-5 flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-xl bg-rose-400/15 text-rose-100"><ListMusic size={18} /></span><div><h2 className="font-semibold">Voice channel</h2><p className="text-sm text-[var(--muted)]">Choose where the bot should join.</p></div></div><VoiceSelector /></section></div>

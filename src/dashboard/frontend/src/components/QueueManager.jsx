@@ -63,28 +63,31 @@ export default function QueueManager() {
 
   if (!player?.active || !queue.length) {
     return (
-      <div className="glass p-8 rounded-3xl min-h-[400px] flex flex-col items-center justify-center text-center space-y-4">
-        <div className="p-4 bg-white/5 rounded-2xl">
-          <Music className="text-white/10" size={32} />
+      <div className="lucent-card p-6 rounded-[1.5rem] min-h-[220px] flex flex-col items-center justify-center text-center space-y-3">
+        <div className="p-3 bg-white/5 rounded-2xl text-rose-300">
+          <Music size={24} />
         </div>
-        <p className="text-white/20 font-bold uppercase tracking-widest text-xs">Queue is Empty</p>
+        <div>
+          <p className="text-white text-xs font-semibold uppercase tracking-wider">Queue is Empty</p>
+          <p className="text-[var(--muted)] text-[11px] mt-0.5">Search or add tracks to build your playlist.</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="glass p-8 rounded-[40px] ambient-red-border space-y-6 flex flex-col h-full max-h-[600px]">
+    <div className="lucent-card p-6 rounded-[1.5rem] space-y-5 flex flex-col h-full max-h-[600px]">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h3 className="text-xl font-black">Up Next</h3>
-          <span className="px-2 py-1 bg-red-500/10 text-red-500 text-[10px] font-black rounded-md">{queue.length} Tracks</span>
+          <h3 className="text-lg font-semibold text-white">Up Next</h3>
+          <span className="px-2.5 py-0.5 bg-rose-500/15 text-rose-300 ring-1 ring-rose-500/20 text-[10px] font-bold rounded-full">{queue.length} Tracks</span>
         </div>
         <button 
           onClick={handleClear}
-          className="p-2 hover:bg-red-500/10 text-white/20 hover:text-red-500 transition-all rounded-xl flex items-center gap-2 group"
+          className="p-2 hover:bg-rose-500/10 text-[var(--muted)] hover:text-rose-300 transition-all rounded-xl flex items-center gap-2 group"
         >
-          <span className="text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Clear All</span>
-          <ListX size={18} />
+          <span className="text-[10px] font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">Clear</span>
+          <ListX size={16} />
         </button>
       </div>
 

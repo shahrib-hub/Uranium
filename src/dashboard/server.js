@@ -96,6 +96,20 @@ function startDashboard(client) {
     });
   });
 
+  // API 404 handler — always return JSON, NEVER HTML
+  app.use('/api', (req, res) => {
+    res.status(404).json({ error: `API endpoint not found: ${req.method} ${req.originalUrl}` });
+  });
+
+  // Global error handler for API and Auth
+  app.use((err, req, res, next) => {
+    if (req.path && (req.path.startsWith('/api') || req.path.startsWith('/auth'))) {
+      console.error('[API Error]', err);
+      return res.status(err.status || 500).json({ error: err.message || 'Internal Server Error' });
+    }
+    next(err);
+  });
+
   // Socket.IO
   const io = new SocketServer(server, {
     cors: {

@@ -48,21 +48,13 @@ export default function VoiceSelector() {
   };
 
   return (
-    <div className={`glass p-8 rounded-[40px] ambient-red-border space-y-6 transition-all duration-500 ${player.active ? 'opacity-50 grayscale-[0.5]' : ''}`}>
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h3 className="text-xl font-black flex items-center gap-3">
-            <Volume2 className="text-red-500" size={24} />
-            Voice Nodes
-          </h3>
-          {player.active && (
-            <p className="text-[10px] text-red-500 font-bold uppercase tracking-tighter">
-              Active Connection Lock Enabled
-            </p>
-          )}
-        </div>
-        <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">
-          {player.active ? 'CONNECTED' : `Available: ${channels.length}`}
+    <div className={`space-y-4 transition-all duration-300 ${player.active ? 'opacity-50 grayscale-[0.3]' : ''}`}>
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--quiet)]">
+          {player.active ? 'Connection Locked' : 'Voice Channels'}
+        </span>
+        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ring-1 bg-white/5 ring-white/10 text-[var(--muted)]">
+          {player.active ? 'Active' : `${channels.length} Available`}
         </span>
       </div>
 

@@ -37,6 +37,7 @@ function createApiRouter(client) {
   };
 
   const requireGuildAdmin = (req, res, next) => {
+    if (req.guild.ownerId === req.member.id) return next();
     if (!req.member.permissions.has(PermissionFlagsBits.ManageGuild) && !req.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return res.status(403).json({ error: 'Missing Permissions: Manage Server permission required.' });
     }
@@ -44,6 +45,7 @@ function createApiRouter(client) {
   };
 
   const requireGuildMod = (req, res, next) => {
+    if (req.guild.ownerId === req.member.id) return next();
     const p = req.member.permissions;
     if (
       !p.has(PermissionFlagsBits.Administrator) &&
@@ -56,6 +58,11 @@ function createApiRouter(client) {
     }
     next();
   };
+
+  // Ping endpoint to verify moderation API availability
+  router.get('/moderation/ping', (req, res) => {
+    res.json({ ok: true, module: 'moderation', timestamp: Date.now() });
+  });
 
   async function sendModLogEmbed(guild, embed) {
     try {

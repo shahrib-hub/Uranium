@@ -81,7 +81,18 @@ export default function HomePage() {
         <Feature icon={<Users />} title="A place for your community" copy="Build reaction-role panels and keep your server organised." />
       </section>
 
-      <footer className="border-t border-white/10 px-6 py-8 text-center text-sm text-[var(--quiet)]">Uranium • Made for Discord communities</footer>
+      <footer className="border-t border-white/10 px-6 py-8 text-sm text-[var(--quiet)]">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+          <p>© 2026 Uranium • Made for Discord communities</p>
+          <div className="flex flex-wrap items-center justify-center gap-5 text-xs">
+            <Link href="/tos" className="hover:text-rose-300 transition-colors">Terms of Service</Link>
+            <span className="text-white/20">•</span>
+            <Link href="/privacy" className="hover:text-rose-300 transition-colors">Privacy Policy</Link>
+            <span className="text-white/20">•</span>
+            <a href="https://discord.gg/26ThFyckFX" target="_blank" rel="noopener noreferrer" className="hover:text-rose-300 transition-colors">Support Server</a>
+          </div>
+        </div>
+      </footer>
     </main>
   );
 }
