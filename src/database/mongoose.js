@@ -277,8 +277,8 @@ const ModCaseSchema = new mongoose.Schema({
   reason: { type: String, required: true },
   duration: { type: Number, default: 0 },
   timestamp: { type: Number, required: true },
-  evidence: { type: String, default: null },
-  references_list: { type: String, default: null }
+  evidence: { type: mongoose.Schema.Types.Mixed, default: '[]' },
+  references_list: { type: mongoose.Schema.Types.Mixed, default: '[]' }
 });
 
 const WarningSchema = new mongoose.Schema({

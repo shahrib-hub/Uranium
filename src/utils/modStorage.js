@@ -115,12 +115,15 @@ async function ensureSchema() {
 }
 
 function serializeArray(arr) {
-  return JSON.stringify(arr || []);
+  if (typeof arr === 'string') return arr;
+  return JSON.stringify(Array.isArray(arr) ? arr : (arr ? [arr] : []));
 }
 
 function deserializeArray(str) {
+  if (Array.isArray(str)) return str;
   try {
-    return JSON.parse(str || '[]');
+    const parsed = JSON.parse(str || '[]');
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
   }
@@ -131,6 +134,9 @@ const storage = {
 
   // CASE LOGGING
   async saveCase(data) {
+    const evidenceSerialized = serializeArray(data.evidence);
+    const referencesSerialized = serializeArray(data.references);
+
     if (isMongoReady()) {
       await mongooseModels.ModCase.create({
         guildId: data.guildId,
@@ -139,10 +145,10 @@ const storage = {
         targetId: data.targetId,
         action: data.action,
         reason: data.reason,
-        duration: data.duration,
-        timestamp: data.timestamp,
-        evidence: data.evidence || [],
-        references_list: data.references || []
+        duration: data.duration || 0,
+        timestamp: data.timestamp || Date.now(),
+        evidence: evidenceSerialized,
+        references_list: referencesSerialized
       });
       return;
     }
@@ -158,10 +164,10 @@ const storage = {
         data.targetId,
         data.action,
         data.reason,
-        data.duration,
-        data.timestamp,
-        serializeArray(data.evidence),
-        serializeArray(data.references)
+        data.duration || 0,
+        data.timestamp || Date.now(),
+        evidenceSerialized,
+        referencesSerialized
       ]
     );
   },
@@ -171,7 +177,8 @@ const storage = {
       const docs = await mongooseModels.ModCase.find({ guildId, targetId: userId }).sort({ timestamp: -1 }).lean();
       return docs.map(doc => ({
         ...doc,
-        references: doc.references_list
+        references: deserializeArray(doc.references_list),
+        evidence: deserializeArray(doc.evidence)
       }));
     }
 
@@ -194,7 +201,8 @@ const storage = {
       if (!doc) return null;
       return {
         ...doc,
-        references: doc.references_list
+        references: deserializeArray(doc.references_list),
+        evidence: deserializeArray(doc.evidence)
       };
     }
 
@@ -214,9 +222,12 @@ const storage = {
   async updateCase(guildId, caseId, updates) {
     if (isMongoReady()) {
       const mappedUpdates = { ...updates };
-      if (mappedUpdates.references) {
-        mappedUpdates.references_list = mappedUpdates.references;
+      if (mappedUpdates.references !== undefined) {
+        mappedUpdates.references_list = serializeArray(mappedUpdates.references);
         delete mappedUpdates.references;
+      }
+      if (mappedUpdates.evidence !== undefined) {
+        mappedUpdates.evidence = serializeArray(mappedUpdates.evidence);
       }
       await mongooseModels.ModCase.updateOne({ guildId, caseId }, { $set: mappedUpdates });
       return;
@@ -254,7 +265,8 @@ const storage = {
         total,
         cases: docs.map(doc => ({
           ...doc,
-          references: doc.references_list
+          references: deserializeArray(doc.references_list),
+          evidence: deserializeArray(doc.evidence)
         }))
       };
     }
