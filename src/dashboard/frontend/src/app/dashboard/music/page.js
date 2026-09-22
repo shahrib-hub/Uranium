@@ -13,8 +13,8 @@ export default function MusicPage() {
     <div className="grid gap-5 xl:grid-cols-[1.2fr_.8fr]">
       <div className="space-y-5">
         <MusicControls />
-        <div className="grid gap-5 md:grid-cols-2 items-stretch">
-          <section className="lucent-card rounded-[1.5rem] p-6 flex flex-col justify-start">
+        <div className="grid gap-5 md:grid-cols-2 items-stretch min-w-0">
+          <section className="lucent-card rounded-[1.5rem] p-5 sm:p-6 flex flex-col justify-start min-w-0 overflow-hidden">
             <div className="mb-4 flex items-center gap-3">
               <span className="grid h-9 w-9 place-items-center rounded-xl bg-rose-400/15 text-rose-100 shrink-0">
                 <SlidersHorizontal size={18} />
@@ -27,7 +27,7 @@ export default function MusicPage() {
             <FilterSelector />
           </section>
 
-          <section className="lucent-card rounded-[1.5rem] p-6 flex flex-col justify-start">
+          <section className="lucent-card rounded-[1.5rem] p-5 sm:p-6 flex flex-col justify-start min-w-0 overflow-hidden">
             <div className="mb-4 flex items-center gap-3">
               <span className="grid h-9 w-9 place-items-center rounded-xl bg-rose-400/15 text-rose-100 shrink-0">
                 <Headphones size={18} />

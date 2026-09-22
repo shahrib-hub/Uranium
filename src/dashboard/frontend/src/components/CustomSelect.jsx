@@ -1,5 +1,6 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown, Check, Search, X } from 'lucide-react';
 
 export default function CustomSelect({
@@ -14,6 +15,13 @@ export default function CustomSelect({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [mounted, setMounted] = useState(false);
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0, openUp: false });
+  const triggerRef = useRef(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const selectedOption = options.find((opt) => opt.value === value);
 
@@ -30,6 +38,54 @@ export default function CustomSelect({
 
   const isSearchEnabled = searchable || options.length > 7;
 
+  const updatePosition = useCallback(() => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const openUp = spaceBelow < 240 && rect.top > spaceBelow;
+    const width = Math.max(rect.width, 220);
+    
+    // Ensure dropdown stays within viewport horizontally
+    let left = rect.left;
+    if (left + width > window.innerWidth - 16) {
+      left = Math.max(16, window.innerWidth - width - 16);
+    }
+
+    setCoords({
+      top: openUp ? rect.top - 8 : rect.bottom + 8,
+      bottom: openUp ? window.innerHeight - rect.top + 8 : 0,
+      left,
+      width,
+      openUp
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    updatePosition();
+
+    const handleScrollOrResize = () => {
+      updatePosition();
+    };
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScrollOrResize, true);
+    window.addEventListener('resize', handleScrollOrResize);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('scroll', handleScrollOrResize, true);
+      window.removeEventListener('resize', handleScrollOrResize);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, updatePosition]);
+
   return (
     <div className={`space-y-1.5 ${disabled ? 'opacity-50 pointer-events-none' : ''} ${className}`}>
       {label && (
@@ -39,9 +95,13 @@ export default function CustomSelect({
       )}
       <div className="relative">
         <button
+          ref={triggerRef}
           type="button"
           disabled={disabled}
           onClick={() => {
+            if (!isOpen) {
+              updatePosition();
+            }
             setIsOpen(!isOpen);
             setSearch('');
           }}
@@ -66,10 +126,23 @@ export default function CustomSelect({
           />
         </button>
 
-        {isOpen && (
+        {isOpen && mounted && createPortal(
           <>
-            <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-            <div className="absolute top-[calc(100%+.5rem)] left-0 right-0 z-50 max-h-72 overflow-hidden rounded-2xl border border-white/15 bg-[#12080f] p-2 shadow-2xl backdrop-blur-3xl ring-1 ring-black/50">
+            <div 
+              className="fixed inset-0 z-[99998] bg-black/25" 
+              onClick={() => setIsOpen(false)} 
+            />
+            <div 
+              style={{
+                position: 'fixed',
+                top: coords.openUp ? undefined : `${coords.top}px`,
+                bottom: coords.openUp ? `${coords.bottom}px` : undefined,
+                left: `${coords.left}px`,
+                width: `${coords.width}px`,
+                zIndex: 99999
+              }}
+              className="max-h-72 overflow-hidden rounded-2xl border border-white/15 bg-[#12080f] p-2 shadow-2xl backdrop-blur-3xl ring-1 ring-black/50 animate-in fade-in zoom-in-95 duration-150"
+            >
               {isSearchEnabled && (
                 <div className="relative mb-2 px-1">
                   <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
@@ -132,7 +205,8 @@ export default function CustomSelect({
                 )}
               </div>
             </div>
-          </>
+          </>,
+          document.body
         )}
       </div>
     </div>
