@@ -282,35 +282,72 @@ function createApiRouter(client) {
     } catch (err) { res.status(500).json({ error: err.message }); }
   });
 
-  router.post('/guild/:guildId/play-track', requireGuildAccess(client), requireMusicAccess, async (req, res) => {
-    const { track, mode } = req.body;
+  const playRoutePaths = [
+    '/guild/:guildId/play-track',
+    '/guild/:guildId/play-track/',
+    '/guild/:guildId/search/play',
+    '/guild/:guildId/search/play/',
+    '/guild/:guildId/play',
+    '/guild/:guildId/play/'
+  ];
+
+  router.post(playRoutePaths, requireGuildAccess(client), requireMusicAccess, async (req, res) => {
     const guildId = req.params.guildId;
-    const player = client.music?.players?.get(guildId);
-    if (!player) return res.status(400).json({ error: 'No player active. Please join a voice channel first.' });
-    
+    const { track, mode } = req.body;
+    const query = req.body.query || (track ? (track.uri || `${track.title || ''} ${track.author || ''}`.trim()) : null);
+
+    if (!query) {
+      return res.status(400).json({ error: 'No track or search query provided.' });
+    }
+
+    // Check or auto-join player
+    let player = client.music?.players?.get(guildId);
+    if (!player) {
+      const voiceChannelId = req.member.voice?.channelId;
+      if (!voiceChannelId) {
+        return res.status(400).json({ 
+          error: 'Please join a voice channel in Discord first so Uranium knows where to play!' 
+        });
+      }
+
+      const targetChannel = req.guild.channels.cache.get(voiceChannelId);
+      if (targetChannel) {
+        const botMember = req.guild.members.me;
+        if (!targetChannel.permissionsFor(botMember)?.has([PermissionFlagsBits.Connect, PermissionFlagsBits.Speak])) {
+          return res.status(403).json({ error: 'I do not have permission to join or speak in your voice channel.' });
+        }
+      }
+
+      const { createPlayer } = require('../music/service');
+      player = await createPlayer(client, guildId, voiceChannelId, req.body.textChannelId || null);
+    } else {
+      // If player already active in a voice channel, verify user isn't in a different voice channel
+      const userVoiceId = req.member.voice?.channelId;
+      if (player.voiceId && userVoiceId && player.voiceId !== userVoiceId) {
+        return res.status(403).json({ error: 'You must be in the same voice channel as Uranium to queue music.' });
+      }
+    }
+
     try {
       const { searchTracks } = require('../music/service');
       
-
-      
-      const query = track.uri || `${track.title} ${track.author}`;
-
-      
       let result = await searchTracks(client, query, { id: req.session.user.id });
-      if (!result.tracks?.length && track.uri) {
-        const fallbackQuery = `${track.title} ${track.author}`;
 
-        result = await searchTracks(client, fallbackQuery, { id: req.session.user.id });
+      // If direct query resolution returned no tracks and a track object was provided, try searching by title + author
+      if (!result.tracks?.length && track && (track.title || track.author)) {
+        const fallbackQuery = `${track.title || ''} ${track.author || ''}`.trim();
+        if (fallbackQuery && fallbackQuery !== query) {
+          result = await searchTracks(client, fallbackQuery, { id: req.session.user.id });
+        }
       }
 
       if (!result.tracks?.length) {
-        console.warn(`[API] Search failed to resolve track even with fallback. Query: ${query}`);
-        return res.status(404).json({ error: 'Track could not be resolved.' });
+        console.warn(`[API] Search failed to resolve track: ${query}`);
+        return res.status(404).json({ error: 'Track could not be resolved. Please try a different song or query.' });
       }
-      
+
       const resolvedTrack = result.tracks[0];
 
-      
       if (mode === 'next') {
         player.queue.unshift(resolvedTrack);
       } else if (mode === 'play') {
@@ -319,22 +356,20 @@ function createApiRouter(client) {
       } else {
         player.queue.add(resolvedTrack);
       }
-      
+
       if (!player.playing && !player.paused) {
         await player.play();
       }
-      
-      res.json({ success: true });
+
+      res.json({ success: true, track: serializeTrack(resolvedTrack) });
       setImmediate(async () => {
         client.dashboardBridge?.emitPlayerUpdate(player);
       });
-    } catch (err) { 
+    } catch (err) {
       console.error('[API] PlayTrack error:', err);
-      res.status(500).json({ error: err.message }); 
+      res.status(500).json({ error: err.message || 'An error occurred while queueing the track.' });
     }
   });
-
-
 
   router.get('/guild/:guildId/voice-channels', requireGuildAccess(client), (req, res) => {
     res.json(req.guild.channels.cache.filter(c => c.type === 2).map(c => ({ id: c.id, name: c.name, userCount: c.members.size })));

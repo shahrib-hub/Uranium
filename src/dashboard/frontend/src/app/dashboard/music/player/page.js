@@ -224,21 +224,23 @@ export default function FullMusicPlayerPage() {
   // Play a song from feed / search
   const playTrack = async (queryOrTrack) => {
     if (!guildId) return;
-    const query = typeof queryOrTrack === 'string' ? queryOrTrack : (queryOrTrack.uri || `${queryOrTrack.title} ${queryOrTrack.author}`);
+    const isObj = typeof queryOrTrack === 'object' && queryOrTrack !== null;
+    const query = isObj ? (queryOrTrack.uri || `${queryOrTrack.title} ${queryOrTrack.author}`) : queryOrTrack;
+    const trackName = isObj ? (queryOrTrack.title || 'Track') : String(queryOrTrack || 'Track');
     try {
-      toast.info(`Adding to queue...`);
+      toast.info(`Adding "${trackName}" to queue...`);
       const res = await fetch(`/api/guild/${guildId}/search/play`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query })
+        body: JSON.stringify({ query, track: isObj ? queryOrTrack : undefined })
       });
       const data = await res.json();
       if (!res.ok) {
         toast.error(data.error || 'Failed to play track');
       } else {
-        toast.success(`Playing track!`);
+        toast.success(`Queued: ${data.track?.title || trackName}`);
         // Save to local listening history
-        if (typeof queryOrTrack === 'object') {
+        if (isObj) {
           saveToHistory(queryOrTrack);
         }
         fetchPlayer();
