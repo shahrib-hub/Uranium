@@ -20,7 +20,9 @@ import {
   Zap,
   Terminal,
   Lock,
-  ArrowLeft
+  ArrowLeft,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import RRCreateModal from '@/components/RRCreateModal';
@@ -45,6 +47,7 @@ export default function ReactionRolesPage() {
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [bulkInput, setBulkInput] = useState('');
   const [editingSetup, setEditingSetup] = useState(null);
+  const [setupStats, setSetupStats] = useState(null);
   const [toast, setToast] = useState(null);
   const [confirmState, setConfirmState] = useState({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
@@ -112,10 +115,38 @@ export default function ReactionRolesPage() {
         throw new Error(data.error || 'Failed to fetch items');
       }
       setItems(data.items || []);
+      setSetupStats(data.stats || null);
     } catch (err) {
       setItems([]);
+      setSetupStats(null);
     } finally {
       setLoadingItems(false);
+    }
+  };
+
+  const handleReorder = async (itemId, direction) => {
+    const currentIndex = items.findIndex(it => it.id === itemId);
+    if (currentIndex === -1) return;
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= items.length) return;
+
+    // Optimistic UI update
+    const reordered = [...items];
+    const [moved] = reordered.splice(currentIndex, 1);
+    reordered.splice(targetIndex, 0, moved);
+    setItems(reordered);
+
+    try {
+      const res = await fetch(`/api/guild/${guildId}/rr/items/${itemId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ position: targetIndex })
+      });
+      if (!res.ok) throw new Error();
+      showToast('Item order updated', 'success');
+    } catch {
+      showToast('Failed to update order', 'error');
+      if (selectedSetup) fetchItems(selectedSetup.id);
     }
   };
 
@@ -602,7 +633,29 @@ export default function ReactionRolesPage() {
                              </button>
                            </div>
                          </div>
-                         <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+
+                          {setupStats && (
+                            <div className="grid grid-cols-4 gap-2 mb-3">
+                              <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center">
+                                <div className="text-[8px] font-black uppercase tracking-wider text-emerald-400">Granted</div>
+                                <div className="text-xs font-black text-white">{setupStats.grant || 0}</div>
+                              </div>
+                              <div className="p-2 rounded-xl bg-red-500/10 border border-red-500/20 text-center">
+                                <div className="text-[8px] font-black uppercase tracking-wider text-red-400">Revoked</div>
+                                <div className="text-xs font-black text-white">{setupStats.revoke || 0}</div>
+                              </div>
+                              <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center">
+                                <div className="text-[8px] font-black uppercase tracking-wider text-amber-400">Blocked</div>
+                                <div className="text-xs font-black text-white">{setupStats.blocked || 0}</div>
+                              </div>
+                              <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-center">
+                                <div className="text-[8px] font-black uppercase tracking-wider text-blue-400">Failed</div>
+                                <div className="text-xs font-black text-white">{setupStats.fail || 0}</div>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
                             {loadingItems ? (
                               <div className="flex flex-col items-center justify-center h-32 space-y-4">
                                 <RefreshCcw className="animate-spin text-red-500/20" size={32} />
@@ -611,7 +664,7 @@ export default function ReactionRolesPage() {
                             ) : items.length === 0 ? (
                               <p className="text-[10px] text-white/20 font-bold text-center py-8 italic uppercase tracking-widest">No roles configured for this panel.</p>
                             ) : (
-                              items.map(item => (
+                              items.map((item, idx) => (
                                 <div key={item.id} className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/5 hover:border-red-500/10 transition-all group/item">
                                   <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-xl shadow-inner">
@@ -622,12 +675,31 @@ export default function ReactionRolesPage() {
                                       <span className="text-[8px] font-black uppercase text-white/20 tracking-tighter">ROLE: {item.role_id}</span>
                                     </div>
                                   </div>
-                                  <button 
-                                    onClick={() => removeItem(item.id, selectedSetup.id)}
-                                    className="p-2 rounded-lg text-white/10 hover:text-red-500 transition-colors"
-                                  >
-                                    <Trash2 size={14} />
-                                  </button>
+                                  <div className="flex items-center gap-1">
+                                    <button 
+                                      onClick={() => handleReorder(item.id, 'up')}
+                                      disabled={idx === 0}
+                                      title="Move Up"
+                                      className="p-1.5 rounded-lg text-white/20 hover:text-white hover:bg-white/5 disabled:opacity-20 disabled:hover:bg-transparent transition-colors"
+                                    >
+                                      <ChevronUp size={14} />
+                                    </button>
+                                    <button 
+                                      onClick={() => handleReorder(item.id, 'down')}
+                                      disabled={idx === items.length - 1}
+                                      title="Move Down"
+                                      className="p-1.5 rounded-lg text-white/20 hover:text-white hover:bg-white/5 disabled:opacity-20 disabled:hover:bg-transparent transition-colors"
+                                    >
+                                      <ChevronDown size={14} />
+                                    </button>
+                                    <button 
+                                      onClick={() => removeItem(item.id, selectedSetup.id)}
+                                      className="p-1.5 rounded-lg text-white/10 hover:text-red-500 transition-colors"
+                                      title="Remove Item"
+                                    >
+                                      <Trash2 size={14} />
+                                    </button>
+                                  </div>
                                 </div>
                               ))
                             )}

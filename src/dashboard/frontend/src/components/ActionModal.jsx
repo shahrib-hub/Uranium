@@ -21,9 +21,12 @@ import CustomSelect from './CustomSelect';
 const ACTION_TYPES = [
   { value: 'warn', label: 'Warn Member', icon: '⚠️', description: 'Issue a formal recorded warning' },
   { value: 'timeout', label: 'Timeout / Mute', icon: '⏳', description: 'Temporarily restrict sending messages' },
+  { value: 'unmute', label: 'Remove Timeout / Unmute', icon: '🔊', description: 'Lift active timeout from member' },
   { value: 'kick', label: 'Kick Member', icon: '👢', description: 'Remove member from the server' },
   { value: 'ban', label: 'Ban Member', icon: '🔨', description: 'Permanently ban member from server' },
+  { value: 'unban', label: 'Unban Member', icon: '🔓', description: 'Unban user by their Discord User ID' },
   { value: 'softban', label: 'Softban (Ban & Unban)', icon: '🧹', description: 'Kick & purge up to 7 days messages' },
+  { value: 'clear-roles', label: 'Clear Member Roles', icon: '🧼', description: 'Remove all roles except preserved' },
   { value: 'nickname', label: 'Change Nickname', icon: '📝', description: 'Update or reset member nickname' },
   { value: 'role', label: 'Manage Member Role', icon: '🏷️', description: 'Add or remove a server role' },
   { value: 'note', label: 'Add Private Note', icon: '📋', description: 'Record a private staff note' }
@@ -73,6 +76,7 @@ export default function ActionModal({
   const [nickname, setNickname] = useState('');
   const [roleId, setRoleId] = useState('');
   const [roleAction, setRoleAction] = useState('add');
+  const [preserveRoles, setPreserveRoles] = useState('');
   const [noteText, setNoteText] = useState('');
 
   useEffect(() => {
@@ -92,6 +96,7 @@ export default function ActionModal({
       setNickname('');
       setRoleId(roles[0]?.id || '');
       setRoleAction('add');
+      setPreserveRoles('');
       setNoteText('');
     }
   }, [isOpen, initialAction, initialTarget, roles]);
@@ -111,6 +116,7 @@ export default function ActionModal({
       nickname: action === 'nickname' ? nickname.trim() : null,
       roleId: action === 'role' ? roleId : null,
       roleAction: action === 'role' ? roleAction : null,
+      preserveRoles: action === 'clear-roles' ? preserveRoles.trim() : null,
       text: action === 'note' ? (noteText || reason) : null
     });
   };
@@ -171,7 +177,7 @@ export default function ActionModal({
             {/* Target User ID or Tag */}
             <div className="space-y-1.5">
               <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--quiet)] ml-1">
-                Target User ID or Username
+                {action === 'unban' ? 'Target User ID (Unban from Server)' : 'Target User ID or Username'}
               </label>
               <div className="relative">
                 <input
@@ -253,6 +259,24 @@ export default function ActionModal({
                   options={roleOptions}
                   searchable
                 />
+              </div>
+            )}
+
+            {action === 'clear-roles' && (
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--quiet)] ml-1">
+                  Preserved Roles (Optional Comma-separated Role IDs to Keep)
+                </label>
+                <input
+                  type="text"
+                  value={preserveRoles}
+                  onChange={(e) => setPreserveRoles(e.target.value)}
+                  placeholder="e.g. 109876543210987654, 987654321098765432"
+                  className="lucent-input px-4 py-3 text-sm font-medium"
+                />
+                <p className="text-[10px] text-white/40 ml-1">
+                  All roles below the bot's highest role will be removed except for IDs specified above.
+                </p>
               </div>
             )}
 

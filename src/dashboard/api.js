@@ -171,6 +171,15 @@ function createApiRouter(client) {
         case 'pause': await player.pause(true); break;
         case 'resume': await player.pause(false); break;
         case 'skip': await player.skip(); break;
+        case 'previous': {
+          const previous = player.getPrevious?.(true) || player.queue.previous?.shift();
+          if (previous) {
+            if (player.queue.current) player.queue.unshift(player.queue.current);
+            player.queue.unshift(previous);
+            await player.skip();
+          }
+          break;
+        }
         case 'stop': await player.destroy(); break;
         case 'shuffle': player.queue.shuffle(); break;
         case 'loop': 
@@ -1142,6 +1151,52 @@ function createApiRouter(client) {
               { name: 'Target', value: `<@${targetId}> (${targetId})`, inline: true },
               { name: 'Moderator', value: `<@${moderator.id}>`, inline: true },
               { name: 'Role', value: `<@&${roleId}> (${role.name})`, inline: true },
+              { name: 'Reason', value: reason }
+            )
+            .setFooter({ text: `Case ID: ${caseId}` })
+            .setTimestamp();
+          break;
+        }
+
+        case 'clear-roles': {
+          const targetMember = await guild.members.fetch(targetId).catch(() => null);
+          if (!targetMember) return res.status(404).json({ error: 'Member not found in this server.' });
+          if (!guild.members.me.permissions.has(PermissionFlagsBits.ManageRoles)) {
+            return res.status(403).json({ error: 'Bot is missing Manage Roles permission.' });
+          }
+
+          const preserve = req.body.preserveRoles || '';
+          const preserveIds = Array.isArray(preserve)
+            ? preserve
+            : (typeof preserve === 'string' && preserve ? preserve.split(',').map(r => r.trim()) : []);
+
+          const botHighest = guild.members.me.roles.highest.position;
+          const rolesToRemove = targetMember.roles.cache
+            .filter((r) => r.id !== guild.id && !preserveIds.includes(r.id) && !r.managed && r.position < botHighest)
+            .map((r) => r.id);
+
+          if (rolesToRemove.length > 0) {
+            await targetMember.roles.remove(rolesToRemove, `[Dashboard Clear Roles by ${moderator.username}] ${reason}`);
+          }
+
+          await modStorage.saveCase({
+            caseId,
+            guildId: guild.id,
+            moderatorId: moderator.id,
+            targetId,
+            action: 'clear-roles',
+            reason: `${reason} (Preserved: ${preserveIds.length}, Removed: ${rolesToRemove.length})`,
+            duration: null,
+            timestamp: Date.now()
+          });
+
+          logEmbed = new EmbedBuilder()
+            .setTitle('🧼 Member Roles Cleared (Dashboard)')
+            .setColor(0x3498DB)
+            .addFields(
+              { name: 'Target', value: `<@${targetId}> (${targetId})`, inline: true },
+              { name: 'Moderator', value: `<@${moderator.id}>`, inline: true },
+              { name: 'Roles Removed', value: String(rolesToRemove.length), inline: true },
               { name: 'Reason', value: reason }
             )
             .setFooter({ text: `Case ID: ${caseId}` })

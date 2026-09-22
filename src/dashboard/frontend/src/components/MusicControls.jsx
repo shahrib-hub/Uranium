@@ -1,5 +1,5 @@
 'use client';
-import { Play, Pause, SkipForward, SkipBack, Volume2, Repeat, Shuffle, RefreshCw, Activity, Zap } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Square, Volume2, Repeat, Shuffle, RefreshCw, Activity, Zap } from 'lucide-react';
 import { useStore } from '@/store';
 import PremiumButton from './PremiumButton';
 import { useState, useEffect } from 'react';
@@ -121,6 +121,15 @@ export default function MusicControls() {
           
           <PremiumButton variant="ghost" className="p-3" onClick={() => handleAction('skip')}>
             <SkipForward size={20} />
+          </PremiumButton>
+
+          <PremiumButton 
+            variant="ghost" 
+            className="p-3 text-white/50 hover:text-red-400 hover:bg-red-500/10" 
+            title="Stop playback & disconnect"
+            onClick={() => handleAction('stop')}
+          >
+            <Square size={18} />
           </PremiumButton>
         </div>
 
