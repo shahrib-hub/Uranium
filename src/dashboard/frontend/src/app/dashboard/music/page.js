@@ -1,47 +1,103 @@
 'use client';
 
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import MusicControls from '@/components/MusicControls';
 import SearchPicker from '@/components/SearchPicker';
 import QueueManager from '@/components/QueueManager';
 import FilterSelector from '@/components/FilterSelector';
 import VoiceSelector from '@/components/VoiceSelector';
-import { Headphones, ListMusic, SlidersHorizontal } from 'lucide-react';
+import { Headphones, ListMusic, SlidersHorizontal, Sparkles, ExternalLink } from 'lucide-react';
 
 export default function MusicPage() {
-  return <div className="lucent-page mx-auto max-w-7xl">
-    <header className="mb-7"><p className="lucent-kicker mb-3">Music</p><h1 className="lucent-title text-4xl sm:text-5xl">Listen together.</h1><p className="lucent-subtitle mt-4">Control music for the selected server. You need to be in the same voice channel as the bot to make changes.</p></header>
-    <div className="grid gap-5 xl:grid-cols-[1.2fr_.8fr]">
-      <div className="space-y-5">
-        <MusicControls />
-        <div className="grid gap-5 md:grid-cols-2 items-stretch min-w-0">
-          <section className="lucent-card rounded-[1.5rem] p-5 sm:p-6 flex flex-col justify-start min-w-0 overflow-hidden">
-            <div className="mb-4 flex items-center gap-3">
-              <span className="grid h-9 w-9 place-items-center rounded-xl bg-rose-400/15 text-rose-100 shrink-0">
-                <SlidersHorizontal size={18} />
-              </span>
-              <div>
-                <h2 className="font-semibold text-white">Sound Filters</h2>
-                <p className="text-xs text-[var(--muted)]">Apply audio DSP effects to playback.</p>
-              </div>
-            </div>
-            <FilterSelector />
-          </section>
+  const searchParams = useSearchParams();
+  const guildId = searchParams.get('guild');
 
-          <section className="lucent-card rounded-[1.5rem] p-5 sm:p-6 flex flex-col justify-start min-w-0 overflow-hidden">
-            <div className="mb-4 flex items-center gap-3">
-              <span className="grid h-9 w-9 place-items-center rounded-xl bg-rose-400/15 text-rose-100 shrink-0">
-                <Headphones size={18} />
+  return (
+    <div className="lucent-page mx-auto max-w-7xl pb-12">
+      <header className="mb-6">
+        <p className="lucent-kicker mb-2">Music</p>
+        <h1 className="lucent-title text-4xl sm:text-5xl">Listen together.</h1>
+        <p className="lucent-subtitle mt-3">
+          Control music for the selected server. You need to be in the same voice channel as the bot to make changes.
+        </p>
+      </header>
+
+      {/* Full Web Music Player Promo Banner */}
+      <div className="mb-6 rounded-2xl border border-rose-500/25 bg-gradient-to-r from-rose-950/40 via-[#181923] to-[#181923] p-5 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-tr from-rose-600 to-red-500 text-white shadow-lg shadow-rose-600/30">
+            <Headphones size={22} />
+          </span>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-bold text-white">Experience the Full Web Music Player</h2>
+              <span className="px-2 py-0.5 rounded text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/30 uppercase tracking-wider">
+                NEW
+              </span>
+            </div>
+            <p className="text-xs text-white/60 mt-0.5 max-w-xl leading-relaxed">
+              Full-screen Spotify-style player with personal playlists, autoplay, genre & region filters, and trending music feeds.
+            </p>
+          </div>
+        </div>
+
+        <Link
+          href={`/dashboard/music/player${guildId ? `?guild=${guildId}` : ''}`}
+          className="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-bold text-xs transition shadow-lg shadow-rose-600/25"
+        >
+          <span>Open Full Web Player</span>
+          <ExternalLink size={13} />
+        </Link>
+      </div>
+
+      <div className="grid gap-5 xl:grid-cols-[1.2fr_.8fr]">
+        <div className="space-y-5">
+          <MusicControls />
+          <div className="grid gap-5 md:grid-cols-2 items-stretch min-w-0">
+            <section className="lucent-card rounded-[1.5rem] p-5 sm:p-6 flex flex-col justify-start min-w-0 overflow-hidden">
+              <div className="mb-4 flex items-center gap-3">
+                <span className="grid h-9 w-9 place-items-center rounded-xl bg-rose-400/15 text-rose-100 shrink-0">
+                  <SlidersHorizontal size={18} />
+                </span>
+                <div>
+                  <h2 className="font-semibold text-white">Sound Filters</h2>
+                  <p className="text-xs text-[var(--muted)]">Apply audio DSP effects to playback.</p>
+                </div>
+              </div>
+              <FilterSelector />
+            </section>
+
+            <section className="lucent-card rounded-[1.5rem] p-5 sm:p-6 flex flex-col justify-start min-w-0 overflow-hidden">
+              <div className="mb-4 flex items-center gap-3">
+                <span className="grid h-9 w-9 place-items-center rounded-xl bg-rose-400/15 text-rose-100 shrink-0">
+                  <Headphones size={18} />
+                </span>
+                <div>
+                  <h2 className="font-semibold text-white">Sound Search</h2>
+                  <p className="text-xs text-[var(--muted)]">Find tracks and add them to queue.</p>
+                </div>
+              </div>
+              <SearchPicker />
+            </section>
+          </div>
+        </div>
+        <div className="space-y-5">
+          <QueueManager />
+          <section className="lucent-card rounded-[1.5rem] p-6">
+            <div className="mb-5 flex items-center gap-3">
+              <span className="grid h-9 w-9 place-items-center rounded-xl bg-rose-400/15 text-rose-100">
+                <ListMusic size={18} />
               </span>
               <div>
-                <h2 className="font-semibold text-white">Sound Search</h2>
-                <p className="text-xs text-[var(--muted)]">Find tracks and add them to queue.</p>
+                <h2 className="font-semibold">Voice channel</h2>
+                <p className="text-sm text-[var(--muted)]">Choose where the bot should join.</p>
               </div>
             </div>
-            <SearchPicker />
+            <VoiceSelector />
           </section>
         </div>
       </div>
-      <div className="space-y-5"><QueueManager /><section className="lucent-card rounded-[1.5rem] p-6"><div className="mb-5 flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-xl bg-rose-400/15 text-rose-100"><ListMusic size={18} /></span><div><h2 className="font-semibold">Voice channel</h2><p className="text-sm text-[var(--muted)]">Choose where the bot should join.</p></div></div><VoiceSelector /></section></div>
     </div>
-  </div>;
+  );
 }

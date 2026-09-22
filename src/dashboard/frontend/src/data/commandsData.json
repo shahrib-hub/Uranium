@@ -954,6 +954,11 @@
         "isPremium": false
       },
       {
+        "name": "/music autoplay",
+        "description": "toggle or set autoplay mode",
+        "isPremium": false
+      },
+      {
         "name": "/music help",
         "description": "music help menu",
         "isPremium": false

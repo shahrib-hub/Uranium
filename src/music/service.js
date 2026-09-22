@@ -372,6 +372,29 @@ async function executeMusicAction(interaction) {
         break;
       }
 
+      case 'autoplay': {
+        if (!player) return interaction.editReply({ embeds: [errorEmbed('No player active in this server.')] });
+        if (!member.voice.channelId || member.voice.channelId !== player.voiceId) {
+          return interaction.editReply({ embeds: [errorEmbed('You must be in the same voice channel as the bot.')] });
+        }
+        const mode = options.getString('mode') || 'toggle';
+        const current = !!player.data.get('autoplay');
+        let nextState = !current;
+        if (mode === 'on') nextState = true;
+        if (mode === 'off') nextState = false;
+        player.data.set('autoplay', nextState);
+        await interaction.editReply({
+          embeds: [
+            successEmbed(
+              nextState
+                ? '📻 **Autoplay Enabled**: Uranium will automatically queue recommended tracks when the queue finishes.'
+                : '📻 **Autoplay Disabled**: Playback will stop when the current queue is empty.'
+            )
+          ]
+        });
+        break;
+      }
+
       default: {
         await interaction.editReply({ embeds: [errorEmbed('Unknown subcommand.')] });
         break;

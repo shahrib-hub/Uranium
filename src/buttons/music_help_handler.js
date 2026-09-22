@@ -21,7 +21,8 @@ const COMMANDS = {
   audio: [
     { cmd: '/music volume <1-100>', desc: 'Set player volume' },
     { cmd: '/music loop <mode>', desc: 'Toggle loop: off / track / queue' },
-    { cmd: '/music filter <preset>', desc: 'Apply audio filter: Nightcore, Bassboost, Vaporwave, Soft, Karaoke, 8D Rotation, Chipmunk, Daycore' }
+    { cmd: '/music filter <preset>', desc: 'Apply audio filter: Nightcore, Bassboost, Vaporwave, Soft, Karaoke, 8D Rotation, Chipmunk, Daycore' },
+    { cmd: '/music autoplay [mode]', desc: 'Toggle or set automatic recommended queue playback' }
   ],
   connection: [
     { cmd: '/music join', desc: 'Bot joins your voice channel' },

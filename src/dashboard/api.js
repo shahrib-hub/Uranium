@@ -8,7 +8,8 @@ const rrStorage = require('../utils/rrStorage');
 const modStorage = require('../utils/modStorage');
 const automodStorage = require('../utils/automodStorage');
 const personalizationStorage = require('../utils/personalizationStorage');
-const { isPremiumGuild, redeemCode, listPremiumGuilds } = require('../utils/premium');
+const playlistStorage = require('../utils/playlistStorage');
+const { isPremiumGuild, isPremiumUser, redeemCode, listPremiumGuilds } = require('../utils/premium');
 const { createSocketToken } = require('./socketAuth');
 
 function createApiRouter(client) {
@@ -124,12 +125,10 @@ function createApiRouter(client) {
 
       const isPremiumCmd = (cmdName) => {
         const lower = cmdName.toLowerCase();
-        if (lower.startsWith('/ytverify')) return true;
-        if (lower.startsWith('/premium')) return true;
-        if (lower.startsWith('/ai') && !lower.includes('help')) return true;
+        // Fully premium-based commands only
         if (lower.startsWith('/backup')) return true;
-        if (lower.includes('embedbuilder template')) return true;
-        if (lower === '/ticket panel') return true;
+        if (lower.startsWith('/ytverify')) return true;
+        if (lower.startsWith('/ai') && !lower.includes('help')) return true;
         return false;
       };
       
@@ -210,6 +209,11 @@ function createApiRouter(client) {
           break;
         case 'seek': await player.seek(parseInt(value)); break;
         case 'filter': await applyFilter(player, value); break;
+        case 'autoplay': {
+          const cur = !!player.data.get('autoplay');
+          player.data.set('autoplay', !cur);
+          break;
+        }
       }
       
       res.json({ success: true });
@@ -783,7 +787,7 @@ function createApiRouter(client) {
       if (!guild) return res.status(404).json({ error: 'Guild not found' });
 
       const isPremium = !!isPremiumGuild(guildId);
-      const personalization = personalizationStorage.getPersonalization(guildId);
+      const personalization = await personalizationStorage.getPersonalization(guildId);
       const me = await guild.members.fetchMe().catch(() => null);
       const currentNickname = me?.nickname || personalization.nickname || '';
 
@@ -813,7 +817,7 @@ function createApiRouter(client) {
       const isPremium = !!isPremiumGuild(guildId);
       const { nickname, avatarUrl, bannerUrl, bio } = req.body;
 
-      const currentPers = personalizationStorage.getPersonalization(guildId);
+      const currentPers = await personalizationStorage.getPersonalization(guildId);
       const isAlteringAvatar = typeof avatarUrl === 'string' && avatarUrl.trim() !== (currentPers.avatarUrl || '');
       const isAlteringBanner = typeof bannerUrl === 'string' && bannerUrl.trim() !== (currentPers.bannerUrl || '');
       const isAlteringBio = typeof bio === 'string' && bio.trim() !== (currentPers.bio || '');
@@ -839,7 +843,7 @@ function createApiRouter(client) {
       }
 
       // Save to personalization storage
-      const updated = personalizationStorage.setPersonalization(guildId, {
+      const updated = await personalizationStorage.setPersonalization(guildId, {
         nickname: typeof nickname === 'string' ? nickname.trim() : currentPers.nickname,
         avatarUrl: isPremium && typeof avatarUrl === 'string' ? avatarUrl.trim() : (isPremium ? currentPers.avatarUrl : ''),
         bannerUrl: isPremium && typeof bannerUrl === 'string' ? bannerUrl.trim() : (isPremium ? currentPers.bannerUrl : ''),
@@ -894,6 +898,162 @@ function createApiRouter(client) {
       });
     } catch (err) {
       res.status(500).json({ success: false, reason: err.message });
+    }
+  });
+
+  // ---------- USER PLAYLISTS API ----------
+  router.get('/playlists/me', async (req, res) => {
+    if (!req.session?.user) return res.status(401).json({ error: 'Not authenticated' });
+    try {
+      const userId = req.session.user.id;
+      const isPremium = isPremiumUser(userId);
+      const playlists = await playlistStorage.getUserPlaylists(userId);
+      const quota = await playlistStorage.getUserPlaylistQuota(userId, isPremium);
+      res.json({ playlists, quota });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  router.post('/playlists', async (req, res) => {
+    if (!req.session?.user) return res.status(401).json({ error: 'Not authenticated' });
+    try {
+      const userId = req.session.user.id;
+      const { name } = req.body;
+      const isPremium = isPremiumUser(userId);
+      const result = await playlistStorage.createPlaylist(userId, name, isPremium);
+      if (!result.success) return res.status(400).json(result);
+      const quota = await playlistStorage.getUserPlaylistQuota(userId, isPremium);
+      res.json({ success: true, playlist: result.playlist, quota });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  router.delete('/playlists/:playlistId', async (req, res) => {
+    if (!req.session?.user) return res.status(401).json({ error: 'Not authenticated' });
+    try {
+      const userId = req.session.user.id;
+      const result = await playlistStorage.deletePlaylist(userId, req.params.playlistId);
+      if (!result.success) return res.status(404).json(result);
+      const isPremium = isPremiumUser(userId);
+      const quota = await playlistStorage.getUserPlaylistQuota(userId, isPremium);
+      res.json({ success: true, deleted: result.playlist, quota });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  router.post('/playlists/:playlistId/tracks', async (req, res) => {
+    if (!req.session?.user) return res.status(401).json({ error: 'Not authenticated' });
+    try {
+      const userId = req.session.user.id;
+      const { track, query } = req.body;
+      let targetTrack = track;
+      if (!targetTrack && query) {
+        const { searchTracks } = require('../music/service');
+        const searchRes = await searchTracks(client, query, req.session.user);
+        if (!searchRes.tracks?.length) return res.status(404).json({ error: 'No tracks found for search query.' });
+        targetTrack = searchRes.tracks[0];
+      }
+      if (!targetTrack) return res.status(400).json({ error: 'No track data provided.' });
+      const result = await playlistStorage.addTrackToPlaylist(userId, req.params.playlistId, targetTrack);
+      if (!result.success) return res.status(400).json(result);
+      res.json({ success: true, playlist: result.playlist, track: result.track });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  router.delete('/playlists/:playlistId/tracks/:trackIndex', async (req, res) => {
+    if (!req.session?.user) return res.status(401).json({ error: 'Not authenticated' });
+    try {
+      const userId = req.session.user.id;
+      const result = await playlistStorage.removeTrackFromPlaylist(userId, req.params.playlistId, req.params.trackIndex);
+      if (!result.success) return res.status(400).json(result);
+      res.json({ success: true, playlist: result.playlist, removed: result.removedTrack });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  router.post('/guild/:guildId/playlists/:playlistId/play', requireGuildAccess(client), requireMusicAccess, async (req, res) => {
+    try {
+      const userId = req.session.user.id;
+      const pl = await playlistStorage.getPlaylist(userId, req.params.playlistId);
+      if (!pl) return res.status(404).json({ error: 'Playlist not found.' });
+      if (!pl.tracks?.length) return res.status(400).json({ error: 'Playlist is empty.' });
+
+      const { createPlayer, searchTracks } = require('../music/service');
+      const voiceChannelId = req.member.voice.channelId;
+      if (!voiceChannelId) return res.status(400).json({ error: 'Join a voice channel first.' });
+
+      let player = client.music?.players?.get(req.params.guildId);
+      player = await createPlayer(client, req.params.guildId, voiceChannelId, req.body.textChannelId || null);
+
+      let queued = 0;
+      for (const t of pl.tracks) {
+        try {
+          const resSearch = await searchTracks(client, t.uri || `${t.title} ${t.author}`, req.member);
+          if (resSearch.tracks?.length) {
+            player.queue.add(resSearch.tracks[0]);
+            queued++;
+          }
+        } catch { }
+      }
+
+      if (queued > 0 && !player.playing && !player.paused) {
+        await player.play();
+      }
+
+      client.dashboardBridge?.emitPlayerUpdate(player);
+      res.json({ success: true, queuedCount: queued, playlistName: pl.name });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ---------- MUSIC FEED & DISCOVERY API ----------
+  router.get('/music/feed', async (req, res) => {
+    try {
+      const popularToday = [
+        { id: 'f1', title: 'DtMF', author: 'Bad Bunny', duration: 237000, thumbnail: 'https://i.scdn.co/image/ab67616d0000b273b754e63b65cb68a7ebdf4d32', rank: 1, streams: '2.4M' },
+        { id: 'f2', title: 'We Are Charlie Kirk', author: 'Spalxxma', duration: 184000, thumbnail: 'https://i.scdn.co/image/ab67616d0000b273c52a06dd876cb862b2173f4d', rank: 2, streams: '1.9M' },
+        { id: 'f3', title: 'Tití Me Preguntó', author: 'Bad Bunny', duration: 243000, thumbnail: 'https://i.scdn.co/image/ab67616d0000b27349d694203245f241a1bcaa70', rank: 3, streams: '1.8M' },
+        { id: 'f4', title: 'Babydoll', author: 'Dominic Fike', duration: 176000, thumbnail: 'https://i.scdn.co/image/ab67616d0000b27364b4c730e2f5f19db1d60768', rank: 4, streams: '1.5M' },
+        { id: 'f5', title: 'BAILE INOLVIDABLE', author: 'Bad Bunny', duration: 198000, thumbnail: 'https://i.scdn.co/image/ab67616d0000b27393433e5c94be0600cf9d6945', rank: 5, streams: '1.3M' },
+        { id: 'f6', title: 'Judas', author: 'Lady Gaga', duration: 249000, thumbnail: 'https://i.scdn.co/image/ab67616d0000b27339ebacb0f55cf64a0656640c', rank: 6, streams: '1.2M' },
+        { id: 'f7', title: 'End of Beginning', author: 'Djo', duration: 159000, thumbnail: 'https://i.scdn.co/image/ab67616d0000b27341ea226d9c6e3b5dfbe3bf63', rank: 7, streams: '1.1M' }
+      ];
+
+      const recentlyPlayed = [
+        { id: 'r1', title: 'Gone Gone Gone', author: 'David Guetta, Teddy Swims', duration: 198000, timeAgo: '1m ago', thumbnail: 'https://i.scdn.co/image/ab67616d0000b273c52a06dd876cb862b2173f4d' },
+        { id: 'r2', title: 'Wicked Game', author: 'Chris Isaak', duration: 289000, timeAgo: '4m ago', thumbnail: 'https://i.scdn.co/image/ab67616d0000b273b754e63b65cb68a7ebdf4d32' },
+        { id: 'r3', title: 'Eyes Without A Face', author: 'Billy Idol', duration: 299000, timeAgo: '7m ago', thumbnail: 'https://i.scdn.co/image/ab67616d0000b27364b4c730e2f5f19db1d60768' },
+        { id: 'r4', title: 'Murder on My Mind', author: 'YNW Melly', duration: 268000, timeAgo: '10m ago', thumbnail: 'https://i.scdn.co/image/ab67616d0000b27349d694203245f241a1bcaa70' },
+        { id: 'r5', title: 'Catalina', author: 'Cheu-B', duration: 212000, timeAgo: '15m ago', thumbnail: 'https://i.scdn.co/image/ab67616d0000b27393433e5c94be0600cf9d6945' },
+        { id: 'r6', title: 'EL GEMANO', author: 'Genev10', duration: 185000, timeAgo: '20m ago', thumbnail: 'https://i.scdn.co/image/ab67616d0000b27341ea226d9c6e3b5dfbe3bf63' }
+      ];
+
+      const genres = ['All', 'Pop', 'Hip-Hop', 'Lo-Fi', 'Rock', 'Electronic', 'R&B', 'Phonk', 'Chill & Study'];
+      const regions = ['Global Top 50', 'United States', 'United Kingdom', 'Latin America', 'Japan', 'South Korea'];
+
+      res.json({ popularToday, recentlyPlayed, genres, regions });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  router.get('/music/search', async (req, res) => {
+    try {
+      const q = String(req.query.q || '').trim();
+      if (!q) return res.json([]);
+      const { searchTracks } = require('../music/service');
+      const searchRes = await searchTracks(client, q, req.session?.user || null);
+      const results = (searchRes.tracks || []).slice(0, 15).map(t => serializeTrack(t));
+      res.json(results);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
     }
   });
 
@@ -2063,6 +2223,7 @@ function serializePlayer(player, client, guildId) {
     position: player.position || 0, 
     volume: player.volume ?? 100, 
     loop: player.loop || 'none', 
+    autoplay: !!player.data?.get?.('autoplay'),
     filter: player.data?.get?.('filter') || 'clear', 
     current: serializeTrack(player.queue?.current), 
     queueSize: player.queue?.size || 0, 

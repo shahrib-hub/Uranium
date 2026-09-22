@@ -830,3 +830,23 @@ const ServerSettingsSchema = new mongoose.Schema({
   botLanguage: { type: String, default: 'en' }
 });
 exports.ServerSettings = mongoose.model('ServerSettings', ServerSettingsSchema);
+
+const BotPersonalizationSchema = new mongoose.Schema({
+  guildId: { type: String, required: true, unique: true },
+  nickname: { type: String, default: '' },
+  avatarUrl: { type: String, default: '' },
+  bannerUrl: { type: String, default: '' },
+  bio: { type: String, default: '' },
+  updatedAt: { type: Date, default: Date.now }
+});
+exports.BotPersonalization = mongoose.model('BotPersonalization', BotPersonalizationSchema);
+
+const UserPlaylistSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  userId: { type: String, required: true, index: true },
+  name: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+  tracksJson: { type: String, default: '[]' }
+});
+exports.UserPlaylist = mongoose.model('UserPlaylist', UserPlaylistSchema);

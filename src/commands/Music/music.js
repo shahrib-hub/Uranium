@@ -62,6 +62,18 @@ module.exports = {
             .setDescription('Filter preset')
             .setRequired(true)
             .addChoices(...filterChoices)))
+    .addSubcommand((sub) =>
+      sub.setName('autoplay')
+        .setDescription('Toggle or set autoplay mode')
+        .addStringOption(opt =>
+          opt.setName('mode')
+            .setDescription('Set autoplay mode')
+            .setRequired(false)
+            .addChoices(
+              { name: 'Enable (Turn On)', value: 'on' },
+              { name: 'Disable (Turn Off)', value: 'off' },
+              { name: 'Toggle', value: 'toggle' }
+            )))
     .addSubcommand((sub) => sub.setName('help').setDescription('Show music help menu')),
 
   async execute(interaction) {
@@ -77,7 +89,7 @@ module.exports = {
         .setDescription('Premium music player with advanced controls.')
         .addFields(
           { name: '⚡ Quick Actions', value: '`/music play <query>` — Play any song\n`/music queue` — View playlist\n`/music skip` — Skip track\n`/music nowplaying` — Display current track', inline: false },
-          { name: '<:u_filters:1502243103774474240> Audio Control', value: '`/music volume <1-100>` — Adjust volume\n`/music filter <preset>` — Nightcore, Bassboost & more\n`/music loop <mode>` — Loop song/queue', inline: false },
+          { name: '<:u_filters:1502243103774474240> Audio Control', value: '`/music volume <1-100>` — Adjust volume\n`/music filter <preset>` — Nightcore, Bassboost & more\n`/music loop <mode>` — Loop song/queue\n`/music autoplay [mode]` — Toggle continuous autoplay', inline: false },
           { name: '🔗 Connection', value: '`/music join` — Join VC\n`/music leave` — Disconnect bot', inline: false },
           { name: '📦 Queue Management', value: '`/music search` — Browse results\n`/music shuffle` — Randomize queue\n`/music clear` — Remove all songs\n`/music remove` — Remove specific track', inline: false }
         )

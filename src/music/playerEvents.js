@@ -153,6 +153,34 @@ module.exports.registerPlayerEvents = function registerPlayerEvents(client) {
       await updateBotPresence(client, track, true);
       // Emit to web dashboard
       client.dashboardBridge?.emitPlayerUpdate(player);
+
+      // One-time session notification: Direct button to the full web music player
+      if (!player.data.get('sessionWebNotified')) {
+        player.data.set('sessionWebNotified', true);
+        try {
+          const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+          const dashboardUrl = (process.env.DASHBOARD_URL || 'https://uraniumbot.vercel.app').replace(/\/$/, '');
+          const webPlayerUrl = `${dashboardUrl}/dashboard/music/player?guild=${player.guildId}`;
+
+          const sessionEmbed = new EmbedBuilder()
+            .setColor(0xff4fd8)
+            .setTitle('🎧 Experience the Full Web Music Player')
+            .setDescription('Control your playback in real-time, browse Spotify-style recommendations, filter by genre & region, and play your saved playlists directly from the web dashboard!')
+            .setFooter({ text: 'Uranium Web Music Experience' });
+
+          const sessionRow = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+              .setLabel('Open Web Music Player')
+              .setStyle(ButtonStyle.Link)
+              .setURL(webPlayerUrl)
+              .setEmoji('🎵')
+          );
+
+          sendToPlayerChannel(client, player, { embeds: [sessionEmbed], components: [sessionRow] }).catch(() => null);
+        } catch (e) {
+          // Non-blocking
+        }
+      }
     } catch (err) {
       console.error('[music] playerStart failed:', err);
     }
@@ -185,6 +213,39 @@ module.exports.registerPlayerEvents = function registerPlayerEvents(client) {
       await updateVoiceChannelStatus(client, player, null, false);
       await updateBotPresence(client, null, false);
       await disableOldMessage(player);
+
+      // Autoplay Check: If enabled, automatically resolve and queue a recommended track
+      if (player.data.get('autoplay')) {
+        const lastTrack = player.data.get('lastTrack');
+        if (lastTrack) {
+          try {
+            const { searchTracks } = require('./service');
+            const author = lastTrack.author || lastTrack.info?.author || '';
+            const titleFirst = (lastTrack.title || '').split(' ')[0] || '';
+            const autoplayQuery = author ? `${author} ${titleFirst}`.trim() : `${titleFirst} radio`;
+
+            const searchRes = await searchTracks(client, autoplayQuery, { username: 'Autoplay' });
+            const candidates = (searchRes.tracks || []).filter(
+              t => t.uri !== lastTrack.uri && t.title?.toLowerCase() !== lastTrack.title?.toLowerCase()
+            );
+
+            const nextTrack = candidates[0] || (searchRes.tracks || [])[0];
+            if (nextTrack) {
+              player.queue.add(nextTrack);
+              await sendToPlayerChannel(client, player, { 
+                embeds: [simpleEmbed(`📻 **Autoplay**: Queued **${nextTrack.title}** by **${nextTrack.author}** to keep the music going.`)] 
+              });
+              if (!player.playing && !player.paused) {
+                await player.play();
+                client.dashboardBridge?.emitPlayerUpdate(player);
+                return; // Song started! Do not trigger timeout
+              }
+            }
+          } catch (autoErr) {
+            console.warn('[music] Autoplay track resolution failed:', autoErr.message);
+          }
+        }
+      }
 
       const timeoutMs = client.musicConfig?.leaveTimeout || 120000;
       await sendToPlayerChannel(client, player, { 
