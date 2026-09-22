@@ -155,34 +155,83 @@ async function listActiveGiveaways(guildId = null) {
 // ✅ Finalize giveaway: end, update embed, announce winners
 async function finalizeGiveaway(messageId, client) {
   const giveaway = await getGiveawayByMessageId(messageId);
-  if (!giveaway || giveaway.ended) return;
+  if (!giveaway || giveaway.ended) return { success: false, error: 'Giveaway not found or already ended' };
+
+  if (client?.giveawayTimers?.has(messageId)) {
+    clearTimeout(client.giveawayTimers.get(messageId));
+    client.giveawayTimers.delete(messageId);
+  }
 
   await endGiveaway(messageId);
 
   const channel = await client.channels.fetch(giveaway.channel_id).catch(() => null);
-  if (!channel) return;
+  let winners = [];
 
-  const msg = await channel.messages.fetch(messageId).catch(() => null);
-  if (!msg) return;
+  if (channel) {
+    const msg = await channel.messages.fetch(messageId).catch(() => null);
+    if (msg) {
+      const embed = msg.embeds[0];
+      if (embed) {
+        const endedEmbed = EmbedBuilder.from(embed)
+          .setColor('Red')
+          .setTitle('🎉 Giveaway Ended')
+          .setFooter({ text: 'Giveaway ended' });
+        await msg.edit({ embeds: [endedEmbed], components: [] }).catch(() => null);
+      }
+    }
 
-  const embed = msg.embeds[0];
-  if (embed) {
-    const endedEmbed = EmbedBuilder.from(embed)
-      .setColor('Red')
-      .setTitle('🎉 Giveaway Ended')
-      .setFooter({ text: 'Giveaway ended' });
-    await msg.edit({ embeds: [endedEmbed], components: [] });
+    const participants = JSON.parse(giveaway.participants || '[]');
+    if (participants.length === 0) {
+      await channel.send(`😢 No valid entries for the giveaway **${giveaway.prize}**.`).catch(() => null);
+    } else {
+      const shuffled = [...participants].sort(() => 0.5 - Math.random());
+      winners = shuffled.slice(0, giveaway.winners);
+      const winnerMentions = winners.map(id => `<@${id}>`).join(', ');
+      await channel.send(`🎉 Congratulations ${winnerMentions}! You won **${giveaway.prize}**!`).catch(() => null);
+    }
   }
 
-  const participants = JSON.parse(giveaway.participants || '[]');
-  if (participants.length === 0) {
-    await channel.send(`😢 No valid entries for the giveaway **${giveaway.prize}**.`);
-  } else {
-    const shuffled = participants.sort(() => 0.5 - Math.random());
-    const winners = shuffled.slice(0, giveaway.winners);
-    const winnerMentions = winners.map(id => `<@${id}>`).join(', ');
-    await channel.send(`🎉 Congratulations ${winnerMentions}! You won **${giveaway.prize}**!`);
+  return { success: true, winners };
+}
+
+// ✅ List all giveaways for a guild (both active and ended)
+async function listAllGiveaways(guildId) {
+  if (useMongoDB) {
+    if (!getDbStatus()) return [];
+    const docs = await Giveaway.find({ guildId }).sort({ endAt: -1 });
+    return docs.map(doc => ({
+      message_id: doc.messageId,
+      guild_id: doc.guildId,
+      channel_id: doc.channelId,
+      prize: doc.prize,
+      winners: doc.winners,
+      end_at: doc.endAt,
+      created_by: doc.createdBy,
+      ended: doc.ended ? 1 : 0,
+      participants: doc.participants
+    }));
   }
+
+  return new Promise((resolve, reject) => {
+    db.all(
+      `SELECT * FROM giveaways WHERE guild_id = ? ORDER BY end_at DESC`,
+      [guildId],
+      (err, rows) => (err ? reject(err) : resolve(rows || []))
+    );
+  });
+}
+
+// ✅ Delete giveaway from database
+async function deleteGiveaway(messageId) {
+  if (useMongoDB) {
+    if (!getDbStatus()) return;
+    await Giveaway.deleteOne({ messageId });
+    return;
+  }
+
+  return new Promise((resolve, reject) => {
+    db.run(`DELETE FROM giveaways WHERE message_id = ?`, [messageId], err => (err ? reject(err) : resolve()));
+  });
 }
 
 // ✅ Schedule giveaway to end automatically
@@ -191,7 +240,9 @@ function scheduleGiveawayEnd(client, giveaway) {
   if (timeLeft <= 0) return finalizeGiveaway(giveaway.messageId, client);
 
   const timer = setTimeout(() => finalizeGiveaway(giveaway.messageId, client), timeLeft);
-  client.giveawayTimers.set(giveaway.messageId, timer);
+  if (client?.giveawayTimers) {
+    client.giveawayTimers.set(giveaway.messageId, timer);
+  }
 }
 
 module.exports = {
@@ -201,6 +252,8 @@ module.exports = {
   endGiveaway,
   rerollGiveaway,
   listActiveGiveaways,
+  listAllGiveaways,
+  deleteGiveaway,
   finalizeGiveaway,
   scheduleGiveawayEnd
 };

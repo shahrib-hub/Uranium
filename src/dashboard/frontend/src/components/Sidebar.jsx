@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { BookOpen, ChevronDown, ChevronRight, Home, Menu, Music2, Settings, ShieldAlert, Sparkles, Users, X } from 'lucide-react';
+import { BookOpen, ChevronDown, ChevronRight, Gift, Home, Menu, Music2, Settings, ShieldAlert, Sparkles, Users, X } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useStore } from '@/store';
 
@@ -11,6 +11,7 @@ const links = [
   { href: '/dashboard/moderation', label: 'Moderation', icon: ShieldAlert },
   { href: '/dashboard/music', label: 'Music', icon: Music2 },
   { href: '/dashboard/rr', label: 'Reaction roles', icon: Users },
+  { href: '/dashboard/giveaways', label: 'Giveaways', icon: Gift },
   { href: '/dashboard/settings', label: 'Bot settings', icon: Settings },
   { href: '/commands', label: 'Commands', icon: BookOpen }
 ];

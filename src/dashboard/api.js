@@ -1,6 +1,6 @@
 // src/dashboard/api.js — Backend API for Uranium Dashboard
 const { Router } = require('express');
-const { PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const ms = require('ms');
@@ -755,6 +755,327 @@ function createApiRouter(client) {
       await setBotLanguage(req.params.guildId, botLanguage);
       res.json({ success: true, botLanguage });
     } catch (err) { res.status(500).json({ error: err.message }); }
+  });
+
+  // ---------- GIVEAWAYS API ----------
+  const giveawayService = require('../listeners/giveawayService');
+
+  function parseGiveawayDuration(input) {
+    if (typeof input === 'number') return input;
+    if (!input || typeof input !== 'string') return null;
+    const regex = /(\d+)\s*([dhms])/gi;
+    const units = { d: 86400000, h: 3600000, m: 60000, s: 1000 };
+    let total = 0, match;
+    while ((match = regex.exec(input)) !== null) {
+      const value = parseInt(match[1], 10);
+      const unit = match[2].toLowerCase();
+      if (units[unit] && !Number.isNaN(value)) total += value * units[unit];
+    }
+    if (total > 0) return total;
+    try {
+      const parsed = ms(input);
+      return typeof parsed === 'number' && parsed > 0 ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+
+  // List all giveaways for a guild
+  router.get('/guild/:guildId/giveaways', requireGuildAccess(client), requireGuildMod, async (req, res) => {
+    try {
+      const guildId = req.params.guildId;
+      const guild = req.guild;
+      const rawList = await giveawayService.listAllGiveaways(guildId);
+
+      const now = Date.now();
+      let activeCount = 0;
+      let endedCount = 0;
+      let totalParticipants = 0;
+      let totalWinnersAwarded = 0;
+
+      const giveaways = await Promise.all(rawList.map(async (g) => {
+        const isEnded = Boolean(g.ended) || g.end_at <= now;
+        if (isEnded) endedCount++;
+        else activeCount++;
+
+        let participantsList = [];
+        try {
+          participantsList = JSON.parse(g.participants || '[]');
+        } catch {}
+        totalParticipants += participantsList.length;
+
+        if (isEnded) {
+          totalWinnersAwarded += Math.min(participantsList.length, g.winners || 1);
+        }
+
+        const channel = guild.channels.cache.get(g.channel_id);
+        let creatorTag = g.created_by;
+        try {
+          const u = await client.users.fetch(g.created_by).catch(() => null);
+          if (u) creatorTag = u.tag || u.username;
+        } catch {}
+
+        return {
+          messageId: g.message_id,
+          guildId: g.guild_id,
+          channelId: g.channel_id,
+          channelName: channel ? channel.name : 'unknown-channel',
+          prize: g.prize,
+          winners: g.winners,
+          endAt: g.end_at,
+          timeLeftMs: Math.max(0, g.end_at - now),
+          createdBy: g.created_by,
+          creatorTag,
+          ended: isEnded,
+          status: isEnded ? 'ended' : 'active',
+          participantCount: participantsList.length,
+          participants: participantsList
+        };
+      }));
+
+      res.json({
+        stats: {
+          total: rawList.length,
+          active: activeCount,
+          ended: endedCount,
+          totalParticipants,
+          totalWinnersAwarded
+        },
+        giveaways
+      });
+    } catch (err) {
+      console.error('[Giveaways API] list error:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Start a new giveaway
+  router.post('/guild/:guildId/giveaways', requireGuildAccess(client), requireGuildMod, async (req, res) => {
+    try {
+      const guild = req.guild;
+      const moderator = req.session.user;
+      const { channelId, prize, winners, duration, content = '🎉 **GIVEAWAY TIME!** 🎉' } = req.body;
+
+      if (!channelId || !prize) {
+        return res.status(400).json({ error: 'Channel and prize are required.' });
+      }
+
+      const channel = guild.channels.cache.get(channelId);
+      if (!channel || !channel.isTextBased()) {
+        return res.status(404).json({ error: 'Valid text channel not found in this server.' });
+      }
+
+      const botMember = guild.members.me;
+      if (!channel.permissionsFor(botMember).has([PermissionFlagsBits.SendMessages, PermissionFlagsBits.EmbedLinks])) {
+        return res.status(403).json({ error: 'Bot is missing Send Messages or Embed Links permissions in that channel.' });
+      }
+
+      const parsedWinners = Math.max(1, Math.min(50, parseInt(winners) || 1));
+      const durationMs = parseGiveawayDuration(duration);
+      if (!durationMs || durationMs < 10000 || durationMs > 30 * 86400 * 1000) {
+        return res.status(400).json({ error: 'Invalid duration. Must be between 10 seconds and 30 days.' });
+      }
+
+      const endAt = Date.now() + durationMs;
+
+      const giveawayEmbed = new EmbedBuilder()
+        .setColor(0x57F287)
+        .setTitle('🎉 Giveaway')
+        .setDescription(`**Prize:** ${prize}\n**Ends:** <t:${Math.floor(endAt / 1000)}:R>\n**Hosted by:** <@${moderator.id}>`)
+        .setFooter({ text: `Winners: ${parsedWinners}` });
+
+      const initialRow = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId('giveaway_info')
+          .setLabel('Giveaway')
+          .setStyle(ButtonStyle.Secondary)
+          .setDisabled(true),
+        new ButtonBuilder()
+          .setCustomId('giveaway_enter_PLACEHOLDER')
+          .setLabel('🎉 Enter')
+          .setStyle(ButtonStyle.Primary)
+      );
+
+      const sent = await channel.send({ content: content || '🎉 **GIVEAWAY TIME!** 🎉', embeds: [giveawayEmbed], components: [initialRow] });
+
+      const fixedRow = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId('giveaway_info')
+          .setLabel('Giveaway')
+          .setStyle(ButtonStyle.Secondary)
+          .setDisabled(true),
+        new ButtonBuilder()
+          .setCustomId(`giveaway_enter_${sent.id}`)
+          .setLabel('🎉 Enter')
+          .setStyle(ButtonStyle.Primary)
+      );
+      await sent.edit({ components: [fixedRow] });
+
+      await giveawayService.createGiveaway({
+        messageId: sent.id,
+        guildId: guild.id,
+        channelId: channel.id,
+        prize,
+        winners: parsedWinners,
+        endAt,
+        createdBy: moderator.id,
+        participants: JSON.stringify([])
+      });
+
+      giveawayService.scheduleGiveawayEnd(client, {
+        messageId: sent.id,
+        channelId: channel.id,
+        prize,
+        winners: parsedWinners,
+        endAt
+      });
+
+      res.json({
+        success: true,
+        giveaway: {
+          messageId: sent.id,
+          guildId: guild.id,
+          channelId: channel.id,
+          prize,
+          winners: parsedWinners,
+          endAt,
+          createdBy: moderator.id
+        }
+      });
+    } catch (err) {
+      console.error('[Giveaways API] create error:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // End giveaway early
+  router.post('/guild/:guildId/giveaways/:messageId/end', requireGuildAccess(client), requireGuildMod, async (req, res) => {
+    try {
+      const result = await giveawayService.finalizeGiveaway(req.params.messageId, client);
+      if (!result.success) {
+        return res.status(400).json({ error: result.error || 'Failed to end giveaway' });
+      }
+      res.json({ success: true, winners: result.winners || [] });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Reroll giveaway winners
+  router.post('/guild/:guildId/giveaways/:messageId/reroll', requireGuildAccess(client), requireGuildMod, async (req, res) => {
+    try {
+      const messageId = req.params.messageId;
+      const giveaway = await giveawayService.getGiveawayByMessageId(messageId);
+      if (!giveaway) {
+        return res.status(404).json({ error: 'Giveaway not found' });
+      }
+
+      let participants = [];
+      try { participants = JSON.parse(giveaway.participants || '[]'); } catch {}
+
+      if (participants.length === 0) {
+        return res.status(400).json({ error: 'No participants available to reroll' });
+      }
+
+      const shuffled = [...participants].sort(() => 0.5 - Math.random());
+      const newWinners = shuffled.slice(0, giveaway.winners || 1);
+      const winnerMentions = newWinners.map(id => `<@${id}>`).join(', ');
+
+      const channel = await client.channels.fetch(giveaway.channel_id).catch(() => null);
+      if (channel) {
+        await channel.send(`🎉 **Reroll!** Congratulations ${winnerMentions}! You won **${giveaway.prize}**!`).catch(() => null);
+      }
+
+      res.json({ success: true, winners: newWinners, mentions: winnerMentions });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Edit giveaway details
+  router.patch('/guild/:guildId/giveaways/:messageId', requireGuildAccess(client), requireGuildMod, async (req, res) => {
+    try {
+      const messageId = req.params.messageId;
+      const { prize, winners, duration } = req.body;
+      const giveaway = await giveawayService.getGiveawayByMessageId(messageId);
+      if (!giveaway) return res.status(404).json({ error: 'Giveaway not found' });
+      if (giveaway.ended) return res.status(400).json({ error: 'Cannot edit an ended giveaway' });
+
+      const updates = {};
+      if (prize) updates.prize = prize.trim();
+      if (winners) updates.winners = Math.max(1, Math.min(50, parseInt(winners) || 1));
+
+      let newEndAt = giveaway.end_at;
+      if (duration) {
+        const durationMs = parseGiveawayDuration(duration);
+        if (durationMs) {
+          newEndAt = Date.now() + durationMs;
+          updates.end_at = newEndAt;
+        }
+      }
+
+      await giveawayService.updateGiveaway(messageId, updates);
+
+      // Edit Discord Message Embed
+      const channel = await client.channels.fetch(giveaway.channel_id).catch(() => null);
+      if (channel) {
+        const msg = await channel.messages.fetch(messageId).catch(() => null);
+        if (msg && msg.embeds[0]) {
+          const finalPrize = updates.prize || giveaway.prize;
+          const finalWinners = updates.winners || giveaway.winners;
+          const updatedEmbed = EmbedBuilder.from(msg.embeds[0])
+            .setDescription(`**Prize:** ${finalPrize}\n**Ends:** <t:${Math.floor(newEndAt / 1000)}:R>\n**Hosted by:** <@${giveaway.created_by}>`)
+            .setFooter({ text: `Winners: ${finalWinners}` });
+          await msg.edit({ embeds: [updatedEmbed] }).catch(() => null);
+        }
+      }
+
+      // If endAt changed, reschedule timer
+      if (updates.end_at) {
+        if (client?.giveawayTimers?.has(messageId)) {
+          clearTimeout(client.giveawayTimers.get(messageId));
+        }
+        giveawayService.scheduleGiveawayEnd(client, {
+          messageId,
+          channelId: giveaway.channel_id,
+          prize: updates.prize || giveaway.prize,
+          winners: updates.winners || giveaway.winners,
+          endAt: newEndAt
+        });
+      }
+
+      res.json({ success: true, updates });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Delete giveaway
+  router.delete('/guild/:guildId/giveaways/:messageId', requireGuildAccess(client), requireGuildMod, async (req, res) => {
+    try {
+      const messageId = req.params.messageId;
+      const giveaway = await giveawayService.getGiveawayByMessageId(messageId);
+      if (!giveaway) return res.status(404).json({ error: 'Giveaway not found' });
+
+      if (client?.giveawayTimers?.has(messageId)) {
+        clearTimeout(client.giveawayTimers.get(messageId));
+        client.giveawayTimers.delete(messageId);
+      }
+
+      // Delete message from Discord channel if available
+      try {
+        const channel = await client.channels.fetch(giveaway.channel_id).catch(() => null);
+        if (channel) {
+          const msg = await channel.messages.fetch(messageId).catch(() => null);
+          if (msg) await msg.delete().catch(() => null);
+        }
+      } catch {}
+
+      await giveawayService.deleteGiveaway(messageId);
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
   });
 
   // ---------- MODERATION SUITE API ----------
