@@ -32,7 +32,8 @@ import {
   HelpCircle,
   Clock,
   Trophy,
-  Shield
+  Shield,
+  Crown
 } from 'lucide-react';
 import LucentSwitch from '@/components/LucentSwitch';
 
@@ -89,7 +90,7 @@ export default function HomePage() {
       </div>
 
       {/* ========================================================================= */}
-      {/* 1. TOP NAVBAR (MEE6-Style Clean Navigation) */}
+      {/* 1. TOP NAVBAR */}
       {/* ========================================================================= */}
       <header className="fixed inset-x-0 top-0 z-50 px-4 py-3.5 sm:px-8">
         <nav className="mx-auto flex max-w-7xl items-center justify-between rounded-2xl px-5 py-3 border border-white/10 bg-[#121422]/85 shadow-2xl backdrop-blur-xl">
@@ -143,24 +144,24 @@ export default function HomePage() {
       </header>
 
       {/* ========================================================================= */}
-      {/* 2. HERO SECTION (MEE6 Layout with Uranium Celestial Pirate Ship Art) */}
+      {/* 2. HERO SECTION */}
       {/* ========================================================================= */}
       <section className="relative z-10 mx-auto max-w-7xl px-4 sm:px-8 pt-36 pb-20 sm:pt-44 sm:pb-28">
         <div className="grid gap-12 lg:grid-cols-[1.05fr_1fr] items-center">
           
           {/* Hero Left Copy */}
           <div className="space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-rose-500/30 bg-rose-500/10 px-3.5 py-1 text-xs font-bold text-rose-300 backdrop-blur-md">
-              <span className="h-2 w-2 rounded-full bg-rose-400 animate-pulse shadow-[0_0_8px_#ff294f]" />
-              <span>Next-Generation Discord Bot Engine</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-rose-500/20 bg-rose-500/10 text-xs font-bold tracking-wide text-rose-300 backdrop-blur-md">
+              <span className="h-2 w-2 rounded-sm bg-rose-400 animate-pulse shadow-[0_0_8px_#ff294f]" />
+              <span>All-in-One Discord Bot Engine</span>
             </div>
 
             <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white leading-[1.08]">
-              The best all-in-one bot for Discord
+              The Complete Discord Bot for Thriving Communities
             </h1>
 
             <p className="text-base sm:text-lg text-white/65 leading-relaxed max-w-xl">
-              Uranium is a complete Discord bot that thousands of Discord servers worldwide trust to manage, entertain, and grow their community. Lossless 320kbps audio, intelligent AutoMod defense, customizable giveaways, and seamless role onboarding.
+              Uranium gives server owners everything they need to grow, entertain, and protect their members. Lossless 320kbps music streaming, lightning-fast AutoMod defense, interactive giveaways, and automated role assignment — all in one unified experience.
             </p>
 
             {/* CTAs */}
@@ -169,14 +170,15 @@ export default function HomePage() {
                 href={inviteHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="h-13 px-8 rounded-2xl bg-[#5865F2] hover:bg-[#4752C4] text-sm font-bold text-white shadow-xl shadow-[#5865F2]/25 transition hover:scale-[1.02] flex items-center justify-center gap-2.5"
+                style={{ color: '#ffffff' }}
+                className="h-12 px-7 rounded-xl bg-[#5865F2] hover:bg-[#4752C4] text-sm font-bold text-white shadow-xl shadow-[#5865F2]/25 transition hover:scale-[1.02] flex items-center justify-center gap-2.5"
               >
                 <DiscordIcon className="w-5 h-5" />
                 <span>Add to Discord</span>
               </a>
               <a
                 href="#features"
-                className="h-13 px-7 rounded-2xl border border-white/15 hover:border-white/30 bg-white/5 hover:bg-white/10 text-sm font-bold text-white transition flex items-center justify-center gap-2"
+                className="h-12 px-6 rounded-xl border border-white/15 hover:border-white/30 bg-white/5 hover:bg-white/10 text-sm font-bold text-white transition flex items-center justify-center gap-2"
               >
                 <span>See features</span>
                 <ChevronRight size={16} />
@@ -186,7 +188,7 @@ export default function HomePage() {
             {/* Trust bullet features */}
             <div className="pt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-white/50">
               <span className="flex items-center gap-1.5 font-medium">
-                <Check size={14} className="text-rose-400" /> Free & No Paywalls
+                <Check size={14} className="text-rose-400" /> Free Tier & Premium Perks
               </span>
               <span className="flex items-center gap-1.5 font-medium">
                 <Check size={14} className="text-rose-400" /> 320kbps Lossless Audio
@@ -246,10 +248,10 @@ export default function HomePage() {
 
         </div>
 
-        {/* Social Proof Partner Bar (MEE6 "Used by 20+ million servers" style) */}
+        {/* Social Proof Community Showcase */}
         <div className="mt-20 pt-8 border-t border-white/10 text-center space-y-6">
           <p className="text-xs uppercase font-extrabold tracking-widest text-white/40">
-            Trusted by 50,000+ Discord communities & esports servers
+            Powering active Discord communities & gaming squads worldwide
           </p>
           <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-14 opacity-60 grayscale hover:grayscale-0 transition-all">
             {['Gamer Hub', 'Anime Galaxy', 'Lofi Lounge', 'Cyber Esports', 'Developer Den', 'Nova Community'].map((name) => (
@@ -262,7 +264,7 @@ export default function HomePage() {
       </section>
 
       {/* ========================================================================= */}
-      {/* 3. FEATURE SPOTLIGHT 1: Build Your Own Unique Discord Bot (MEE6 Image 2) */}
+      {/* 3. FEATURE SPOTLIGHT 1: Community Customization & Role Hierarchy */}
       {/* ========================================================================= */}
       <section id="features" className="relative z-10 py-24 border-t border-white/10 bg-[#0b0c15]">
         <div className="mx-auto max-w-7xl px-4 sm:px-8">
@@ -272,9 +274,9 @@ export default function HomePage() {
             <div className="relative">
               <div className="rounded-[2.2rem] border border-white/15 bg-[#171926] p-6 sm:p-8 shadow-2xl space-y-5">
                 <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                  <span className="text-xs font-bold uppercase tracking-wider text-white/50">Bot Personalizer</span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-bold text-emerald-300">
-                    Active
+                  <span className="text-xs font-bold uppercase tracking-wider text-white/50">Bot Identity & Roles</span>
+                  <span className="px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-bold text-emerald-300">
+                    Online & Active
                   </span>
                 </div>
 
@@ -334,17 +336,17 @@ export default function HomePage() {
             <div className="space-y-6">
               <span className="text-xs font-black uppercase tracking-widest text-rose-400">Total Customization</span>
               <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
-                Build Your Own Unique Discord Bot
+                Customize Uranium for Your Community's Vibe
               </h2>
               <p className="text-base text-white/65 leading-relaxed">
-                The best Discord bot is the one you can customize yourself. Let's make the Discord client better than ever. Customize Uranium to reflect your server's unique brand, identity, and rules. Utilize Uranium's bot personalization to match your community's universe.
+                Tailor Uranium to blend seamlessly into your server culture. Set custom server nicknames, configure fine-grained permissions for moderators, personalize embed accent colors, and synchronize commands instantly between Discord and the live web dashboard.
               </p>
 
               <div className="space-y-3 pt-2">
                 {[
-                  'Custom embed accent colors & brand styles',
-                  'Dedicated commands tailored to your server staff',
-                  'Seamless dashboard and slash command synchronization'
+                  'Tailored permissions for moderators and staff roles',
+                  'Custom embed accent colors matching your community theme',
+                  'Instant two-way sync between web dashboard and Discord commands'
                 ].map((text) => (
                   <div key={text} className="flex items-center gap-2.5 text-sm text-white/80 font-medium">
                     <span className="h-5 w-5 rounded-full bg-rose-500/20 text-rose-400 grid place-items-center shrink-0">
@@ -360,14 +362,15 @@ export default function HomePage() {
                   href={inviteHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="h-12 px-6 rounded-xl bg-[#5865F2] hover:bg-[#4752C4] text-xs font-bold text-white shadow-lg transition flex items-center gap-2"
+                  style={{ color: '#ffffff' }}
+                  className="h-11 px-5 rounded-xl bg-[#5865F2] hover:bg-[#4752C4] text-xs font-bold text-white shadow-lg transition flex items-center gap-2"
                 >
                   <DiscordIcon className="w-4 h-4" />
                   <span>Add to Discord</span>
                 </a>
                 <Link
                   href="/docs"
-                  className="h-12 px-6 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-xs font-bold text-white transition flex items-center gap-2"
+                  className="h-11 px-5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-xs font-bold text-white transition flex items-center gap-2"
                 >
                   <span>Learn more</span>
                   <ChevronRight size={14} />
@@ -645,7 +648,7 @@ export default function HomePage() {
       </section>
 
       {/* ========================================================================= */}
-      {/* 7. DOCUMENTATION & TUTORIALS CARDS (MEE6 Image 3 Style) */}
+      {/* 7. DOCUMENTATION & GUIDES */}
       {/* ========================================================================= */}
       <section className="relative z-10 py-24 border-t border-white/10 bg-[#0b0c15]">
         <div className="mx-auto max-w-7xl px-4 sm:px-8 space-y-12">
@@ -654,10 +657,10 @@ export default function HomePage() {
           <div className="text-center max-w-3xl mx-auto space-y-4">
             <span className="text-xs font-black uppercase tracking-widest text-rose-400">Knowledge Base</span>
             <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
-              Discover Uranium Tutorials, Documents and Guides
+              Discover Guides, Walkthroughs & Documentation
             </h2>
             <p className="text-base text-white/60 leading-relaxed">
-              Whether you're starting a new server or managing thousands of active members, our comprehensive guides help you set up and get rolling in minutes.
+              Step-by-step setup guides and command references to help you configure audio, secure your channels, and engage your members in minutes.
             </p>
           </div>
 
@@ -737,32 +740,42 @@ export default function HomePage() {
       </section>
 
       {/* ========================================================================= */}
-      {/* 8. CALL TO ACTION BANNER (MEE6 Image 4 Style in Brand Crimson Red) */}
+      {/* 8. CALL TO ACTION BANNER */}
       {/* ========================================================================= */}
       <section className="relative z-10 py-20 bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 text-center text-white">
         <div className="mx-auto max-w-4xl px-4 sm:px-8 space-y-6">
           <h2 className="text-3xl sm:text-5xl font-black tracking-tight">
-            Build the best Discord server for free
+            Power Up Your Discord Server With Uranium
           </h2>
           <p className="text-base sm:text-lg text-white/90 max-w-xl mx-auto leading-relaxed">
-            Join thousands of Discord server owners already boosting member activity and securing their channels with Uranium.
+            Give your members crystal-clear audio, airtight automated moderation, role self-assignment, and interactive giveaways — with powerful free core features and unlocked premium perks.
           </p>
-          <div className="pt-2">
+          <div className="pt-3 flex flex-wrap items-center justify-center gap-4">
             <a
               href={inviteHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2.5 h-13 px-9 rounded-2xl bg-white text-black hover:bg-white/90 text-sm font-black uppercase tracking-wider shadow-2xl transition hover:scale-105"
+              style={{ color: '#090a10', backgroundColor: '#ffffff' }}
+              className="inline-flex items-center gap-2.5 h-12 px-7 rounded-xl font-black uppercase tracking-wider text-sm shadow-2xl hover:bg-neutral-100 hover:scale-[1.02] active:scale-95 transition-all"
             >
               <DiscordIcon className="w-5 h-5 text-[#5865F2]" fill="#5865F2" />
-              <span>Add to Discord</span>
+              <span style={{ color: '#090a10' }} className="text-[#090a10] font-black">Add to Discord</span>
+            </a>
+            <a
+              href="https://discord.gg/26ThFyckFX"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 h-12 px-6 rounded-xl bg-black/40 hover:bg-black/60 border border-white/20 text-white font-bold text-sm shadow-xl transition-all hover:scale-[1.02] active:scale-95"
+            >
+              <Crown size={16} className="fill-amber-400 text-amber-400" />
+              <span>Get Premium</span>
             </a>
           </div>
         </div>
       </section>
 
       {/* ========================================================================= */}
-      {/* 9. FOOTER (MEE6 Image 4 Style) */}
+      {/* 9. FOOTER */}
       {/* ========================================================================= */}
       <footer className="relative z-10 border-t border-white/10 bg-[#0a0b12] py-16 text-white/70">
         <div className="mx-auto max-w-7xl px-4 sm:px-8">
@@ -777,7 +790,7 @@ export default function HomePage() {
                 <span className="text-xl font-extrabold text-white">Uranium</span>
               </div>
               <p className="text-xs text-white/50 max-w-xs leading-relaxed">
-                The best Discord bot to bootstrap and grow your Discord server. Engineered for speed, stability, and total community management.
+                High-performance Discord bot engineered for gaming hubs, esports teams, and creator communities. Crystal clear audio, intelligent moderation, and live web management.
               </p>
               <p className="text-[11px] text-white/30 pt-4">
                 Copyright © 2024 - 2026 Uranium Bot. All rights reserved.
@@ -792,7 +805,7 @@ export default function HomePage() {
                 <li><a href="#defense" className="hover:text-white transition">AutoMod Engine</a></li>
                 <li><a href="#giveaways" className="hover:text-white transition">Custom Giveaways</a></li>
                 <li><Link href="/dashboard/rr" className="hover:text-white transition">Reaction Roles</Link></li>
-                <li><Link href="/dashboard/settings" className="hover:text-white transition">Server Settings</Link></li>
+                <li><a href="https://discord.gg/26ThFyckFX" target="_blank" rel="noopener noreferrer" className="text-amber-400 hover:text-amber-300 transition flex items-center gap-1 font-semibold">★ Premium Perks</a></li>
               </ul>
             </div>
 
@@ -814,7 +827,7 @@ export default function HomePage() {
                 <li><Link href="/tos" className="hover:text-white transition">Terms of Service</Link></li>
                 <li><Link href="/privacy" className="hover:text-white transition">Privacy Policy</Link></li>
                 <li><a href={inviteHref} target="_blank" rel="noopener noreferrer" className="hover:text-white transition">Invite Bot</a></li>
-                <li><a href="https://discord.gg/invite" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">Support Server</a></li>
+                <li><a href="https://discord.gg/26ThFyckFX" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">Support Server</a></li>
               </ul>
             </div>
 

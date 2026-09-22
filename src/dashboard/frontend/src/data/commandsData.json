@@ -1,0 +1,1651 @@
+[
+  {
+    "name": "Moderation",
+    "emoji": "<:mb_mod:1448297559905927270>",
+    "commands": [
+      {
+        "name": "/mod warn",
+        "description": "warn a user",
+        "isPremium": false
+      },
+      {
+        "name": "/mod kick",
+        "description": "kick a user",
+        "isPremium": false
+      },
+      {
+        "name": "/mod ban",
+        "description": "ban a user",
+        "isPremium": false
+      },
+      {
+        "name": "/mod tempban",
+        "description": "temporarily ban",
+        "isPremium": false
+      },
+      {
+        "name": "/mod unban",
+        "description": "unban a user",
+        "isPremium": false
+      },
+      {
+        "name": "/mod mute",
+        "description": "mute a user",
+        "isPremium": false
+      },
+      {
+        "name": "/mod unmute",
+        "description": "unmute user",
+        "isPremium": false
+      },
+      {
+        "name": "/mod timeout",
+        "description": "apply timeout",
+        "isPremium": false
+      },
+      {
+        "name": "/mod softban",
+        "description": "softban user",
+        "isPremium": false
+      },
+      {
+        "name": "/mod purge",
+        "description": "delete messages",
+        "isPremium": false
+      },
+      {
+        "name": "/mod lockdown",
+        "description": "lock a channel",
+        "isPremium": false
+      },
+      {
+        "name": "/mod unlock",
+        "description": "unlock channel",
+        "isPremium": false
+      },
+      {
+        "name": "/mod slowmode",
+        "description": "set slowmode",
+        "isPremium": false
+      },
+      {
+        "name": "/mod nick",
+        "description": "change nickname",
+        "isPremium": false
+      },
+      {
+        "name": "/mod force-role",
+        "description": "force a role onto user",
+        "isPremium": false
+      },
+      {
+        "name": "/mod clear-roles",
+        "description": "remove roles",
+        "isPremium": false
+      },
+      {
+        "name": "/mod unwarn",
+        "description": "remove a warning",
+        "isPremium": false
+      },
+      {
+        "name": "/mod infractions",
+        "description": "view infractions",
+        "isPremium": false
+      },
+      {
+        "name": "/mod notes-add",
+        "description": "add note to user",
+        "isPremium": false
+      },
+      {
+        "name": "/mod notes-list",
+        "description": "list notes",
+        "isPremium": false
+      },
+      {
+        "name": "/mod history",
+        "description": "view mod history",
+        "isPremium": false
+      }
+    ]
+  },
+  {
+    "name": "Automod",
+    "emoji": "<:mb_shield:1448297837136707706>",
+    "commands": [
+      {
+        "name": "/automod anti-spam",
+        "description": "anti-spam settings",
+        "isPremium": false
+      },
+      {
+        "name": "/automod anti-link",
+        "description": "block links",
+        "isPremium": false
+      },
+      {
+        "name": "/automod anti-caps",
+        "description": "limit caps",
+        "isPremium": false
+      },
+      {
+        "name": "/automod anti-invite",
+        "description": "block invites",
+        "isPremium": false
+      },
+      {
+        "name": "/automod anti-mention-spam",
+        "description": "prevent mention spam",
+        "isPremium": false
+      },
+      {
+        "name": "/automod banned-words",
+        "description": "set banned words",
+        "isPremium": false
+      },
+      {
+        "name": "/automod anti-raid",
+        "description": "anti-raid tools",
+        "isPremium": false
+      },
+      {
+        "name": "/automod ignore-channel",
+        "description": "ignore a channel",
+        "isPremium": false
+      },
+      {
+        "name": "/automod ignore-role",
+        "description": "ignore a role",
+        "isPremium": false
+      },
+      {
+        "name": "/automod whitelist-domain",
+        "description": "allow domain",
+        "isPremium": false
+      },
+      {
+        "name": "/automod status",
+        "description": "view automod status",
+        "isPremium": false
+      }
+    ]
+  },
+  {
+    "name": "Fun",
+    "emoji": "<:mb_fun:1448298159313780778>",
+    "commands": [
+      {
+        "name": "/facts fact",
+        "description": "general fact",
+        "isPremium": false
+      },
+      {
+        "name": "/facts bird",
+        "description": "bird facts",
+        "isPremium": false
+      },
+      {
+        "name": "/facts cat",
+        "description": "cat facts",
+        "isPremium": false
+      },
+      {
+        "name": "/facts dog",
+        "description": "dog facts",
+        "isPremium": false
+      },
+      {
+        "name": "/facts panda",
+        "description": "panda facts",
+        "isPremium": false
+      },
+      {
+        "name": "/facts koala",
+        "description": "koala facts",
+        "isPremium": false
+      },
+      {
+        "name": "/fun nom",
+        "description": "nom action",
+        "isPremium": false
+      },
+      {
+        "name": "/fun poke",
+        "description": "poke action",
+        "isPremium": false
+      },
+      {
+        "name": "/fun cry",
+        "description": "cry action",
+        "isPremium": false
+      },
+      {
+        "name": "/fun kiss",
+        "description": "kiss action",
+        "isPremium": false
+      },
+      {
+        "name": "/fun pat",
+        "description": "pat action",
+        "isPremium": false
+      },
+      {
+        "name": "/fun hug",
+        "description": "hug action",
+        "isPremium": false
+      },
+      {
+        "name": "/fun wink",
+        "description": "wink action",
+        "isPremium": false
+      },
+      {
+        "name": "/fun facepalm",
+        "description": "facepalm action",
+        "isPremium": false
+      },
+      {
+        "name": "/fun quote",
+        "description": "show a quote",
+        "isPremium": false
+      },
+      {
+        "name": "/fun ascii",
+        "description": "ascii art",
+        "isPremium": false
+      },
+      {
+        "name": "/fun cleverrate",
+        "description": "rate cleverness",
+        "isPremium": false
+      },
+      {
+        "name": "/fun confused",
+        "description": "confused action",
+        "isPremium": false
+      },
+      {
+        "name": "/fun dinochrome",
+        "description": "dinochrome",
+        "isPremium": false
+      },
+      {
+        "name": "/fun epicgamerrate",
+        "description": "epic gamer rate",
+        "isPremium": false
+      },
+      {
+        "name": "/fun gif",
+        "description": "send a gif",
+        "isPremium": false
+      },
+      {
+        "name": "/fun hack",
+        "description": "fun hack message",
+        "isPremium": false
+      },
+      {
+        "name": "/fun kill",
+        "description": "playfully kill",
+        "isPremium": false
+      },
+      {
+        "name": "/fun lovemeter",
+        "description": "love meter",
+        "isPremium": false
+      },
+      {
+        "name": "/fun reverse",
+        "description": "reverse text",
+        "isPremium": false
+      },
+      {
+        "name": "/fun rickroll",
+        "description": "rickroll",
+        "isPremium": false
+      },
+      {
+        "name": "/fun roast",
+        "description": "roast text",
+        "isPremium": false
+      },
+      {
+        "name": "/fun sudo",
+        "description": "sudo message",
+        "isPremium": false
+      },
+      {
+        "name": "/fun token",
+        "description": "fake token",
+        "isPremium": false
+      },
+      {
+        "name": "/fun xmas",
+        "description": "xmas special",
+        "isPremium": false
+      },
+      {
+        "name": "/meme",
+        "description": "post meme",
+        "isPremium": false
+      }
+    ]
+  },
+  {
+    "name": "Games",
+    "emoji": "<:mb_games:1448298235427819521>",
+    "commands": [
+      {
+        "name": "/games tictactoe",
+        "description": "play tic tac toe",
+        "isPremium": false
+      },
+      {
+        "name": "/games hangman",
+        "description": "hangman game",
+        "isPremium": false
+      },
+      {
+        "name": "/games memory",
+        "description": "memory game",
+        "isPremium": false
+      },
+      {
+        "name": "/games rps",
+        "description": "rock paper scissors",
+        "isPremium": false
+      },
+      {
+        "name": "/games guessthenumber",
+        "description": "guess the number",
+        "isPremium": false
+      },
+      {
+        "name": "/games trivia",
+        "description": "trivia game",
+        "isPremium": false
+      },
+      {
+        "name": "/games 8ball",
+        "description": "magic 8 ball",
+        "isPremium": false
+      },
+      {
+        "name": "/games fasttype",
+        "description": "typing challenge",
+        "isPremium": false
+      }
+    ]
+  },
+  {
+    "name": "Economy",
+    "emoji": "<:mb_economy:1448764015919497400>",
+    "commands": [
+      {
+        "name": "/economy help",
+        "description": "full economy help menu",
+        "isPremium": false
+      },
+      {
+        "name": "/eco info balance",
+        "description": "view balance & net worth",
+        "isPremium": false
+      },
+      {
+        "name": "/eco info profile",
+        "description": "rich profile with level & stats",
+        "isPremium": false
+      },
+      {
+        "name": "/eco info inventory",
+        "description": "view & use items",
+        "isPremium": false
+      },
+      {
+        "name": "/eco info stats",
+        "description": "detailed statistics",
+        "isPremium": false
+      },
+      {
+        "name": "/eco info leaderboard",
+        "description": "global leaderboard",
+        "isPremium": false
+      },
+      {
+        "name": "/eco info level",
+        "description": "XP & level progress",
+        "isPremium": false
+      },
+      {
+        "name": "/eco bank deposit",
+        "description": "deposit coins to bank",
+        "isPremium": false
+      },
+      {
+        "name": "/eco bank withdraw",
+        "description": "withdraw from bank",
+        "isPremium": false
+      },
+      {
+        "name": "/eco bank transfer",
+        "description": "transfer coins (2% tax)",
+        "isPremium": false
+      },
+      {
+        "name": "/eco bank rob",
+        "description": "rob someone's wallet",
+        "isPremium": false
+      },
+      {
+        "name": "/eco earn daily",
+        "description": "daily reward (streak bonus!)",
+        "isPremium": false
+      },
+      {
+        "name": "/eco earn work",
+        "description": "work level-gated jobs",
+        "isPremium": false
+      },
+      {
+        "name": "/eco earn crime",
+        "description": "risky crime for big payouts",
+        "isPremium": false
+      },
+      {
+        "name": "/eco earn beg",
+        "description": "beg for spare change",
+        "isPremium": false
+      },
+      {
+        "name": "/eco earn search",
+        "description": "search locations for coins",
+        "isPremium": false
+      },
+      {
+        "name": "/eco earn quest",
+        "description": "view & claim quests",
+        "isPremium": false
+      },
+      {
+        "name": "/eco earn mine",
+        "description": "mine for ores",
+        "isPremium": false
+      },
+      {
+        "name": "/eco earn hack",
+        "description": "hack for data",
+        "isPremium": false
+      },
+      {
+        "name": "/eco earn duel",
+        "description": "duel an NPC",
+        "isPremium": false
+      },
+      {
+        "name": "/eco earn heist",
+        "description": "perform a heist",
+        "isPremium": false
+      },
+      {
+        "name": "/eco earn scavenge",
+        "description": "scavenge areas",
+        "isPremium": false
+      },
+      {
+        "name": "/eco earn reactor",
+        "description": "run the nuclear reactor",
+        "isPremium": false
+      },
+      {
+        "name": "/eco earn bounty",
+        "description": "capture bounties",
+        "isPremium": false
+      },
+      {
+        "name": "/eco earn dig",
+        "description": "dig for artifacts",
+        "isPremium": false
+      },
+      {
+        "name": "/eco earn chop",
+        "description": "chop some wood",
+        "isPremium": false
+      },
+      {
+        "name": "/eco earn drill",
+        "description": "drill deep underground",
+        "isPremium": false
+      },
+      {
+        "name": "/eco fun slots",
+        "description": "slot machine",
+        "isPremium": false
+      },
+      {
+        "name": "/eco fun coinflip",
+        "description": "heads or tails",
+        "isPremium": false
+      },
+      {
+        "name": "/eco fun blackjack",
+        "description": "full blackjack game",
+        "isPremium": false
+      },
+      {
+        "name": "/eco fun dice",
+        "description": "dice roll vs dealer",
+        "isPremium": false
+      },
+      {
+        "name": "/eco fun crash",
+        "description": "crash multiplier game",
+        "isPremium": false
+      },
+      {
+        "name": "/eco shop browse",
+        "description": "browse 55+ items",
+        "isPremium": false
+      },
+      {
+        "name": "/eco shop sell",
+        "description": "sell items for coins",
+        "isPremium": false
+      },
+      {
+        "name": "/eco adventure start",
+        "description": "choose adventure zone",
+        "isPremium": false
+      },
+      {
+        "name": "/eco adventure hunt",
+        "description": "hunt animals for coins",
+        "isPremium": false
+      },
+      {
+        "name": "/eco adventure fish",
+        "description": "catch fish for coins",
+        "isPremium": false
+      },
+      {
+        "name": "/eco adventure explore",
+        "description": "explore for loot",
+        "isPremium": false
+      },
+      {
+        "name": "/eco progress level",
+        "description": "view level & XP",
+        "isPremium": false
+      },
+      {
+        "name": "/eco progress prestige",
+        "description": "prestige for bonuses",
+        "isPremium": false
+      },
+      {
+        "name": "/eco progress streaks",
+        "description": "daily streak info",
+        "isPremium": false
+      }
+    ]
+  },
+  {
+    "name": "Social",
+    "emoji": "<:mb_social:1448763992871931965>",
+    "commands": [
+      {
+        "name": "/family adopt",
+        "description": "adopt user",
+        "isPremium": false
+      },
+      {
+        "name": "/family children",
+        "description": "view children",
+        "isPremium": false
+      },
+      {
+        "name": "/family divorce",
+        "description": "divorce partner",
+        "isPremium": false
+      },
+      {
+        "name": "/family marry",
+        "description": "marry user",
+        "isPremium": false
+      },
+      {
+        "name": "/family partner",
+        "description": "partner actions",
+        "isPremium": false
+      },
+      {
+        "name": "/family runaway",
+        "description": "runaway action",
+        "isPremium": false
+      },
+      {
+        "name": "/family toggle",
+        "description": "toggle family settings",
+        "isPremium": false
+      },
+      {
+        "name": "/family view",
+        "description": "view family",
+        "isPremium": false
+      }
+    ]
+  },
+  {
+    "name": "AI",
+    "emoji": "<:mb_ai:1448298308014571541>",
+    "commands": [
+      {
+        "name": "/ai chat",
+        "description": "chat with AI",
+        "isPremium": true
+      },
+      {
+        "name": "/ai setup",
+        "description": "set AI channel",
+        "isPremium": true
+      },
+      {
+        "name": "/ai disable",
+        "description": "disable AI",
+        "isPremium": true
+      },
+      {
+        "name": "/ai status",
+        "description": "AI status",
+        "isPremium": true
+      },
+      {
+        "name": "/ai style",
+        "description": "set style",
+        "isPremium": true
+      },
+      {
+        "name": "/ai settings",
+        "description": "AI settings",
+        "isPremium": true
+      },
+      {
+        "name": "/ai stats",
+        "description": "usage stats",
+        "isPremium": true
+      },
+      {
+        "name": "/ai reset",
+        "description": "reset AI",
+        "isPremium": true
+      },
+      {
+        "name": "/ai help",
+        "description": "AI help",
+        "isPremium": false
+      }
+    ]
+  },
+  {
+    "name": "Giveaways",
+    "emoji": "<:mb_giveaway:1448298127093272648>",
+    "commands": [
+      {
+        "name": "/giveaway start",
+        "description": "start a giveaway",
+        "isPremium": false
+      },
+      {
+        "name": "/giveaway edit",
+        "description": "edit giveaway",
+        "isPremium": false
+      },
+      {
+        "name": "/giveaway end",
+        "description": "end giveaway",
+        "isPremium": false
+      },
+      {
+        "name": "/giveaway reroll",
+        "description": "reroll winners",
+        "isPremium": false
+      },
+      {
+        "name": "/giveaway list",
+        "description": "list giveaways",
+        "isPremium": false
+      }
+    ]
+  },
+  {
+    "name": "Information",
+    "emoji": "<:mb_info:1448298008910495774>",
+    "commands": [
+      {
+        "name": "/info emoji-list",
+        "description": "list emojis",
+        "isPremium": false
+      },
+      {
+        "name": "/info avatar",
+        "description": "show avatar",
+        "isPremium": false
+      },
+      {
+        "name": "/info user",
+        "description": "user info",
+        "isPremium": false
+      },
+      {
+        "name": "/info server",
+        "description": "server info",
+        "isPremium": false
+      },
+      {
+        "name": "/info channel",
+        "description": "channel info",
+        "isPremium": false
+      },
+      {
+        "name": "/info role",
+        "description": "role info",
+        "isPremium": false
+      },
+      {
+        "name": "/bot uptime",
+        "description": "uptime",
+        "isPremium": false
+      },
+      {
+        "name": "/bot ping",
+        "description": "ping",
+        "isPremium": false
+      },
+      {
+        "name": "/bot stats",
+        "description": "stats",
+        "isPremium": false
+      },
+      {
+        "name": "/bot info",
+        "description": "bot info",
+        "isPremium": false
+      },
+      {
+        "name": "/bot version",
+        "description": "version",
+        "isPremium": false
+      },
+      {
+        "name": "/bot developer",
+        "description": "show developer",
+        "isPremium": false
+      },
+      {
+        "name": "/bot invite",
+        "description": "invite link",
+        "isPremium": false
+      },
+      {
+        "name": "/bot settings",
+        "description": "manage server bot settings",
+        "isPremium": false
+      },
+      {
+        "name": "/bot dashboard",
+        "description": "get the dashboard link",
+        "isPremium": false
+      },
+      {
+        "name": "/help",
+        "description": "open this help",
+        "isPremium": false
+      }
+    ]
+  },
+  {
+    "name": "Logging",
+    "emoji": "<:mb_track:1448297790198513734>",
+    "commands": [
+      {
+        "name": "/log set-channel",
+        "description": "set log channel",
+        "isPremium": false
+      },
+      {
+        "name": "/log create-webhook",
+        "description": "create webhook",
+        "isPremium": false
+      },
+      {
+        "name": "/log remove-webhook",
+        "description": "remove webhook",
+        "isPremium": false
+      },
+      {
+        "name": "/log enable",
+        "description": "enable logs",
+        "isPremium": false
+      },
+      {
+        "name": "/log disable",
+        "description": "disable logs",
+        "isPremium": false
+      },
+      {
+        "name": "/log list-events",
+        "description": "list log events",
+        "isPremium": false
+      },
+      {
+        "name": "/log ignore-add",
+        "description": "ignore an event",
+        "isPremium": false
+      },
+      {
+        "name": "/log ignore-remove",
+        "description": "remove ignore",
+        "isPremium": false
+      },
+      {
+        "name": "/log ignore-list",
+        "description": "list ignores",
+        "isPremium": false
+      },
+      {
+        "name": "/log status",
+        "description": "logging status",
+        "isPremium": false
+      }
+    ]
+  },
+  {
+    "name": "Music",
+    "emoji": "<:mb_music:1448297428649381958>",
+    "commands": [
+      {
+        "name": "/music play",
+        "description": "play track",
+        "isPremium": false
+      },
+      {
+        "name": "/music search",
+        "description": "search track",
+        "isPremium": false
+      },
+      {
+        "name": "/music join",
+        "description": "join voice",
+        "isPremium": false
+      },
+      {
+        "name": "/music leave",
+        "description": "leave voice",
+        "isPremium": false
+      },
+      {
+        "name": "/music pause",
+        "description": "pause",
+        "isPremium": false
+      },
+      {
+        "name": "/music resume",
+        "description": "resume",
+        "isPremium": false
+      },
+      {
+        "name": "/music skip",
+        "description": "skip track",
+        "isPremium": false
+      },
+      {
+        "name": "/music previous",
+        "description": "previous track",
+        "isPremium": false
+      },
+      {
+        "name": "/music stop",
+        "description": "stop music",
+        "isPremium": false
+      },
+      {
+        "name": "/music nowplaying",
+        "description": "now playing",
+        "isPremium": false
+      },
+      {
+        "name": "/music queue",
+        "description": "show queue",
+        "isPremium": false
+      },
+      {
+        "name": "/music clear",
+        "description": "clear queue",
+        "isPremium": false
+      },
+      {
+        "name": "/music shuffle",
+        "description": "shuffle queue",
+        "isPremium": false
+      },
+      {
+        "name": "/music remove",
+        "description": "remove track",
+        "isPremium": false
+      },
+      {
+        "name": "/music seek",
+        "description": "seek in track",
+        "isPremium": false
+      },
+      {
+        "name": "/music volume",
+        "description": "volume control",
+        "isPremium": false
+      },
+      {
+        "name": "/music loop",
+        "description": "loop mode",
+        "isPremium": false
+      },
+      {
+        "name": "/music filter",
+        "description": "audio filter",
+        "isPremium": false
+      },
+      {
+        "name": "/music help",
+        "description": "music help menu",
+        "isPremium": false
+      }
+    ]
+  },
+  {
+    "name": "Premium",
+    "emoji": "<:mb_premium:1448298200589926450>",
+    "commands": [
+      {
+        "name": "/premium help",
+        "description": "premium help",
+        "isPremium": true
+      },
+      {
+        "name": "/premium buy",
+        "description": "buy premium",
+        "isPremium": true
+      },
+      {
+        "name": "/premium redeem",
+        "description": "redeem a code",
+        "isPremium": true
+      },
+      {
+        "name": "/premium support",
+        "description": "premium support",
+        "isPremium": true
+      },
+      {
+        "name": "/premium status",
+        "description": "view status",
+        "isPremium": true
+      }
+    ]
+  },
+  {
+    "name": "Ranking",
+    "emoji": "<:mb_rank:1448297877112750165>",
+    "commands": [
+      {
+        "name": "/rank user xp",
+        "description": "xp info",
+        "isPremium": false
+      },
+      {
+        "name": "/rank user rank",
+        "description": "rank info",
+        "isPremium": false
+      },
+      {
+        "name": "/rank user card",
+        "description": "rank card",
+        "isPremium": false
+      },
+      {
+        "name": "/rank user leaderboard",
+        "description": "leaderboard",
+        "isPremium": false
+      },
+      {
+        "name": "/rank config enable",
+        "description": "enable rank",
+        "isPremium": false
+      },
+      {
+        "name": "/rank config disable",
+        "description": "disable rank",
+        "isPremium": false
+      },
+      {
+        "name": "/rank config setcooldown",
+        "description": "set cooldown",
+        "isPremium": false
+      },
+      {
+        "name": "/rank config blacklist",
+        "description": "blacklist user",
+        "isPremium": false
+      },
+      {
+        "name": "/rank config roles",
+        "description": "set roles",
+        "isPremium": false
+      },
+      {
+        "name": "/rank config roles-list",
+        "description": "list roles",
+        "isPremium": false
+      },
+      {
+        "name": "/rank admin recalc",
+        "description": "recalc ranks",
+        "isPremium": false
+      },
+      {
+        "name": "/rank admin give",
+        "description": "give xp",
+        "isPremium": false
+      },
+      {
+        "name": "/rank admin set",
+        "description": "set xp",
+        "isPremium": false
+      },
+      {
+        "name": "/rank admin reset",
+        "description": "reset user",
+        "isPremium": false
+      },
+      {
+        "name": "/rank admin resetall",
+        "description": "reset all",
+        "isPremium": false
+      }
+    ]
+  },
+  {
+    "name": "Setup",
+    "emoji": "<:mb_setup:1448298046587932733>",
+    "commands": [
+      {
+        "name": "/anti-ghostping setup",
+        "description": "setup anti-ghostping",
+        "isPremium": false
+      },
+      {
+        "name": "/anti-ghostping disable",
+        "description": "disable",
+        "isPremium": false
+      },
+      {
+        "name": "/anti-ghostping number-reset",
+        "description": "reset number",
+        "isPremium": false
+      },
+      {
+        "name": "/anti-ghostping config",
+        "description": "configure",
+        "isPremium": false
+      },
+      {
+        "name": "/autoresponse add",
+        "description": "add autoresponse",
+        "isPremium": false
+      },
+      {
+        "name": "/autoresponse remove",
+        "description": "remove autoresponse",
+        "isPremium": false
+      },
+      {
+        "name": "/autoresponse list",
+        "description": "list autoresponses",
+        "isPremium": false
+      },
+      {
+        "name": "/autorole add",
+        "description": "add autorole",
+        "isPremium": false
+      },
+      {
+        "name": "/autorole create",
+        "description": "create autorole",
+        "isPremium": false
+      },
+      {
+        "name": "/autorole delete",
+        "description": "delete autorole",
+        "isPremium": false
+      },
+      {
+        "name": "/autorole list",
+        "description": "list autoroles",
+        "isPremium": false
+      },
+      {
+        "name": "/autorole assign-now",
+        "description": "assign now",
+        "isPremium": false
+      },
+      {
+        "name": "/autorole disable",
+        "description": "disable autorole",
+        "isPremium": false
+      },
+      {
+        "name": "/autorole enable",
+        "description": "enable autorole",
+        "isPremium": false
+      },
+      {
+        "name": "/autorole remove",
+        "description": "remove autorole",
+        "isPremium": false
+      },
+      {
+        "name": "/autorole set-default",
+        "description": "set default",
+        "isPremium": false
+      },
+      {
+        "name": "/autorole view",
+        "description": "view autorole",
+        "isPremium": false
+      },
+      {
+        "name": "/join-ping add",
+        "description": "add join ping",
+        "isPremium": false
+      },
+      {
+        "name": "/join-ping remove",
+        "description": "remove join ping",
+        "isPremium": false
+      },
+      {
+        "name": "/join-ping disable",
+        "description": "disable",
+        "isPremium": false
+      },
+      {
+        "name": "/join-ping list",
+        "description": "list join pings",
+        "isPremium": false
+      },
+      {
+        "name": "/join-to-create setup",
+        "description": "setup jtc",
+        "isPremium": false
+      },
+      {
+        "name": "/join-to-create disable",
+        "description": "disable jtc",
+        "isPremium": false
+      },
+      {
+        "name": "/verify setup",
+        "description": "setup verification",
+        "isPremium": false
+      },
+      {
+        "name": "/verify bypass",
+        "description": "bypass verify",
+        "isPremium": false
+      },
+      {
+        "name": "/verify remove",
+        "description": "remove verify",
+        "isPremium": false
+      },
+      {
+        "name": "/verify disable",
+        "description": "disable verify",
+        "isPremium": false
+      },
+      {
+        "name": "/verify status",
+        "description": "verify status",
+        "isPremium": false
+      },
+      {
+        "name": "/rr create",
+        "description": "create a new panel (buttons/dropdown/reactions)",
+        "isPremium": false
+      },
+      {
+        "name": "/rr add",
+        "description": "add role + emoji to a panel",
+        "isPremium": false
+      },
+      {
+        "name": "/rr remove",
+        "description": "remove an item from a panel",
+        "isPremium": false
+      },
+      {
+        "name": "/rr config",
+        "description": "configure panel settings & policies",
+        "isPremium": false
+      },
+      {
+        "name": "/rr list",
+        "description": "list all panels in the server",
+        "isPremium": false
+      },
+      {
+        "name": "/rr view",
+        "description": "view detailed panel info & items",
+        "isPremium": false
+      },
+      {
+        "name": "/rr delete",
+        "description": "delete a panel completely",
+        "isPremium": false
+      },
+      {
+        "name": "/rr regen",
+        "description": "repost/refresh a panel message",
+        "isPremium": false
+      },
+      {
+        "name": "/rr sync",
+        "description": "sync emojis (reactions mode only)",
+        "isPremium": false
+      },
+      {
+        "name": "/rr stats",
+        "description": "view panel interaction statistics",
+        "isPremium": false
+      },
+      {
+        "name": "/rr reorder",
+        "description": "change item positions",
+        "isPremium": false
+      },
+      {
+        "name": "/rr bulkadd",
+        "description": "add multiple items via JSON",
+        "isPremium": false
+      },
+      {
+        "name": "/welcome channel set",
+        "description": "set welcome channel",
+        "isPremium": false
+      },
+      {
+        "name": "/welcome channel remove",
+        "description": "remove welcome channel",
+        "isPremium": false
+      },
+      {
+        "name": "/welcome config",
+        "description": "config welcome",
+        "isPremium": false
+      }
+    ]
+  },
+  {
+    "name": "Tickets",
+    "emoji": "<:mb_tickets:1448297943303061726>",
+    "commands": [
+      {
+        "name": "/ticket setup",
+        "description": "setup tickets",
+        "isPremium": false
+      },
+      {
+        "name": "/ticket panel",
+        "description": "ticket panel",
+        "isPremium": true
+      },
+      {
+        "name": "/ticket delete",
+        "description": "delete ticket",
+        "isPremium": false
+      },
+      {
+        "name": "/ticket archive",
+        "description": "archive ticket",
+        "isPremium": false
+      },
+      {
+        "name": "/ticket add-user",
+        "description": "add user",
+        "isPremium": false
+      },
+      {
+        "name": "/ticket remove-user",
+        "description": "remove user",
+        "isPremium": false
+      },
+      {
+        "name": "/ticket close",
+        "description": "close ticket",
+        "isPremium": false
+      },
+      {
+        "name": "/ticket claim",
+        "description": "claim ticket",
+        "isPremium": false
+      },
+      {
+        "name": "/ticket unclaim",
+        "description": "unclaim ticket",
+        "isPremium": false
+      },
+      {
+        "name": "/ticket information",
+        "description": "ticket info",
+        "isPremium": false
+      }
+    ]
+  },
+  {
+    "name": "Tools",
+    "emoji": "<:mb_tools:1448297911459909752>",
+    "commands": [
+      {
+        "name": "/tools decode",
+        "description": "decode text",
+        "isPremium": false
+      },
+      {
+        "name": "/tools encode",
+        "description": "encode text",
+        "isPremium": false
+      },
+      {
+        "name": "/tools emojify",
+        "description": "make emoji text",
+        "isPremium": false
+      },
+      {
+        "name": "/tools enlarge",
+        "description": "enlarge emoji",
+        "isPremium": false
+      },
+      {
+        "name": "/tools mcskin",
+        "description": "minecraft skin",
+        "isPremium": false
+      },
+      {
+        "name": "/tools mcstatus",
+        "description": "minecraft server status",
+        "isPremium": false
+      },
+      {
+        "name": "/tools passwordgen",
+        "description": "generate password",
+        "isPremium": false
+      },
+      {
+        "name": "/tools qrcode",
+        "description": "make QR code",
+        "isPremium": false
+      },
+      {
+        "name": "/tools shortenurl",
+        "description": "shorten url",
+        "isPremium": false
+      }
+    ]
+  },
+  {
+    "name": "Utility",
+    "emoji": "<:mb_utility:1448298269334704180>",
+    "commands": [
+      {
+        "name": "/afk set",
+        "description": "set AFK",
+        "isPremium": false
+      },
+      {
+        "name": "/afk remove",
+        "description": "remove AFK",
+        "isPremium": false
+      },
+      {
+        "name": "/afk info",
+        "description": "AFK info",
+        "isPremium": false
+      },
+      {
+        "name": "/afk list",
+        "description": "AFK list",
+        "isPremium": false
+      },
+      {
+        "name": "/afk config enable",
+        "description": "enable AFK config",
+        "isPremium": false
+      },
+      {
+        "name": "/afk config disable",
+        "description": "disable AFK config",
+        "isPremium": false
+      },
+      {
+        "name": "/afk config cooldown",
+        "description": "set AFK cooldown",
+        "isPremium": false
+      },
+      {
+        "name": "/afk config ignore-channel",
+        "description": "ignore channel",
+        "isPremium": false
+      },
+      {
+        "name": "/countdown aprilfools",
+        "description": "countdown",
+        "isPremium": false
+      },
+      {
+        "name": "/countdown birthday",
+        "description": "countdown",
+        "isPremium": false
+      },
+      {
+        "name": "/countdown christmas",
+        "description": "countdown",
+        "isPremium": false
+      },
+      {
+        "name": "/countdown easter",
+        "description": "countdown",
+        "isPremium": false
+      },
+      {
+        "name": "/countdown halloween",
+        "description": "countdown",
+        "isPremium": false
+      },
+      {
+        "name": "/countdown newyear",
+        "description": "countdown",
+        "isPremium": false
+      },
+      {
+        "name": "/countdown thanksgiving",
+        "description": "countdown",
+        "isPremium": false
+      },
+      {
+        "name": "/countdown valentines",
+        "description": "countdown",
+        "isPremium": false
+      },
+      {
+        "name": "/country set",
+        "description": "set country",
+        "isPremium": false
+      },
+      {
+        "name": "/country view",
+        "description": "view country",
+        "isPremium": false
+      },
+      {
+        "name": "/country list",
+        "description": "list countries",
+        "isPremium": false
+      },
+      {
+        "name": "/country matches",
+        "description": "matches",
+        "isPremium": false
+      },
+      {
+        "name": "/country remove",
+        "description": "remove country",
+        "isPremium": false
+      },
+      {
+        "name": "/embedbuilder create",
+        "description": "create embed",
+        "isPremium": false
+      },
+      {
+        "name": "/embedbuilder template load",
+        "description": "load template",
+        "isPremium": true
+      },
+      {
+        "name": "/embedbuilder template list",
+        "description": "list templates",
+        "isPremium": true
+      },
+      {
+        "name": "/embedbuilder template delete",
+        "description": "delete template",
+        "isPremium": true
+      },
+      {
+        "name": "/pokedex",
+        "description": "pokemon lookup",
+        "isPremium": false
+      },
+      {
+        "name": "/stickymessage create",
+        "description": "create sticky",
+        "isPremium": false
+      },
+      {
+        "name": "/stickymessage edit",
+        "description": "edit sticky",
+        "isPremium": false
+      },
+      {
+        "name": "/stickymessage remove",
+        "description": "remove sticky",
+        "isPremium": false
+      },
+      {
+        "name": "/stickymessage list",
+        "description": "list sticky",
+        "isPremium": false
+      },
+      {
+        "name": "/stickymessage toggle",
+        "description": "toggle sticky",
+        "isPremium": false
+      },
+      {
+        "name": "/stickymessage setchannel",
+        "description": "set channel",
+        "isPremium": false
+      },
+      {
+        "name": "/stickymessage reorder",
+        "description": "reorder",
+        "isPremium": false
+      },
+      {
+        "name": "/stickymessage config",
+        "description": "sticky config",
+        "isPremium": false
+      },
+      {
+        "name": "/birthday set",
+        "description": "set birthday",
+        "isPremium": false
+      },
+      {
+        "name": "/birthday view",
+        "description": "view birthday",
+        "isPremium": false
+      },
+      {
+        "name": "/birthday list",
+        "description": "birthday list",
+        "isPremium": false
+      },
+      {
+        "name": "/birthday matches",
+        "description": "birthday matches",
+        "isPremium": false
+      },
+      {
+        "name": "/birthday remove",
+        "description": "remove birthday",
+        "isPremium": false
+      }
+    ]
+  },
+  {
+    "name": "Backup",
+    "emoji": "<:mb_pkg:1448297649760374804>",
+    "commands": [
+      {
+        "name": "/backup info",
+        "description": "backup info",
+        "isPremium": true
+      },
+      {
+        "name": "/backup create",
+        "description": "create backup",
+        "isPremium": true
+      },
+      {
+        "name": "/backup restore",
+        "description": "restore backup",
+        "isPremium": true
+      },
+      {
+        "name": "/backup delete",
+        "description": "delete backup",
+        "isPremium": true
+      }
+    ]
+  },
+  {
+    "name": "Youtube Verification",
+    "emoji": "<:mb_youtube:1448297975334830162>",
+    "commands": [
+      {
+        "name": "/ytverify setup",
+        "description": "setup youtube verification",
+        "isPremium": true
+      },
+      {
+        "name": "/ytverify disable",
+        "description": "disable",
+        "isPremium": true
+      },
+      {
+        "name": "/ytverify status",
+        "description": "status",
+        "isPremium": true
+      }
+    ]
+  }
+]

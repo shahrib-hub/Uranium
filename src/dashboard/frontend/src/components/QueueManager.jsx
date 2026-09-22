@@ -80,7 +80,7 @@ export default function QueueManager() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h3 className="text-lg font-semibold text-white">Up Next</h3>
-          <span className="px-2.5 py-0.5 bg-rose-500/15 text-rose-300 ring-1 ring-rose-500/20 text-[10px] font-bold rounded-full">{queue.length} Tracks</span>
+          <span className="px-2 py-0.5 bg-rose-500/15 text-rose-300 ring-1 ring-rose-500/20 text-[10px] font-bold rounded-md">{queue.length} Tracks</span>
         </div>
         <button 
           onClick={handleClear}

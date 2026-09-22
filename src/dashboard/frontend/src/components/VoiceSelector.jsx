@@ -53,7 +53,7 @@ export default function VoiceSelector() {
         <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--quiet)]">
           {player.active ? 'Connection Locked' : 'Voice Channels'}
         </span>
-        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ring-1 bg-white/5 ring-white/10 text-[var(--muted)]">
+        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ring-1 bg-white/5 ring-white/10 text-[var(--muted)]">
           {player.active ? 'Active' : `${channels.length} Available`}
         </span>
       </div>

@@ -46,10 +46,12 @@ function AppShell({ children }) {
   }, [guildId, setPlayer]);
 
   return (
-    <div className="min-h-screen">
-      {dashboardArea && <Sidebar />}
+    <div className="min-h-screen bg-[#0e0f15] text-[#f3f4f6]">
       {dashboardArea && <Header />}
-      <main className={dashboardArea ? 'min-h-screen pt-[5.35rem] lg:pl-[17.5rem]' : 'min-h-screen'}>{children}</main>
+      {dashboardArea && <Sidebar />}
+      <main className={dashboardArea ? 'min-h-screen pt-14 lg:pl-64 bg-[#0e0f15]' : 'min-h-screen'}>
+        {children}
+      </main>
     </div>
   );
 }

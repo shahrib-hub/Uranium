@@ -4,11 +4,13 @@ export const useStore = create((set) => ({
   user: null,
   guilds: [],
   activeGuild: null,
+  sidebarOpen: false,
   player: { active: false, lastUpdate: Date.now() },
   
   setUser: (user) => set({ user }),
   setGuilds: (guilds) => set({ guilds }),
   setActiveGuild: (guild) => set({ activeGuild: guild }),
+  setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
   setPlayer: (player) => set({ 
     player: { ...player, lastUpdate: Date.now() } 
   }),

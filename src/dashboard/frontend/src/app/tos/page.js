@@ -72,7 +72,7 @@ export default function TermsOfService() {
 
         {/* Hero Header */}
         <div className="mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-bold tracking-wide uppercase mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-bold tracking-wide uppercase mb-4">
             <Scale size={13} />
             <span>Legal & Compliance</span>
           </div>

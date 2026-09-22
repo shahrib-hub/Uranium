@@ -69,7 +69,7 @@ export default function FilterSelector() {
           Sound Profile
         </span>
         {isActive && current !== 'clear' ? (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-500/20 text-rose-300 text-[10px] font-bold rounded-full uppercase ring-1 ring-rose-500/30">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-500/20 text-rose-300 text-[10px] font-bold rounded-md uppercase ring-1 ring-rose-500/30">
             <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
             {activeMeta.label} Active
           </span>

@@ -119,6 +119,17 @@ function createApiRouter(client) {
       
       // SPECIFIC DEV COMMAND BLACKLIST
       const devBlacklist = ['/ecoconfig', '/premiumadmin', '/notificationtesting', '/dbmigrate'];
+
+      const isPremiumCmd = (cmdName) => {
+        const lower = cmdName.toLowerCase();
+        if (lower.startsWith('/ytverify')) return true;
+        if (lower.startsWith('/premium')) return true;
+        if (lower.startsWith('/ai') && !lower.includes('help')) return true;
+        if (lower.startsWith('/backup')) return true;
+        if (lower.includes('embedbuilder template')) return true;
+        if (lower === '/ticket panel') return true;
+        return false;
+      };
       
       const publicCategories = (helpData.categories || [])
         .map(cat => ({
@@ -131,7 +142,12 @@ function createApiRouter(client) {
             })
             .map(cmdStr => {
               const [name, desc] = cmdStr.split(' — ');
-              return { name: (name || '').trim(), description: (desc || '').trim() };
+              const cleanName = (name || '').trim();
+              return { 
+                name: cleanName, 
+                description: (desc || '').trim(),
+                isPremium: isPremiumCmd(cleanName)
+              };
             })
         }))
         .filter(cat => cat.commands.length > 0);

@@ -2,81 +2,87 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { BookOpen, ChevronDown, ChevronRight, Gift, Home, Menu, Music2, Settings, ShieldAlert, Sparkles, Users, X } from 'lucide-react';
+import {
+  LayoutDashboard,
+  ShieldAlert,
+  Music2,
+  Users,
+  Gift,
+  Settings,
+  BookOpen,
+  ChevronDown,
+  ChevronRight,
+  Plus,
+  Crown,
+  Sparkles,
+  Database,
+  ExternalLink,
+  Check,
+  Search,
+  Server
+} from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useStore } from '@/store';
-
-const links = [
-  { href: '/dashboard', label: 'Overview', icon: Home },
-  { href: '/dashboard/moderation', label: 'Moderation', icon: ShieldAlert },
-  { href: '/dashboard/music', label: 'Music', icon: Music2 },
-  { href: '/dashboard/rr', label: 'Reaction roles', icon: Users },
-  { href: '/dashboard/giveaways', label: 'Giveaways', icon: Gift },
-  { href: '/dashboard/settings', label: 'Bot settings', icon: Settings },
-  { href: '/commands', label: 'Commands', icon: BookOpen }
-];
 
 export default function Sidebar() {
   const pathname = usePathname();
   const params = useSearchParams();
   const router = useRouter();
-  const { guilds, setGuilds } = useStore();
-  const [open, setOpen] = useState(false);
+  const { guilds, setGuilds, sidebarOpen, setSidebarOpen } = useStore();
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [serverSearch, setServerSearch] = useState('');
+  const [essentialsOpen, setEssentialsOpen] = useState(true);
+  const [premiumOpen, setPremiumOpen] = useState(true);
+
   const guildId = params.get('guild');
 
   useEffect(() => {
     if (guilds.length) return;
-    fetch('/api/guilds').then((r) => r.ok ? r.json() : []).then((data) => {
-      if (Array.isArray(data)) setGuilds(data.filter((guild) => guild.isBotAdded));
-    }).catch(() => null);
+    fetch('/api/guilds')
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => {
+        if (Array.isArray(data)) setGuilds(data.filter((guild) => guild.isBotAdded));
+      })
+      .catch(() => null);
   }, [guilds.length, setGuilds]);
 
   const activeGuild = guilds.find((guild) => guild.id === guildId);
-  const withGuild = (href) => guildId ? href + '?guild=' + guildId : href;
+  const withGuild = (href) => (guildId ? `${href}?guild=${guildId}` : href);
+
   const chooseGuild = (id) => {
     setPickerOpen(false);
-    setOpen(false);
+    setSidebarOpen(false);
     const targetPath = pathname.startsWith('/dashboard') ? pathname : '/dashboard';
-    router.push(targetPath + '?guild=' + id);
+    router.push(`${targetPath}?guild=${id}`);
   };
+
+  const filteredGuilds = guilds.filter((g) =>
+    g.name.toLowerCase().includes(serverSearch.toLowerCase())
+  );
 
   return (
     <>
-      <button
-        className="fixed left-3.5 top-3.5 z-[70] grid h-11 w-11 place-items-center rounded-2xl border border-white/15 bg-black/60 text-white backdrop-blur-xl transition hover:bg-black/80 lg:hidden shadow-lg"
-        onClick={() => setOpen(!open)}
-        aria-label="Open navigation"
-      >
-        {open ? <X size={20} /> : <Menu size={20} />}
-      </button>
-
-      {open && (
-        <button
-          className="fixed inset-0 z-[50] bg-black/70 backdrop-blur-sm lg:hidden transition-opacity"
-          aria-label="Close navigation"
-          onClick={() => setOpen(false)}
+      {/* Mobile Backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/60 lg:hidden transition-opacity"
+          onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      <aside className={"fixed inset-y-0 left-0 z-[60] flex w-[17.5rem] flex-col border-r border-white/10 bg-[#090507]/95 px-4 py-5 backdrop-blur-2xl transition-transform duration-300 lg:translate-x-0 " + (open ? 'translate-x-0' : '-translate-x-full')}>
-        <Link href="/" className="flex items-center gap-3 px-3 py-2">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[#ff294f] to-[#ff8499] text-white shadow-[0_10px_26px_rgba(255,45,79,.3)]">
-            <Sparkles size={18} />
-          </span>
-          <span className="min-w-0">
-            <strong className="block text-base tracking-tight text-white">Uranium</strong>
-            <small className="text-xs text-[var(--muted)]">Discord dashboard</small>
-          </span>
-        </Link>
-
-        {/* Server Selector */}
-        <div className="relative mt-7">
+      <aside
+        className={`fixed top-14 bottom-0 left-0 z-40 flex w-64 flex-col border-r border-[#1e202c] bg-[#13141c] text-[#f3f4f6] transition-transform duration-200 lg:translate-x-0 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        {/* Top: MEE6-Style Server Switcher */}
+        <div className="relative p-3 border-b border-[#1e202c]">
           <button
+            type="button"
             onClick={() => setPickerOpen(!pickerOpen)}
-            className="glass relative z-10 flex w-full items-center gap-3 rounded-2xl p-3 text-left transition hover:border-rose-400/30"
+            className="flex w-full items-center gap-2.5 rounded-xl border border-[#262838] bg-[#181923] hover:bg-[#1f212d] hover:border-[#35384d] p-2 text-left transition"
           >
-            <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-xl bg-rose-400/15 text-sm font-semibold text-rose-100 ring-1 ring-white/10">
+            <span className="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-lg bg-rose-500/15 text-xs font-bold text-rose-300">
               {activeGuild?.icon ? (
                 <img
                   className="h-full w-full object-cover"
@@ -84,32 +90,53 @@ export default function Sidebar() {
                   src={`https://cdn.discordapp.com/icons/${activeGuild.id}/${activeGuild.icon}.png`}
                 />
               ) : (
-                activeGuild?.name?.[0] || <Sparkles size={16} />
+                activeGuild?.name?.[0] || '?'
               )}
             </span>
-            <span className="min-w-0 flex-1">
-              <small className="block text-[10px] font-bold uppercase tracking-[.12em] text-[var(--quiet)]">Selected server</small>
-              <strong className="block truncate text-sm font-semibold text-white">{activeGuild?.name || 'Choose a server'}</strong>
+            <span className="min-w-0 flex-1 truncate font-bold text-xs text-white">
+              {activeGuild?.name || 'Choose Server'}
             </span>
-            <ChevronDown size={16} className={`text-[var(--muted)] transition-transform duration-200 ${pickerOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown
+              size={15}
+              className={`text-white/40 transition-transform duration-200 shrink-0 ${
+                pickerOpen ? 'rotate-180' : ''
+              }`}
+            />
           </button>
 
+          {/* Server Switcher Dropdown */}
           {pickerOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setPickerOpen(false)} />
-              <div className="absolute inset-x-0 top-[calc(100%+.5rem)] z-50 max-h-72 overflow-y-auto rounded-2xl border border-white/15 bg-[#12080f] p-2 shadow-2xl backdrop-blur-3xl ring-1 ring-black/40">
-                <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--quiet)]">Available Servers ({guilds.length})</p>
-                {guilds.length ? (
-                  <div className="space-y-1 mt-1">
-                    {guilds.map((guild) => {
+              <div className="absolute inset-x-3 top-[calc(100%+4px)] z-50 rounded-xl border border-[#2a2c3d] bg-[#161722] p-2 shadow-2xl">
+                {/* Search */}
+                <div className="relative mb-2">
+                  <Search size={13} className="absolute left-2.5 top-2.5 text-white/40" />
+                  <input
+                    type="text"
+                    placeholder="Search servers..."
+                    value={serverSearch}
+                    onChange={(e) => setServerSearch(e.target.value)}
+                    className="w-full pl-8 pr-2.5 py-1.5 rounded-lg bg-[#101118] border border-[#232534] text-xs text-white placeholder:text-white/40 outline-none focus:border-rose-500/50"
+                  />
+                </div>
+
+                <div className="max-h-52 overflow-y-auto space-y-1">
+                  {filteredGuilds.length > 0 ? (
+                    filteredGuilds.map((guild) => {
                       const isSelected = guild.id === guildId;
                       return (
                         <button
                           key={guild.id}
+                          type="button"
                           onClick={() => chooseGuild(guild.id)}
-                          className={"flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left text-sm transition " + (isSelected ? 'bg-rose-500/20 text-rose-100 ring-1 ring-rose-400/30' : 'text-[var(--muted)] hover:bg-white/[.08] hover:text-white')}
+                          className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-xs transition ${
+                            isSelected
+                              ? 'bg-rose-500/20 text-white font-bold'
+                              : 'text-white/70 hover:bg-white/5 hover:text-white'
+                          }`}
                         >
-                          <span className="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-xl bg-white/10 text-xs font-semibold ring-1 ring-white/10">
+                          <span className="grid h-6 w-6 shrink-0 place-items-center overflow-hidden rounded-md bg-white/10 text-[10px] font-bold">
                             {guild.icon ? (
                               <img
                                 className="h-full w-full object-cover"
@@ -120,67 +147,207 @@ export default function Sidebar() {
                               guild.name?.[0] || '?'
                             )}
                           </span>
-                          <span className="min-w-0 flex-1 truncate font-medium">{guild.name}</span>
-                          {isSelected && <span className="h-2 w-2 rounded-full bg-rose-400 shrink-0 shadow-[0_0_8px_#ff4f71]" />}
+                          <span className="min-w-0 flex-1 truncate">{guild.name}</span>
+                          {isSelected && <Check size={13} className="text-rose-400 shrink-0" />}
                         </button>
                       );
-                    })}
-                  </div>
-                ) : (
-                  <p className="p-3 text-sm text-[var(--muted)]">No servers are available yet.</p>
-                )}
-                <div className="mt-2 border-t border-white/10 pt-2">
+                    })
+                  ) : (
+                    <p className="p-2 text-center text-xs text-white/40">No servers found</p>
+                  )}
+                </div>
+
+                <div className="mt-2 pt-2 border-t border-white/5 flex items-center justify-between text-[11px] px-1">
                   <Link
-                    onClick={() => { setPickerOpen(false); setOpen(false); }}
                     href="/servers"
-                    className="flex items-center justify-center rounded-xl py-2 text-xs font-semibold text-rose-300 hover:bg-rose-400/10 transition"
+                    onClick={() => {
+                      setPickerOpen(false);
+                      setSidebarOpen(false);
+                    }}
+                    className="text-rose-400 hover:text-rose-300 font-semibold"
                   >
-                    View all servers →
+                    View All Servers
                   </Link>
+                  <a
+                    href="https://discord.com/oauth2/authorize?client_id=932136827605905489&permissions=8&scope=bot%20applications.commands"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-white/40 hover:text-white flex items-center gap-1"
+                  >
+                    <Plus size={11} /> Add Bot
+                  </a>
                 </div>
               </div>
             </>
           )}
         </div>
 
-        {/* Navigation Links */}
-        <nav className="mt-7 space-y-1.5 overflow-y-auto">
-          {links.map(({ href, label, icon: Icon }) => {
-            const selected = pathname === href;
-            return (
-              <Link
-                key={href}
-                href={withGuild(href)}
-                onClick={() => setOpen(false)}
-                className={"group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition " + (selected ? 'bg-rose-400/15 text-white shadow-[inset_0_1px_0_rgba(255,255,255,.1)] ring-1 ring-rose-400/20' : 'text-[var(--muted)] hover:bg-white/[.06] hover:text-white')}
-              >
-                <Icon size={18} className={selected ? 'text-rose-300' : 'group-hover:text-rose-300 transition-colors'} />
-                <span className="flex-1 truncate">{label}</span>
-                {selected && <ChevronRight size={15} className="text-rose-300 shrink-0" />}
-              </Link>
-            );
-          })}
-        </nav>
+        {/* Navigation List */}
+        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-4">
+          {/* Main Top Links */}
+          <div className="space-y-0.5">
+            <Link
+              href={withGuild('/dashboard')}
+              onClick={() => setSidebarOpen(false)}
+              className={`flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition ${
+                pathname === '/dashboard'
+                  ? 'bg-[#222432] text-white'
+                  : 'text-[#949ba4] hover:text-white hover:bg-[#1a1b24]'
+              }`}
+            >
+              <LayoutDashboard size={16} className={pathname === '/dashboard' ? 'text-rose-400' : ''} />
+              <span>Dashboard</span>
+            </Link>
 
-        {/* Bottom Card */}
-        <div className="mt-auto rounded-2xl border border-white/10 bg-white/[.035] p-4">
-          <p className="text-sm font-semibold text-white">Need another server?</p>
-          <p className="mt-1 text-xs leading-5 text-[var(--muted)]">Open your server list to choose one or invite Uranium somewhere new.</p>
-          <Link href="/servers" className="lucent-button mt-3.5 h-9 w-full rounded-xl text-xs font-semibold">
-            Manage servers
-          </Link>
+            <Link
+              href={withGuild('/commands')}
+              onClick={() => setSidebarOpen(false)}
+              className={`flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition ${
+                pathname === '/commands'
+                  ? 'bg-[#222432] text-white'
+                  : 'text-[#949ba4] hover:text-white hover:bg-[#1a1b24]'
+              }`}
+            >
+              <BookOpen size={16} className={pathname === '/commands' ? 'text-rose-400' : ''} />
+              <span>Commands</span>
+            </Link>
+          </div>
+
+          {/* ESSENTIALS Group */}
+          <div className="space-y-1">
+            <button
+              type="button"
+              onClick={() => setEssentialsOpen(!essentialsOpen)}
+              className="flex w-full items-center justify-between px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white/40 hover:text-white/70 transition"
+            >
+              <span>Essentials</span>
+              <ChevronDown
+                size={12}
+                className={`transition-transform duration-150 ${
+                  essentialsOpen ? 'rotate-0' : '-rotate-90'
+                }`}
+              />
+            </button>
+
+            {essentialsOpen && (
+              <div className="space-y-0.5 pt-0.5">
+                {[
+                  { href: '/dashboard/moderation', label: 'Moderator & AutoMod', icon: ShieldAlert },
+                  { href: '/dashboard/rr', label: 'Reaction Roles', icon: Users },
+                  { href: '/dashboard/music', label: 'Music & Audio', icon: Music2 },
+                  { href: '/dashboard/giveaways', label: 'Giveaways', icon: Gift },
+                  { href: '/dashboard/settings', label: 'Bot Settings', icon: Settings }
+                ].map(({ href, label, icon: Icon }) => {
+                  const active = pathname === href;
+                  return (
+                    <Link
+                      key={href}
+                      href={withGuild(href)}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
+                        active
+                          ? 'bg-[#222432] text-white'
+                          : 'text-[#949ba4] hover:text-white hover:bg-[#1a1b24]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon size={16} className={active ? 'text-rose-400' : ''} />
+                        <span>{label}</span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* PREMIUM & ADVANCED Group */}
+          <div className="space-y-1">
+            <button
+              type="button"
+              onClick={() => setPremiumOpen(!premiumOpen)}
+              className="flex w-full items-center justify-between px-3 py-1 text-[10px] font-black uppercase tracking-wider text-amber-400/70 hover:text-amber-300 transition"
+            >
+              <span className="flex items-center gap-1.5">
+                <Crown size={11} className="fill-amber-400 text-amber-400" />
+                <span>Premium Perks</span>
+              </span>
+              <ChevronDown
+                size={12}
+                className={`transition-transform duration-150 ${
+                  premiumOpen ? 'rotate-0' : '-rotate-90'
+                }`}
+              />
+            </button>
+
+            {premiumOpen && (
+              <div className="space-y-0.5 pt-0.5">
+                {[
+                  {
+                    href: withGuild('/commands') + '&search=ai',
+                    label: 'AI Characters & Chat',
+                    icon: Sparkles
+                  },
+                  {
+                    href: withGuild('/commands') + '&search=ytverify',
+                    label: 'YouTube Verification',
+                    icon: Check
+                  },
+                  {
+                    href: withGuild('/commands') + '&search=backup',
+                    label: 'Server Backups',
+                    icon: Database
+                  },
+                  {
+                    href: 'https://discord.gg/26ThFyckFX',
+                    label: 'Upgrade / Buy Code',
+                    icon: Crown,
+                    external: true
+                  }
+                ].map(({ href, label, icon: Icon, external }) => {
+                  return (
+                    <a
+                      key={label}
+                      href={href}
+                      target={external ? '_blank' : undefined}
+                      rel={external ? 'noopener noreferrer' : undefined}
+                      onClick={() => setSidebarOpen(false)}
+                      className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-[#949ba4] hover:text-white hover:bg-[#1a1b24] transition group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon size={16} className="text-amber-400/80 group-hover:text-amber-300" />
+                        <span>{label}</span>
+                      </div>
+                      <Crown size={12} className="fill-amber-400 text-amber-400 shrink-0" />
+                    </a>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Footer Legal Links */}
-        <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between px-2 text-[11px] text-[var(--quiet)]">
-          <Link href="/tos" onClick={() => setOpen(false)} className="hover:text-rose-300 transition-colors py-1">Terms of Service</Link>
-          <span className="text-white/10">•</span>
-          <Link href="/privacy" onClick={() => setOpen(false)} className="hover:text-rose-300 transition-colors py-1">Privacy</Link>
-          <span className="text-white/10">•</span>
-          <a href="https://discord.gg/26ThFyckFX" target="_blank" rel="noopener noreferrer" className="hover:text-rose-300 transition-colors py-1">Support</a>
+        {/* Sidebar Footer */}
+        <div className="p-3 border-t border-[#1e202c] space-y-2">
+          <a
+            href="https://discord.gg/26ThFyckFX"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between px-3 py-2 rounded-xl bg-[#181923] hover:bg-[#1e202d] border border-[#232534] text-xs font-semibold text-white/70 hover:text-white transition"
+          >
+            <span>Need Help? Support</span>
+            <ExternalLink size={12} className="text-white/40" />
+          </a>
+
+          <div className="flex items-center justify-between px-2 text-[10px] text-white/30">
+            <Link href="/tos" className="hover:text-white/60 transition">Terms</Link>
+            <span>•</span>
+            <Link href="/privacy" className="hover:text-white/60 transition">Privacy</Link>
+            <span>•</span>
+            <Link href="/docs" className="hover:text-white/60 transition">Docs</Link>
+          </div>
         </div>
       </aside>
     </>
   );
 }
-
