@@ -73,6 +73,36 @@ function defaultConfig() {
   };
 }
 
+function normalizeConfig(parsed) {
+  const def = defaultConfig();
+  if (!parsed || typeof parsed !== 'object') return def;
+  return {
+    ...def,
+    ...parsed,
+    AntiSpam: { ...def.AntiSpam, ...(parsed.AntiSpam || {}) },
+    AntiLink: {
+      ...def.AntiLink,
+      ...(parsed.AntiLink || {}),
+      whitelistedDomains: Array.isArray(parsed.AntiLink?.whitelistedDomains)
+        ? parsed.AntiLink.whitelistedDomains
+        : []
+    },
+    AntiCaps: { ...def.AntiCaps, ...(parsed.AntiCaps || {}) },
+    AntiInvite: { ...def.AntiInvite, ...(parsed.AntiInvite || {}) },
+    AntiMentionSpam: { ...def.AntiMentionSpam, ...(parsed.AntiMentionSpam || {}) },
+    BannedWords: {
+      ...def.BannedWords,
+      ...(parsed.BannedWords || {}),
+      words: Array.isArray(parsed.BannedWords?.words)
+        ? parsed.BannedWords.words
+        : []
+    },
+    AntiRaid: { ...def.AntiRaid, ...(parsed.AntiRaid || {}) },
+    IgnoredChannels: Array.isArray(parsed.IgnoredChannels) ? parsed.IgnoredChannels : [],
+    IgnoredRoles: Array.isArray(parsed.IgnoredRoles) ? parsed.IgnoredRoles : []
+  };
+}
+
 module.exports = {
   async getConfig(guildId) {
     if (isMongoReady()) {
@@ -82,8 +112,11 @@ module.exports = {
         await this.setConfig(guildId, def);
         return def;
       }
-      try { return JSON.parse(doc.settings); }
-      catch { return defaultConfig(); }
+      try { 
+        return normalizeConfig(JSON.parse(doc.settings)); 
+      } catch { 
+        return defaultConfig(); 
+      }
     }
 
     await ready;
@@ -94,7 +127,7 @@ module.exports = {
       return def;
     }
     try {
-      return JSON.parse(row.settings);
+      return normalizeConfig(JSON.parse(row.settings));
     } catch {
       const def = defaultConfig();
       await this.setConfig(guildId, def);
@@ -103,7 +136,8 @@ module.exports = {
   },
 
   async setConfig(guildId, newSettings) {
-    const json = JSON.stringify(newSettings);
+    const normalized = normalizeConfig(newSettings);
+    const json = JSON.stringify(normalized);
     if (isMongoReady()) {
       await mongooseModels.AutomodSettings.findOneAndUpdate(
         { guildId },

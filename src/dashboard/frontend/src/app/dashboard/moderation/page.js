@@ -27,7 +27,10 @@ import {
   ChevronRight,
   Sparkles,
   Hash,
-  Eye
+  Eye,
+  X,
+  Globe,
+  Ban
 } from 'lucide-react';
 import CustomSelect from '@/components/CustomSelect';
 import ConfirmModal from '@/components/ConfirmModal';
@@ -132,6 +135,8 @@ export default function ModerationPage() {
   // Automod state
   const [automod, setAutomod] = useState(null);
   const [automodSaving, setAutomodSaving] = useState(false);
+  const [domainInput, setDomainInput] = useState('');
+  const [wordInput, setWordInput] = useState('');
 
   // Mod Settings state
   const [modSettings, setModSettings] = useState({ logChannel: '', mutedRole: '', modRoles: [] });
@@ -520,6 +525,58 @@ export default function ModerationPage() {
     } finally {
       setAutomodSaving(false);
     }
+  };
+
+  const handleAddDomain = () => {
+    const d = domainInput.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+    if (!d) return;
+    const current = automod?.AntiLink?.whitelistedDomains || [];
+    if (!current.includes(d)) {
+      setAutomod({
+        ...automod,
+        AntiLink: {
+          ...automod?.AntiLink,
+          whitelistedDomains: [...current, d]
+        }
+      });
+    }
+    setDomainInput('');
+  };
+
+  const handleRemoveDomain = (dom) => {
+    setAutomod({
+      ...automod,
+      AntiLink: {
+        ...automod?.AntiLink,
+        whitelistedDomains: (automod?.AntiLink?.whitelistedDomains || []).filter((x) => x !== dom)
+      }
+    });
+  };
+
+  const handleAddWord = () => {
+    const w = wordInput.trim().toLowerCase();
+    if (!w) return;
+    const current = automod?.BannedWords?.words || [];
+    if (!current.includes(w)) {
+      setAutomod({
+        ...automod,
+        BannedWords: {
+          ...automod?.BannedWords,
+          words: [...current, w]
+        }
+      });
+    }
+    setWordInput('');
+  };
+
+  const handleRemoveWord = (word) => {
+    setAutomod({
+      ...automod,
+      BannedWords: {
+        ...automod?.BannedWords,
+        words: (automod?.BannedWords?.words || []).filter((x) => x !== word)
+      }
+    });
   };
 
   // Save General Mod Settings
@@ -1229,7 +1286,8 @@ export default function ModerationPage() {
             </div>
 
             {automod && (
-              <div className="grid gap-5 md:grid-cols-2">
+              <>
+                <div className="grid gap-5 md:grid-cols-2">
                 {/* Anti-Spam */}
                 <section className="lucent-card rounded-[1.8rem] p-6 space-y-4">
                   <div className="flex items-center justify-between">
@@ -1342,6 +1400,58 @@ export default function ModerationPage() {
                         }
                         options={PENALTY_ACTIONS}
                       />
+                      <div className="space-y-2 pt-2 border-t border-white/5">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--quiet)] flex items-center gap-1.5">
+                          <Globe size={11} className="text-blue-300" />
+                          Whitelisted Domains ({automod.AntiLink?.whitelistedDomains?.length || 0})
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={domainInput}
+                            onChange={(e) => setDomainInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleAddDomain();
+                              }
+                            }}
+                            placeholder="e.g. youtube.com, tenor.com…"
+                            className="lucent-input px-3 py-2 text-xs flex-1"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleAddDomain}
+                            className="lucent-button px-3 py-2 rounded-xl text-xs font-semibold text-rose-200 hover:bg-rose-500/20 transition shrink-0"
+                          >
+                            + Add
+                          </button>
+                        </div>
+                        {automod.AntiLink?.whitelistedDomains?.length > 0 ? (
+                          <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pt-1">
+                            {automod.AntiLink.whitelistedDomains.map((dom) => (
+                              <span
+                                key={dom}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-xs text-blue-200"
+                              >
+                                <span>{dom}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveDomain(dom)}
+                                  className="text-blue-300/60 hover:text-white transition"
+                                  title="Remove domain"
+                                >
+                                  <X size={12} />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-[11px] text-[var(--quiet)] italic">
+                            No domains whitelisted. All external links will trigger this rule.
+                          </p>
+                        )}
+                      </div>
                     </div>
                   )}
                 </section>
@@ -1583,7 +1693,279 @@ export default function ModerationPage() {
                     </div>
                   )}
                 </section>
+
+                {/* Banned Words */}
+                <section className="lucent-card rounded-[1.8rem] p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="grid h-10 w-10 place-items-center rounded-xl bg-rose-400/15 text-rose-200">
+                        <Ban size={20} />
+                      </span>
+                      <div>
+                        <h4 className="text-sm font-bold text-white">Banned Words & Phrases</h4>
+                        <p className="text-xs text-[var(--muted)]">Deletes messages containing forbidden vocabulary</p>
+                      </div>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={!!automod.BannedWords?.enabled}
+                      onChange={(e) =>
+                        setAutomod({
+                          ...automod,
+                          BannedWords: { ...automod.BannedWords, enabled: e.target.checked }
+                        })
+                      }
+                      className="h-5 w-5 accent-rose-500 rounded cursor-pointer"
+                    />
+                  </div>
+                  {automod.BannedWords?.enabled && (
+                    <div className="space-y-3 pt-2">
+                      <CustomSelect
+                        label="Action On Trigger"
+                        value={automod.BannedWords.action || 'delete'}
+                        onChange={(val) =>
+                          setAutomod({
+                            ...automod,
+                            BannedWords: { ...automod.BannedWords, action: val }
+                          })
+                        }
+                        options={[
+                          { value: 'delete', label: 'Delete Message Only' },
+                          { value: 'warn', label: 'Warn User' },
+                          { value: 'timeout', label: 'Timeout Member' }
+                        ]}
+                      />
+                      <div className="space-y-2 pt-2 border-t border-white/5">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--quiet)]">
+                            Forbidden Words ({automod.BannedWords?.words?.length || 0})
+                          </label>
+                          {automod.BannedWords?.words?.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setAutomod({
+                                  ...automod,
+                                  BannedWords: { ...automod.BannedWords, words: [] }
+                                })
+                              }
+                              className="text-[10px] text-rose-300 hover:underline"
+                            >
+                              Clear all
+                            </button>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={wordInput}
+                            onChange={(e) => setWordInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleAddWord();
+                              }
+                            }}
+                            placeholder="Type forbidden word…"
+                            className="lucent-input px-3 py-2 text-xs flex-1"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleAddWord}
+                            className="lucent-button px-3 py-2 rounded-xl text-xs font-semibold text-rose-200 hover:bg-rose-500/20 transition shrink-0"
+                          >
+                            + Add
+                          </button>
+                        </div>
+                        {automod.BannedWords?.words?.length > 0 ? (
+                          <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pt-1">
+                            {automod.BannedWords.words.map((word) => (
+                              <span
+                                key={word}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-500/10 border border-rose-500/25 text-xs text-rose-200 font-mono"
+                              >
+                                <span>{word}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveWord(word)}
+                                  className="text-rose-300/60 hover:text-rose-200 transition"
+                                  title="Remove word"
+                                >
+                                  <X size={12} />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-[11px] text-[var(--quiet)] italic">No banned words configured yet.</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </section>
               </div>
+
+              {/* Automod Exemptions: Ignored Channels & Ignored Roles */}
+              <div className="space-y-4 pt-4 border-t border-white/10">
+                <div>
+                  <h3 className="text-lg font-bold text-white">Automod Exemptions & Whitelists</h3>
+                  <p className="text-xs text-[var(--muted)]">
+                    Channels and member roles that completely bypass all automod checks and penalties
+                  </p>
+                </div>
+
+                <div className="grid gap-5 md:grid-cols-2">
+                  {/* Ignored Channels Card */}
+                  <section className="lucent-card rounded-[1.8rem] p-6 space-y-4">
+                    <div className="flex items-center gap-3">
+                      <span className="grid h-10 w-10 place-items-center rounded-xl bg-cyan-400/15 text-cyan-200">
+                        <Hash size={20} />
+                      </span>
+                      <div>
+                        <h4 className="text-sm font-bold text-white">Ignored Channels</h4>
+                        <p className="text-xs text-[var(--muted)]">Messages sent in these channels will never trigger automod</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <CustomSelect
+                        label="Add Channel to Ignore"
+                        placeholder="Select a channel to exempt…"
+                        value=""
+                        onChange={(channelId) => {
+                          if (!channelId) return;
+                          const current = automod.IgnoredChannels || [];
+                          if (!current.includes(channelId)) {
+                            setAutomod({
+                              ...automod,
+                              IgnoredChannels: [...current, channelId]
+                            });
+                          }
+                        }}
+                        options={channelOptions.filter((c) => !(automod.IgnoredChannels || []).includes(c.value))}
+                        searchable
+                      />
+
+                      <div className="space-y-1.5 pt-2">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--quiet)]">
+                          Currently Ignored ({automod.IgnoredChannels?.length || 0})
+                        </label>
+                        {automod.IgnoredChannels?.length > 0 ? (
+                          <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto pt-1">
+                            {automod.IgnoredChannels.map((chId) => {
+                              const ch = channels.find((c) => c.id === chId);
+                              const name = ch ? `#${ch.name}` : `Channel ${chId}`;
+                              return (
+                                <span
+                                  key={chId}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-xs text-cyan-200 font-medium"
+                                >
+                                  <Hash size={13} className="text-cyan-400 shrink-0" />
+                                  <span className="truncate max-w-[150px]">{name}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setAutomod({
+                                        ...automod,
+                                        IgnoredChannels: (automod.IgnoredChannels || []).filter((id) => id !== chId)
+                                      })
+                                    }
+                                    className="text-cyan-300/60 hover:text-white transition ml-1"
+                                    title="Remove channel exemption"
+                                  >
+                                    <X size={13} />
+                                  </button>
+                                </span>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-[var(--muted)] p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                            No channels are exempt. All text channels are monitored by automod.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Ignored Roles Card */}
+                  <section className="lucent-card rounded-[1.8rem] p-6 space-y-4">
+                    <div className="flex items-center gap-3">
+                      <span className="grid h-10 w-10 place-items-center rounded-xl bg-purple-400/15 text-purple-200">
+                        <ShieldCheck size={20} />
+                      </span>
+                      <div>
+                        <h4 className="text-sm font-bold text-white">Ignored Roles</h4>
+                        <p className="text-xs text-[var(--muted)]">Users holding any of these roles completely bypass automod</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <CustomSelect
+                        label="Add Role to Ignore"
+                        placeholder="Select a role to exempt…"
+                        value=""
+                        onChange={(roleId) => {
+                          if (!roleId) return;
+                          const current = automod.IgnoredRoles || [];
+                          if (!current.includes(roleId)) {
+                            setAutomod({
+                              ...automod,
+                              IgnoredRoles: [...current, roleId]
+                            });
+                          }
+                        }}
+                        options={roleOptions.filter((r) => !(automod.IgnoredRoles || []).includes(r.value))}
+                        searchable
+                      />
+
+                      <div className="space-y-1.5 pt-2">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--quiet)]">
+                          Currently Ignored ({automod.IgnoredRoles?.length || 0})
+                        </label>
+                        {automod.IgnoredRoles?.length > 0 ? (
+                          <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto pt-1">
+                            {automod.IgnoredRoles.map((rId) => {
+                              const r = roles.find((role) => role.id === rId);
+                              const name = r ? `@${r.name}` : `Role ${rId}`;
+                              return (
+                                <span
+                                  key={rId}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs text-purple-200 font-medium"
+                                >
+                                  <span
+                                    className="w-2 h-2 rounded-full shrink-0"
+                                    style={{ backgroundColor: r?.color ? `#${r.color.toString(16).padStart(6, '0')}` : '#a855f7' }}
+                                  />
+                                  <span className="truncate max-w-[150px]">{name}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setAutomod({
+                                        ...automod,
+                                        IgnoredRoles: (automod.IgnoredRoles || []).filter((id) => id !== rId)
+                                      })
+                                    }
+                                    className="text-purple-300/60 hover:text-white transition ml-1"
+                                    title="Remove role exemption"
+                                  >
+                                    <X size={13} />
+                                  </button>
+                                </span>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-[var(--muted)] p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                            No roles are exempt. All regular server members are monitored by automod.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </section>
+                </div>
+              </div>
+              </>
             )}
           </div>
         )}
