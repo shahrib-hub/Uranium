@@ -20,7 +20,8 @@ import {
   Edit2,
   Trash2,
   ExternalLink,
-  Flame
+  Flame,
+  Shield
 } from 'lucide-react';
 import GiveawayCreateModal from '@/components/GiveawayCreateModal';
 import GiveawayEditModal from '@/components/GiveawayEditModal';
@@ -384,6 +385,8 @@ export default function GiveawaysPage() {
           {filteredGiveaways.map((giveaway) => {
             const isEnded = giveaway.ended;
             const remainingFormatted = formatRemainingTime(giveaway.endAt);
+            const cfg = giveaway.config || {};
+            const cardAccentColor = cfg.color || (isEnded ? '#4E5058' : '#57F287');
 
             return (
               <motion.div
@@ -392,37 +395,82 @@ export default function GiveawaysPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
-                className="lucent-card rounded-[1.8rem] p-6 flex flex-col justify-between space-y-5 border border-white/10 hover:border-white/20 transition-all group"
+                className="lucent-card rounded-[1.8rem] overflow-hidden flex flex-col justify-between border border-white/10 hover:border-white/20 transition-all group relative"
+                style={{ borderLeftColor: cardAccentColor, borderLeftWidth: 4 }}
               >
-                {/* Card Top: Status & Channel */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {isEnded ? (
-                      <span className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-wider text-white/50 flex items-center gap-1.5">
-                        <CheckCircle2 size={12} className="text-white/40" /> Ended
-                      </span>
-                    ) : (
-                      <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1.5 shadow-sm shadow-emerald-500/20">
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Live Giveaway
-                      </span>
-                    )}
+                {/* Optional Banner Header */}
+                {cfg.image && (
+                  <div className="w-full h-28 overflow-hidden relative border-b border-white/10">
+                    <img
+                      src={cfg.image}
+                      alt="Giveaway banner"
+                      className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#10080d] via-transparent to-transparent" />
+                  </div>
+                )}
+
+                <div className="p-6 space-y-5 flex-1 flex flex-col justify-between">
+                  {/* Card Top: Status & Channel */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {isEnded ? (
+                        <span className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-wider text-white/50 flex items-center gap-1.5">
+                          <CheckCircle2 size={12} className="text-white/40" /> Ended
+                        </span>
+                      ) : (
+                        <span
+                          className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm"
+                          style={{
+                            backgroundColor: `${cardAccentColor}20`,
+                            borderColor: `${cardAccentColor}40`,
+                            color: cardAccentColor,
+                            borderWidth: 1
+                          }}
+                        >
+                          <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: cardAccentColor }} /> Live Giveaway
+                        </span>
+                      )}
+
+                      {cfg.requiredRole && (
+                        <span className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[10px] text-white/60 font-semibold flex items-center gap-1">
+                          <Shield size={10} className="text-emerald-400" /> Role Req
+                        </span>
+                      )}
+                    </div>
+
+                    <span className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/5 text-[11px] font-semibold text-white/70 shrink-0">
+                      <Hash size={12} className="text-white/30" />
+                      {giveaway.channelName}
+                    </span>
                   </div>
 
-                  <span className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/5 text-[11px] font-semibold text-white/70">
-                    <Hash size={12} className="text-white/30" />
-                    {giveaway.channelName}
-                  </span>
-                </div>
+                  {/* Prize Info & Optional Thumbnail */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1 min-w-0">
+                      {cfg.title && cfg.title !== giveaway.prize && (
+                        <p className="text-[11px] font-bold text-emerald-400/80 truncate">
+                          {cfg.title}
+                        </p>
+                      )}
+                      <h3 className="text-xl font-black text-white tracking-tight group-hover:text-emerald-300 transition-colors line-clamp-2">
+                        {giveaway.prize}
+                      </h3>
+                      <p className="mt-1 text-xs text-[var(--muted)] flex items-center gap-1">
+                        Hosted by <span className="text-white font-medium">@{giveaway.creatorTag}</span>
+                      </p>
+                    </div>
 
-                {/* Prize Info */}
-                <div>
-                  <h3 className="text-xl font-black text-white tracking-tight group-hover:text-emerald-300 transition-colors line-clamp-2">
-                    {giveaway.prize}
-                  </h3>
-                  <p className="mt-1 text-xs text-[var(--muted)] flex items-center gap-1">
-                    Hosted by <span className="text-white font-medium">@{giveaway.creatorTag}</span>
-                  </p>
-                </div>
+                    {cfg.thumbnail && (
+                      <img
+                        src={cfg.thumbnail}
+                        alt="Thumbnail"
+                        className="w-12 h-12 rounded-xl object-cover border border-white/10 shrink-0 shadow"
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                      />
+                    )}
+                  </div>
 
                 {/* Stat Counters & Time */}
                 <div className="grid grid-cols-3 gap-2 p-3 rounded-2xl bg-black/30 border border-white/5">
@@ -494,6 +542,7 @@ export default function GiveawaysPage() {
                   >
                     <Trash2 size={15} />
                   </button>
+                </div>
                 </div>
               </motion.div>
             );

@@ -204,7 +204,8 @@ const GiveawaySchema = new mongoose.Schema({
   endAt: { type: Number, required: true },
   createdBy: { type: String, required: true },
   ended: { type: Boolean, default: false },
-  participants: { type: String, default: '[]' }
+  participants: { type: String, default: '[]' },
+  config: { type: String, default: '{}' }
 });
 
 

@@ -1,5 +1,5 @@
 const db = require('../utils/giveaway');
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { useMongoDB } = require('../config/database');
 const { Giveaway, getDbStatus } = require('../database/mongoose');
 
@@ -7,8 +7,10 @@ const { Giveaway, getDbStatus } = require('../database/mongoose');
 async function createGiveaway(data) {
   const {
     messageId, guildId, channelId, prize,
-    winners, endAt, createdBy
+    winners, endAt, createdBy, config = {}
   } = data;
+
+  const configStr = typeof config === 'string' ? config : JSON.stringify(config || {});
 
   if (useMongoDB) {
     if (!getDbStatus()) {
@@ -16,16 +18,25 @@ async function createGiveaway(data) {
       return;
     }
     await Giveaway.create({
-      messageId, guildId, channelId, prize, winners, endAt, createdBy, ended: false, participants: '[]'
+      messageId,
+      guildId,
+      channelId,
+      prize,
+      winners,
+      endAt,
+      createdBy,
+      ended: false,
+      participants: '[]',
+      config: configStr
     });
     return;
   }
 
   return new Promise((resolve, reject) => {
     db.run(
-      `INSERT INTO giveaways (message_id, guild_id, channel_id, prize, winners, end_at, created_by, ended, participants)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)`,
-      [messageId, guildId, channelId, prize, winners, endAt, createdBy, JSON.stringify([])],
+      `INSERT INTO giveaways (message_id, guild_id, channel_id, prize, winners, end_at, created_by, ended, participants, config)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?)`,
+      [messageId, guildId, channelId, prize, winners, endAt, createdBy, JSON.stringify([]), configStr],
       err => (err ? reject(err) : resolve())
     );
   });
@@ -46,7 +57,8 @@ async function getGiveawayByMessageId(messageId) {
       end_at: doc.endAt,
       created_by: doc.createdBy,
       ended: doc.ended ? 1 : 0,
-      participants: doc.participants
+      participants: doc.participants,
+      config: doc.config || '{}'
     };
   }
 
@@ -54,7 +66,7 @@ async function getGiveawayByMessageId(messageId) {
     db.get(
       `SELECT * FROM giveaways WHERE message_id = ?`,
       [messageId],
-      (err, row) => (err ? reject(err) : resolve(row || null))
+      (err, row) => (err ? reject(err) : resolve(row ? { ...row, config: row.config || '{}' } : null))
     );
   });
 }
@@ -66,7 +78,12 @@ async function updateGiveaway(messageId, updates) {
     const mongoUpdates = {};
     if ('ended' in updates) mongoUpdates.ended = !!updates.ended;
     if ('participants' in updates) mongoUpdates.participants = updates.participants;
-    // Add other fields if needed, but currently only ended and participants are updated dynamically
+    if ('prize' in updates) mongoUpdates.prize = updates.prize;
+    if ('winners' in updates) mongoUpdates.winners = updates.winners;
+    if ('end_at' in updates) mongoUpdates.endAt = updates.end_at;
+    if ('config' in updates) {
+      mongoUpdates.config = typeof updates.config === 'string' ? updates.config : JSON.stringify(updates.config);
+    }
     
     await Giveaway.updateOne({ messageId }, { $set: mongoUpdates });
     return;
@@ -74,7 +91,7 @@ async function updateGiveaway(messageId, updates) {
 
   return new Promise((resolve, reject) => {
     const fields = Object.keys(updates);
-    const values = Object.values(updates);
+    const values = Object.values(updates).map(v => (typeof v === 'object' ? JSON.stringify(v) : v));
 
     if (!fields.length) return resolve();
 
@@ -138,7 +155,8 @@ async function listActiveGiveaways(guildId = null) {
       end_at: doc.endAt,
       created_by: doc.createdBy,
       ended: doc.ended ? 1 : 0,
-      participants: doc.participants
+      participants: doc.participants,
+      config: doc.config || '{}'
     }));
   }
 
@@ -148,7 +166,7 @@ async function listActiveGiveaways(guildId = null) {
       : `SELECT * FROM giveaways WHERE ended = 0`;
     const params = guildId ? [guildId] : [];
 
-    db.all(query, params, (err, rows) => (err ? reject(err) : resolve(rows)));
+    db.all(query, params, (err, rows) => (err ? reject(err) : resolve((rows || []).map(r => ({ ...r, config: r.config || '{}' })))));
   });
 }
 
@@ -168,26 +186,60 @@ async function finalizeGiveaway(messageId, client) {
   let winners = [];
 
   if (channel) {
+    let participants = [];
+    try {
+      participants = JSON.parse(giveaway.participants || '[]');
+    } catch {}
+
     const msg = await channel.messages.fetch(messageId).catch(() => null);
     if (msg) {
       const embed = msg.embeds[0];
       if (embed) {
         const endedEmbed = EmbedBuilder.from(embed)
-          .setColor('Red')
-          .setTitle('🎉 Giveaway Ended')
-          .setFooter({ text: 'Giveaway ended' });
-        await msg.edit({ embeds: [endedEmbed], components: [] }).catch(() => null);
+          .setColor(0x2B2D31)
+          .setTitle(`🎉 [ENDED] ${giveaway.prize}`)
+          .setFooter({ text: 'Giveaway Concluded • Uranium Giveaways' });
+
+        const disabledRow = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId(`giveaway_ended_${messageId}`)
+            .setLabel(`🔒 Giveaway Concluded (${participants.length} entries)`)
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(true)
+        );
+        await msg.edit({ embeds: [endedEmbed], components: [disabledRow] }).catch(() => null);
       }
     }
 
-    const participants = JSON.parse(giveaway.participants || '[]');
     if (participants.length === 0) {
-      await channel.send(`😢 No valid entries for the giveaway **${giveaway.prize}**.`).catch(() => null);
+      const noEntriesEmbed = new EmbedBuilder()
+        .setColor(0xED4245)
+        .setTitle('😢 Giveaway Concluded — No Entries')
+        .setDescription(`The giveaway for **${giveaway.prize}** has concluded, but unfortunately no one entered.`)
+        .setFooter({ text: 'Uranium Giveaways' });
+      await channel.send({ embeds: [noEntriesEmbed] }).catch(() => null);
     } else {
       const shuffled = [...participants].sort(() => 0.5 - Math.random());
       winners = shuffled.slice(0, giveaway.winners);
-      const winnerMentions = winners.map(id => `<@${id}>`).join(', ');
-      await channel.send(`🎉 Congratulations ${winnerMentions}! You won **${giveaway.prize}**!`).catch(() => null);
+      const winnerMentions = winners.map(id => `<@${id}>`).join(' ');
+
+      const winnerEmbed = new EmbedBuilder()
+        .setColor(0xF1C40F)
+        .setTitle('🎉 GIVEAWAY WINNER(S) ANNOUNCED! 🎉')
+        .setDescription(`Congratulations to our lucky winner(s)!\n\n${winners.map((w, idx) => `🏆 **${idx + 1}.** <@${w}>`).join('\n')}`)
+        .addFields(
+          { name: '🎁 Prize', value: `**${giveaway.prize}**`, inline: true },
+          { name: '👥 Total Entries', value: `\`${participants.length}\``, inline: true },
+          { name: '👑 Hosted by', value: `<@${giveaway.created_by}>`, inline: true },
+          { name: '🔗 Giveaway Post', value: `[Jump to Announcement](https://discord.com/channels/${giveaway.guild_id}/${giveaway.channel_id}/${messageId})`, inline: false }
+        )
+        .setFooter({ text: 'Uranium Giveaways • Congratulations!' })
+        .setTimestamp();
+
+      await channel.send({
+        content: `🎉 Congratulations ${winnerMentions}! You won **${giveaway.prize}**!`,
+        embeds: [winnerEmbed]
+      }).catch(() => null);
     }
   }
 
@@ -208,7 +260,8 @@ async function listAllGiveaways(guildId) {
       end_at: doc.endAt,
       created_by: doc.createdBy,
       ended: doc.ended ? 1 : 0,
-      participants: doc.participants
+      participants: doc.participants,
+      config: doc.config || '{}'
     }));
   }
 
@@ -216,7 +269,7 @@ async function listAllGiveaways(guildId) {
     db.all(
       `SELECT * FROM giveaways WHERE guild_id = ? ORDER BY end_at DESC`,
       [guildId],
-      (err, rows) => (err ? reject(err) : resolve(rows || []))
+      (err, rows) => (err ? reject(err) : resolve((rows || []).map(r => ({ ...r, config: r.config || '{}' }))))
     );
   });
 }
@@ -245,6 +298,94 @@ function scheduleGiveawayEnd(client, giveaway) {
   }
 }
 
+// 🎨 Embed & Button Helpers for Unified Professional Giveaways
+function parseHexColor(colorStr, defaultColor = 0x5865F2) {
+  if (!colorStr || typeof colorStr !== 'string') return defaultColor;
+  const cleaned = colorStr.replace('#', '').trim();
+  const num = parseInt(cleaned, 16);
+  return Number.isNaN(num) ? defaultColor : num;
+}
+
+function buildGiveawayEmbed({ prize, winners, endAt, hostId, config = {} }) {
+  if (typeof config === 'string') {
+    try { config = JSON.parse(config); } catch { config = {}; }
+  }
+
+  const embedColor = parseHexColor(config.color, 0x5865F2);
+  const title = config.title?.trim() || `🎉 GIVEAWAY: ${prize}`;
+
+  const embed = new EmbedBuilder()
+    .setColor(embedColor)
+    .setTitle(title)
+    .setTimestamp(endAt)
+    .setFooter({ text: `Uranium Giveaways • Winners: ${winners} • Concludes` });
+
+  const descParts = [];
+
+  if (config.description?.trim()) {
+    descParts.push(`>>> ${config.description.trim()}`);
+    descParts.push('');
+  }
+
+  descParts.push(`🎁 **Prize:** **${prize}**`);
+  descParts.push(`🏆 **Winners:** **${winners}** ${winners === 1 ? 'Winner' : 'Winners'}`);
+  descParts.push(`⏳ **Ends:** <t:${Math.floor(endAt / 1000)}:R> (<t:${Math.floor(endAt / 1000)}:F>)`);
+  descParts.push(`👑 **Hosted by:** <@${hostId}>`);
+
+  if (config.requiredRole) {
+    descParts.push(`🛡️ **Required Role:** <@&${config.requiredRole}>`);
+  }
+
+  embed.setDescription(descParts.join('\n'));
+
+  if (config.thumbnail) {
+    try {
+      new URL(config.thumbnail);
+      embed.setThumbnail(config.thumbnail);
+    } catch {}
+  }
+
+  if (config.image) {
+    try {
+      new URL(config.image);
+      embed.setImage(config.image);
+    } catch {}
+  }
+
+  return embed;
+}
+
+function buildGiveawayRow({ messageId, winners, config = {}, participantCount = 0 }) {
+  if (typeof config === 'string') {
+    try { config = JSON.parse(config); } catch { config = {}; }
+  }
+
+  const buttonEmoji = config.buttonEmoji?.trim() || '🎉';
+  const buttonLabel = config.buttonLabel?.trim() || 'Enter';
+
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`giveaway_enter_${messageId}`)
+      .setLabel(`${buttonEmoji} ${buttonLabel} (${participantCount})`)
+      .setStyle(ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId(`giveaway_info_${messageId}`)
+      .setLabel(`${winners} ${winners === 1 ? 'Winner' : 'Winners'}`)
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(true)
+  );
+}
+
+function formatAnnouncementContent(content, ping) {
+  let prefix = '';
+  if (ping === 'everyone') prefix = '@everyone ';
+  else if (ping === 'here') prefix = '@here ';
+  else if (ping && ping !== 'none') prefix = `<@&${ping}> `;
+
+  const main = content?.trim() || '🎉 **GIVEAWAY TIME!** 🎉 React or click below to enter!';
+  return `${prefix}${main}`.trim();
+}
+
 module.exports = {
   createGiveaway,
   getGiveawayByMessageId,
@@ -255,5 +396,10 @@ module.exports = {
   listAllGiveaways,
   deleteGiveaway,
   finalizeGiveaway,
-  scheduleGiveawayEnd
+  scheduleGiveawayEnd,
+  buildGiveawayEmbed,
+  buildGiveawayRow,
+  formatAnnouncementContent,
+  parseHexColor
 };
+

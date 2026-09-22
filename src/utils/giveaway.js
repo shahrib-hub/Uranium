@@ -22,9 +22,12 @@ db.serialize(() => {
       end_at INTEGER NOT NULL,
       created_by TEXT NOT NULL,
       ended INTEGER DEFAULT 0,
-      participants TEXT DEFAULT '[]'
+      participants TEXT DEFAULT '[]',
+      config TEXT DEFAULT '{}'
     )
   `);
+  // Ensure config column exists in existing tables
+  db.run(`ALTER TABLE giveaways ADD COLUMN config TEXT DEFAULT '{}'`, () => {});
 });
 
 module.exports = db;

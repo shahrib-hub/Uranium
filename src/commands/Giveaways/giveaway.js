@@ -42,7 +42,15 @@ module.exports = {
         .addIntegerOption(opt => opt.setName('winners').setDescription('Number of winners').setRequired(true))
         .addStringOption(opt => opt.setName('prize').setDescription('Prize').setRequired(true))
         .addChannelOption(opt => opt.setName('channel').setDescription('Target channel').addChannelTypes(ChannelType.GuildText).setRequired(true))
-        .addStringOption(opt => opt.setName('content').setDescription('Optional message')))
+        .addStringOption(opt => opt.setName('description').setDescription('Optional extra rules or description'))
+        .addStringOption(opt => opt.setName('color').setDescription('Optional accent hex color (e.g. #5865F2, #57F287)'))
+        .addRoleOption(opt => opt.setName('required_role').setDescription('Optional role required to enter'))
+        .addStringOption(opt => opt.setName('button_label').setDescription('Optional button label (default: Enter)'))
+        .addStringOption(opt => opt.setName('button_emoji').setDescription('Optional button emoji (default: 🎉)'))
+        .addStringOption(opt => opt.setName('ping').setDescription('Ping on launch').addChoices({ name: 'None', value: 'none' }, { name: '@everyone', value: 'everyone' }, { name: '@here', value: 'here' }))
+        .addStringOption(opt => opt.setName('thumbnail').setDescription('Optional thumbnail image URL'))
+        .addStringOption(opt => opt.setName('banner').setDescription('Optional banner image URL'))
+        .addStringOption(opt => opt.setName('content').setDescription('Optional announcement message')))
     .addSubcommand(sub =>
       sub.setName('edit')
         .setDescription('Edit an existing giveaway')
@@ -74,22 +82,72 @@ module.exports = {
     if (sub === 'start') {
       const durationInput = interaction.options.getString('duration');
       const durationMs = parseDuration(durationInput);
-      if (!durationMs) return interaction.reply({ flags: 64, content: '❌ Invalid duration format.' });
+      if (!durationMs) return interaction.reply({ flags: 64, content: '❌ Invalid duration format. Examples: `1h`, `1d 6h`, `30m`.' });
 
       const winners = interaction.options.getInteger('winners');
       const prize = interaction.options.getString('prize');
       const channel = interaction.options.getChannel('channel');
-      const content = interaction.options.getString('content') || '🎉 **GIVEAWAY TIME!** 🎉';
+      const description = interaction.options.getString('description') || '';
+      const color = interaction.options.getString('color') || '#5865F2';
+      const requiredRole = interaction.options.getRole('required_role');
+      const buttonLabel = interaction.options.getString('button_label') || 'Enter';
+      const buttonEmoji = interaction.options.getString('button_emoji') || '🎉';
+      const ping = interaction.options.getString('ping') || 'none';
+      const thumbnail = interaction.options.getString('thumbnail') || '';
+      const banner = interaction.options.getString('banner') || '';
+      const content = interaction.options.getString('content') || '🎉 **GIVEAWAY TIME!** 🎉 React or click below to enter!';
       const normalized = formatDuration(durationMs);
 
+      const config = {
+        description,
+        color,
+        requiredRole: requiredRole ? requiredRole.id : undefined,
+        buttonLabel,
+        buttonEmoji,
+        ping,
+        thumbnail: thumbnail || undefined,
+        image: banner || undefined
+      };
+
+      const previewData = {
+        prize,
+        winners,
+        durationMs,
+        channelId: channel.id,
+        content,
+        config
+      };
+
+      let previewColor = 0xF1C40F;
+      if (color && typeof color === 'string') {
+        const parsed = parseInt(color.replace('#', '').trim(), 16);
+        if (!Number.isNaN(parsed)) previewColor = parsed;
+      }
+
       const preview = new EmbedBuilder()
-        .setColor('Gold')
-        .setTitle('🎁 Giveaway Preview')
-        .setDescription(`**Prize:** ${prize}\n**Winners:** ${winners}\n**Duration:** ${normalized}\n**Channel:** ${channel}\n**Message:** ${content}`)
-        .setFooter({ text: 'Click confirm to start.' });
+        .setColor(previewColor)
+        .setTitle('🎁 Giveaway Launch Preview')
+        .setDescription(
+          `**Prize:** ${prize}\n` +
+          `**Winners:** ${winners}\n` +
+          `**Duration:** ${normalized}\n` +
+          `**Channel:** ${channel}\n` +
+          (requiredRole ? `**Required Role:** <@&${requiredRole.id}>\n` : '') +
+          (description ? `**Description:** ${description}\n` : '') +
+          `**Button:** \`${buttonEmoji} ${buttonLabel} (0)\`\n` +
+          `**Ping:** \`${ping}\``
+        )
+        .setFooter({ text: `RAW_CONFIG::${JSON.stringify(previewData)}` });
+
+      if (thumbnail) {
+        try { new URL(thumbnail); preview.setThumbnail(thumbnail); } catch {}
+      }
+      if (banner) {
+        try { new URL(banner); preview.setImage(banner); } catch {}
+      }
 
       const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId(`giveaway_confirm_start_${userId}`).setLabel('✅ Confirm').setStyle(ButtonStyle.Success),
+        new ButtonBuilder().setCustomId(`giveaway_confirm_start_${userId}`).setLabel('🚀 Confirm & Launch').setStyle(ButtonStyle.Success),
         new ButtonBuilder().setCustomId(`giveaway_cancel_start_${userId}`).setLabel('❌ Cancel').setStyle(ButtonStyle.Danger)
       );
 

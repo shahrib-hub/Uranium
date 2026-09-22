@@ -808,6 +808,11 @@ function createApiRouter(client) {
           totalWinnersAwarded += Math.min(participantsList.length, g.winners || 1);
         }
 
+        let config = {};
+        try {
+          config = JSON.parse(g.config || '{}');
+        } catch {}
+
         const channel = guild.channels.cache.get(g.channel_id);
         let creatorTag = g.created_by;
         try {
@@ -829,7 +834,8 @@ function createApiRouter(client) {
           ended: isEnded,
           status: isEnded ? 'ended' : 'active',
           participantCount: participantsList.length,
-          participants: participantsList
+          participants: participantsList,
+          config
         };
       }));
 
@@ -854,7 +860,22 @@ function createApiRouter(client) {
     try {
       const guild = req.guild;
       const moderator = req.session.user;
-      const { channelId, prize, winners, duration, content = '🎉 **GIVEAWAY TIME!** 🎉' } = req.body;
+      const {
+        channelId,
+        prize,
+        winners,
+        duration,
+        content = '🎉 **GIVEAWAY TIME!** React or click below to enter!',
+        title,
+        description,
+        color = '#5865F2',
+        thumbnail,
+        image,
+        requiredRole,
+        buttonLabel = 'Enter',
+        buttonEmoji = '🎉',
+        ping = 'none'
+      } = req.body;
 
       if (!channelId || !prize) {
         return res.status(400).json({ error: 'Channel and prize are required.' });
@@ -878,54 +899,60 @@ function createApiRouter(client) {
 
       const endAt = Date.now() + durationMs;
 
-      const giveawayEmbed = new EmbedBuilder()
-        .setColor(0x57F287)
-        .setTitle('🎉 Giveaway')
-        .setDescription(`**Prize:** ${prize}\n**Ends:** <t:${Math.floor(endAt / 1000)}:R>\n**Hosted by:** <@${moderator.id}>`)
-        .setFooter({ text: `Winners: ${parsedWinners}` });
+      const config = {
+        title: title?.trim() || undefined,
+        description: description?.trim() || undefined,
+        color: color?.trim() || '#5865F2',
+        thumbnail: thumbnail?.trim() || undefined,
+        image: image?.trim() || undefined,
+        requiredRole: requiredRole || undefined,
+        buttonLabel: buttonLabel?.trim() || 'Enter',
+        buttonEmoji: buttonEmoji?.trim() || '🎉',
+        ping: ping || 'none'
+      };
 
-      const initialRow = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId('giveaway_info')
-          .setLabel('Giveaway')
-          .setStyle(ButtonStyle.Secondary)
-          .setDisabled(true),
-        new ButtonBuilder()
-          .setCustomId('giveaway_enter_PLACEHOLDER')
-          .setLabel('🎉 Enter')
-          .setStyle(ButtonStyle.Primary)
-      );
+      const giveawayEmbed = giveawayService.buildGiveawayEmbed({
+        prize: prize.trim(),
+        winners: parsedWinners,
+        endAt,
+        hostId: moderator.id,
+        config
+      });
 
-      const sent = await channel.send({ content: content || '🎉 **GIVEAWAY TIME!** 🎉', embeds: [giveawayEmbed], components: [initialRow] });
+      const initialRow = giveawayService.buildGiveawayRow({
+        messageId: 'PLACEHOLDER',
+        winners: parsedWinners,
+        config,
+        participantCount: 0
+      });
 
-      const fixedRow = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId('giveaway_info')
-          .setLabel('Giveaway')
-          .setStyle(ButtonStyle.Secondary)
-          .setDisabled(true),
-        new ButtonBuilder()
-          .setCustomId(`giveaway_enter_${sent.id}`)
-          .setLabel('🎉 Enter')
-          .setStyle(ButtonStyle.Primary)
-      );
+      const announcement = giveawayService.formatAnnouncementContent(content, ping);
+      const sent = await channel.send({ content: announcement, embeds: [giveawayEmbed], components: [initialRow] });
+
+      const fixedRow = giveawayService.buildGiveawayRow({
+        messageId: sent.id,
+        winners: parsedWinners,
+        config,
+        participantCount: 0
+      });
       await sent.edit({ components: [fixedRow] });
 
       await giveawayService.createGiveaway({
         messageId: sent.id,
         guildId: guild.id,
         channelId: channel.id,
-        prize,
+        prize: prize.trim(),
         winners: parsedWinners,
         endAt,
         createdBy: moderator.id,
-        participants: JSON.stringify([])
+        participants: JSON.stringify([]),
+        config
       });
 
       giveawayService.scheduleGiveawayEnd(client, {
         messageId: sent.id,
         channelId: channel.id,
-        prize,
+        prize: prize.trim(),
         winners: parsedWinners,
         endAt
       });
@@ -936,10 +963,11 @@ function createApiRouter(client) {
           messageId: sent.id,
           guildId: guild.id,
           channelId: channel.id,
-          prize,
+          prize: prize.trim(),
           winners: parsedWinners,
           endAt,
-          createdBy: moderator.id
+          createdBy: moderator.id,
+          config
         }
       });
     } catch (err) {
@@ -978,12 +1006,29 @@ function createApiRouter(client) {
       }
 
       const shuffled = [...participants].sort(() => 0.5 - Math.random());
-      const newWinners = shuffled.slice(0, giveaway.winners || 1);
-      const winnerMentions = newWinners.map(id => `<@${id}>`).join(', ');
+      const count = Math.min(giveaway.winners || 1, participants.length);
+      const newWinners = shuffled.slice(0, count);
+      const winnerMentions = newWinners.map(id => `<@${id}>`).join(' ');
 
       const channel = await client.channels.fetch(giveaway.channel_id).catch(() => null);
       if (channel) {
-        await channel.send(`🎉 **Reroll!** Congratulations ${winnerMentions}! You won **${giveaway.prize}**!`).catch(() => null);
+        const rerollEmbed = new EmbedBuilder()
+          .setColor(0xF1C40F)
+          .setTitle('🎉 GIVEAWAY REROLL: NEW WINNER(S)! 🎉')
+          .setDescription(`Congratulations to the new lucky winner(s)!\n\n${newWinners.map((w, idx) => `🏆 **${idx + 1}.** <@${w}>`).join('\n')}`)
+          .addFields(
+            { name: '🎁 Prize', value: `**${giveaway.prize}**`, inline: true },
+            { name: '👥 Total Entries', value: `\`${participants.length}\``, inline: true },
+            { name: '👑 Hosted by', value: `<@${giveaway.created_by}>`, inline: true },
+            { name: '🔗 Original Giveaway', value: `[Jump to Giveaway Post](https://discord.com/channels/${giveaway.guild_id}/${giveaway.channel_id}/${messageId})`, inline: false }
+          )
+          .setFooter({ text: 'Uranium Giveaways • Reroll Completed' })
+          .setTimestamp();
+
+        await channel.send({
+          content: `🎉 Congratulations ${winnerMentions}! You won **${giveaway.prize}** in the reroll!`,
+          embeds: [rerollEmbed]
+        }).catch(() => null);
       }
 
       res.json({ success: true, winners: newWinners, mentions: winnerMentions });
@@ -996,7 +1041,20 @@ function createApiRouter(client) {
   router.patch('/guild/:guildId/giveaways/:messageId', requireGuildAccess(client), requireGuildMod, async (req, res) => {
     try {
       const messageId = req.params.messageId;
-      const { prize, winners, duration } = req.body;
+      const {
+        prize,
+        winners,
+        duration,
+        title,
+        description,
+        color,
+        thumbnail,
+        image,
+        requiredRole,
+        buttonLabel,
+        buttonEmoji
+      } = req.body;
+
       const giveaway = await giveawayService.getGiveawayByMessageId(messageId);
       if (!giveaway) return res.status(404).json({ error: 'Giveaway not found' });
       if (giveaway.ended) return res.status(400).json({ error: 'Cannot edit an ended giveaway' });
@@ -1014,19 +1072,49 @@ function createApiRouter(client) {
         }
       }
 
+      let currentConfig = {};
+      try { currentConfig = JSON.parse(giveaway.config || '{}'); } catch {}
+
+      const updatedConfig = { ...currentConfig };
+      if (title !== undefined) updatedConfig.title = title.trim();
+      if (description !== undefined) updatedConfig.description = description.trim();
+      if (color !== undefined) updatedConfig.color = color.trim();
+      if (thumbnail !== undefined) updatedConfig.thumbnail = thumbnail.trim();
+      if (image !== undefined) updatedConfig.image = image.trim();
+      if (requiredRole !== undefined) updatedConfig.requiredRole = requiredRole;
+      if (buttonLabel !== undefined) updatedConfig.buttonLabel = buttonLabel.trim();
+      if (buttonEmoji !== undefined) updatedConfig.buttonEmoji = buttonEmoji.trim();
+      updates.config = updatedConfig;
+
       await giveawayService.updateGiveaway(messageId, updates);
 
-      // Edit Discord Message Embed
+      // Edit Discord Message Embed & Component Row
       const channel = await client.channels.fetch(giveaway.channel_id).catch(() => null);
       if (channel) {
         const msg = await channel.messages.fetch(messageId).catch(() => null);
-        if (msg && msg.embeds[0]) {
+        if (msg) {
+          let participants = [];
+          try { participants = JSON.parse(giveaway.participants || '[]'); } catch {}
+
           const finalPrize = updates.prize || giveaway.prize;
           const finalWinners = updates.winners || giveaway.winners;
-          const updatedEmbed = EmbedBuilder.from(msg.embeds[0])
-            .setDescription(`**Prize:** ${finalPrize}\n**Ends:** <t:${Math.floor(newEndAt / 1000)}:R>\n**Hosted by:** <@${giveaway.created_by}>`)
-            .setFooter({ text: `Winners: ${finalWinners}` });
-          await msg.edit({ embeds: [updatedEmbed] }).catch(() => null);
+
+          const updatedEmbed = giveawayService.buildGiveawayEmbed({
+            prize: finalPrize,
+            winners: finalWinners,
+            endAt: newEndAt,
+            hostId: giveaway.created_by,
+            config: updatedConfig
+          });
+
+          const updatedRow = giveawayService.buildGiveawayRow({
+            messageId,
+            winners: finalWinners,
+            config: updatedConfig,
+            participantCount: participants.length
+          });
+
+          await msg.edit({ embeds: [updatedEmbed], components: [updatedRow] }).catch(() => null);
         }
       }
 
