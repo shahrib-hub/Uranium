@@ -86,6 +86,18 @@ export default function FullMusicPlayerPage() {
   const [seekPos, setSeekPos] = useState(0);
   const [isSeeking, setIsSeeking] = useState(false);
 
+  // Instant volume tracking (0ms UI latency)
+  const [localVolume, setLocalVolume] = useState(100);
+  const isDraggingVolumeRef = useRef(false);
+  const volumeDebounceTimerRef = useRef(null);
+
+  // Sync volume from server only when not actively dragging
+  useEffect(() => {
+    if (!isDraggingVolumeRef.current && typeof player.volume === 'number') {
+      setLocalVolume(player.volume);
+    }
+  }, [player.volume]);
+
   // Fetch initial player state
   const fetchPlayer = async () => {
     if (!guildId) return;
@@ -96,6 +108,9 @@ export default function FullMusicPlayerPage() {
         setPlayer(data);
         if (!isSeeking) {
           setSeekPos(data.position || 0);
+        }
+        if (!isDraggingVolumeRef.current && typeof data.volume === 'number') {
+          setLocalVolume(data.volume);
         }
       }
     } catch (e) {
@@ -180,6 +195,30 @@ export default function FullMusicPlayerPage() {
     } catch (err) {
       toast.error('Network error executing player action.');
     }
+  };
+
+  // Instant Volume Handlers (Zero UI latency with debounced network calls)
+  const handleVolumeChange = (val) => {
+    const numeric = Math.min(100, Math.max(0, parseInt(val) || 0));
+    setLocalVolume(numeric);
+    setPlayer((prev) => ({ ...prev, volume: numeric }));
+    isDraggingVolumeRef.current = true;
+
+    if (volumeDebounceTimerRef.current) {
+      clearTimeout(volumeDebounceTimerRef.current);
+    }
+    volumeDebounceTimerRef.current = setTimeout(() => {
+      isDraggingVolumeRef.current = false;
+      doAction('volume', numeric);
+    }, 120);
+  };
+
+  const handleVolumeToggle = () => {
+    const target = localVolume > 0 ? 0 : 100;
+    setLocalVolume(target);
+    setPlayer((prev) => ({ ...prev, volume: target }));
+    isDraggingVolumeRef.current = false;
+    doAction('volume', target);
   };
 
   // Play a song from feed / search
@@ -330,25 +369,29 @@ export default function FullMusicPlayerPage() {
   const progressPercent = currentDuration > 0 ? Math.min(100, (seekPos / currentDuration) * 100) : 0;
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0e0f16] text-[#f3f4f6] -m-6 sm:-m-8">
-      {/* ── TOP NAV BAR (FlaviBot / Spotify Style) ───────────────────────────── */}
-      <header className="h-16 shrink-0 border-b border-[#1c1d29] bg-[#12131d] px-6 flex items-center justify-between gap-4 z-20">
-        <div className="flex items-center gap-4">
+    <div className="flex flex-col min-h-screen w-full bg-[#0e0f16] text-[#f3f4f6]">
+      {/* ── TOP NAV BAR (Spotify Full Player Style) ───────────────────────────── */}
+      <header className="h-16 shrink-0 border-b border-[#1c1d29] bg-[#12131d] px-4 sm:px-6 flex items-center justify-between gap-4 z-20 sticky top-0">
+        <div className="flex items-center gap-3 sm:gap-4">
           <Link
             href={`/dashboard/music${guildId ? `?guild=${guildId}` : ''}`}
-            className="flex items-center gap-2 text-xs font-semibold text-white/60 hover:text-white transition px-2.5 py-1.5 rounded-lg hover:bg-white/5"
+            className="flex items-center gap-2 text-xs font-bold text-white bg-rose-600/15 hover:bg-rose-600/25 border border-rose-500/30 text-rose-300 hover:text-white transition px-3.5 py-2 rounded-xl shadow-sm group"
+            title="Return to Dashboard"
           >
-            <ArrowLeft size={16} />
-            <span>Back to Dashboard</span>
+            <ArrowLeft size={16} className="text-rose-400 group-hover:-translate-x-0.5 transition-transform" />
+            <span>Return to Dashboard</span>
           </Link>
 
           <div className="h-4 w-px bg-white/10 hidden sm:block" />
 
-          {/* Breadcrumb / Mode */}
+          {/* Uranium Music Brand */}
           <div className="hidden sm:flex items-center gap-2 text-xs">
-            <span className="font-bold text-white flex items-center gap-1.5">
-              <Headphones size={15} className="text-rose-400" />
-              <span>Music Player</span>
+            <span className="font-extrabold text-sm text-white tracking-wide flex items-center gap-1.5">
+              <Headphones size={17} className="text-rose-500" />
+              <span>Uranium Music</span>
+            </span>
+            <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              Live
             </span>
             <span className="text-white/30">›</span>
             <span className="text-white/60 capitalize font-medium">{activeTab}</span>
@@ -734,14 +777,59 @@ export default function FullMusicPlayerPage() {
                 </div>
               </div>
 
-              {/* Recently Played Horizontal Carousel (FlaviBot Style) */}
+              {/* Genre-Filtered Grid (When a specific genre is selected) */}
+              {selectedGenre !== 'All' && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                      <Sparkles size={14} className="text-rose-400" />
+                      <span>{selectedGenre} — Official Spotify Listings</span>
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedGenre('All')}
+                      className="text-[11px] text-rose-400 hover:text-rose-300 font-semibold transition"
+                    >
+                      Show All Charts
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                    {(feedData.genreTracks?.[selectedGenre] || []).map((item) => (
+                      <div
+                        key={item.id}
+                        onClick={() => playTrack(item)}
+                        className="rounded-2xl bg-[#141520] border border-[#222436] p-3 space-y-2 hover:border-rose-500/40 hover:scale-[1.02] transition cursor-pointer group"
+                      >
+                        <div className="relative aspect-square rounded-xl overflow-hidden bg-black/40">
+                          <img
+                            src={item.thumbnail}
+                            alt=""
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop';
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition grid place-items-center">
+                            <Play size={20} fill="currentColor" className="text-white" />
+                          </div>
+                        </div>
+                        <p className="text-xs font-bold text-white truncate">{item.title}</p>
+                        <p className="text-[10px] text-white/40 truncate">{item.author}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Trending on Spotify (Live Horizontal Carousel) */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
                     <Clock size={14} className="text-rose-400" />
-                    <span>Recently Played</span>
+                    <span>Trending on Spotify</span>
                   </h3>
-                  <span className="text-[11px] text-white/40">Real-time live feed</span>
+                  <span className="text-[11px] text-white/40">Official Spotify Listings</span>
                 </div>
 
                 <div className="flex gap-4 overflow-x-auto pb-3 pt-1">
@@ -752,10 +840,19 @@ export default function FullMusicPlayerPage() {
                       className="shrink-0 w-36 rounded-2xl bg-[#141520] border border-[#222436] p-3 space-y-2 hover:border-rose-500/40 hover:scale-[1.02] transition cursor-pointer group"
                     >
                       <div className="relative aspect-square rounded-xl overflow-hidden bg-black/40">
-                        <img src={item.thumbnail} alt="" className="h-full w-full object-cover" />
-                        <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-black/60 text-white/80 backdrop-blur-sm">
-                          {item.timeAgo}
-                        </span>
+                        <img
+                          src={item.thumbnail}
+                          alt=""
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop';
+                          }}
+                        />
+                        {item.timeAgo && (
+                          <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-black/60 text-white/80 backdrop-blur-sm">
+                            {item.timeAgo}
+                          </span>
+                        )}
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition grid place-items-center">
                           <Play size={20} fill="currentColor" className="text-white" />
                         </div>
@@ -767,14 +864,17 @@ export default function FullMusicPlayerPage() {
                 </div>
               </div>
 
-              {/* Popular Today Horizontal Carousel (FlaviBot Style) */}
+              {/* Spotify Global Top 50 Horizontal Carousel */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
                     <Flame size={14} className="text-amber-400" />
-                    <span>Popular Today</span>
+                    <span>Spotify Global Top 50</span>
                   </h3>
-                  <span className="text-[11px] text-white/40">Trending on Uranium</span>
+                  <span className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    Official Charts
+                  </span>
                 </div>
 
                 <div className="flex gap-4 overflow-x-auto pb-3 pt-1">
@@ -785,7 +885,14 @@ export default function FullMusicPlayerPage() {
                       className="shrink-0 w-36 rounded-2xl bg-[#141520] border border-[#222436] p-3 space-y-2 hover:border-amber-500/40 hover:scale-[1.02] transition cursor-pointer group"
                     >
                       <div className="relative aspect-square rounded-xl overflow-hidden bg-black/40">
-                        <img src={item.thumbnail} alt="" className="h-full w-full object-cover" />
+                        <img
+                          src={item.thumbnail}
+                          alt=""
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop';
+                          }}
+                        />
                         <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[10px] font-black bg-amber-400 text-black">
                           #{item.rank}
                         </span>
@@ -986,23 +1093,29 @@ export default function FullMusicPlayerPage() {
             <option value="soft">Soft & Relaxing</option>
           </select>
 
-          {/* Volume Slider */}
+          {/* Volume Slider (Instant 0ms Feedback) */}
           <div className="flex items-center gap-1.5">
             <button
               type="button"
-              onClick={() => doAction('volume', player.volume > 0 ? 0 : 100)}
-              className="text-white/50 hover:text-white"
+              onClick={handleVolumeToggle}
+              className="text-white/50 hover:text-white transition"
+              title={localVolume === 0 ? 'Unmute' : 'Mute'}
             >
-              {player.volume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
+              {localVolume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
             </button>
             <input
               type="range"
               min="0"
               max="100"
-              value={player.volume ?? 100}
-              onChange={(e) => doAction('volume', parseInt(e.target.value))}
+              value={localVolume}
+              onPointerDown={() => { isDraggingVolumeRef.current = true; }}
+              onPointerUp={() => { isDraggingVolumeRef.current = false; }}
+              onChange={(e) => handleVolumeChange(e.target.value)}
               className="w-16 accent-rose-500 cursor-pointer"
             />
+            <span className="text-[10px] font-mono text-white/50 w-6 text-right select-none">
+              {localVolume}%
+            </span>
           </div>
         </div>
       </footer>

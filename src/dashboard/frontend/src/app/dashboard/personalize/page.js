@@ -157,23 +157,29 @@ export default function BotPersonalizerPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-16">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1e202c] pb-5">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-[#1e202c] pb-8 mb-8">
         <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl font-bold text-white tracking-tight">Bot Personalizer</h1>
+          <div className="flex items-center gap-4 mb-2">
+            <div className="h-px w-12 bg-red-500" />
+            <span className="text-[10px] sm:text-xs font-black uppercase tracking-[4px] text-red-500">
+              Identity Module
+            </span>
             {isPremium ? (
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
                 <Crown size={11} className="fill-amber-400 text-amber-400" />
                 Premium Active
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/10 text-white/70">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-white/10 text-white/70">
                 Free Server
               </span>
             )}
           </div>
-          <p className="text-xs text-white/60 mt-1">
-            Make your bot really special by changing its nickname, avatar, banner, and bio for this server.
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tighter uppercase italic text-white">
+            Bot <span className="text-red-500">Personalizer</span>
+          </h1>
+          <p className="mt-2 text-xs sm:text-sm text-white/50 max-w-xl leading-relaxed">
+            Customize Uranium's per-server identity with custom nicknames, animated GIF avatars, profile banners, and bios.
           </p>
         </div>
 
@@ -234,18 +240,13 @@ export default function BotPersonalizerPage() {
             </div>
           )}
 
-          {/* Section 1: Bot Nickname (FREE FEATURE) */}
+          {/* Section 1: Bot Nickname */}
           <div className="rounded-2xl border border-[#1e202c] bg-[#14151e] p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-white uppercase tracking-wider">
-                  Bot Nickname
-                </span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                  Free Feature
-                </span>
-              </div>
-              <span className="text-[11px] text-white/40">{nickname.length}/32</span>
+              <span className="text-sm font-bold text-white tracking-wide">
+                Bot Nickname
+              </span>
+              <span className="text-xs text-white/40 font-mono">{nickname.length}/32</span>
             </div>
 
             <p className="text-xs text-white/50">
@@ -259,7 +260,7 @@ export default function BotPersonalizerPage() {
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
                 placeholder={botUser.username}
-                className="w-full rounded-xl border border-[#262838] bg-[#101118] px-3.5 py-2.5 text-xs text-white placeholder:text-white/30 outline-none focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/30 transition"
+                className="w-full rounded-xl border border-[#262838] bg-[#101118] px-3.5 py-2.5 text-sm text-white placeholder:text-white/30 outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/30 transition"
               />
             </div>
             <p className="text-[11px] text-white/40">

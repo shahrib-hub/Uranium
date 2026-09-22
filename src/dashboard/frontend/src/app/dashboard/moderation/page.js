@@ -620,12 +620,19 @@ export default function ModerationPage() {
   return (
     <div className="lucent-page mx-auto max-w-7xl">
       {/* Top Header Bar */}
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between mb-8">
         <div>
-          <p className="lucent-kicker mb-2">Moderation Suite</p>
-          <h1 className="lucent-title text-3xl sm:text-5xl">Server Defense & Mod Hub</h1>
-          <p className="lucent-subtitle mt-2 text-sm sm:text-base">
-            Control infractions, automod rules, locks, and live moderation actions directly on Discord.
+          <div className="flex items-center gap-4 mb-2">
+            <div className="h-px w-12 bg-red-500" />
+            <span className="text-[10px] sm:text-xs font-black uppercase tracking-[4px] text-red-500">
+              Security Suite
+            </span>
+          </div>
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tighter uppercase italic text-white">
+            Server <span className="text-red-500">Defense</span>
+          </h1>
+          <p className="mt-2 text-xs sm:text-sm text-white/50 max-w-xl leading-relaxed">
+            Automated raid protection, spam filtering, custom punishments, channel lockdowns, and live infraction logs.
           </p>
         </div>
 

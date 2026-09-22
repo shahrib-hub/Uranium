@@ -20,7 +20,9 @@ import {
   Palette,
   MessageSquare,
   FileCode2,
-  HelpCircle
+  HelpCircle,
+  Music,
+  Radio
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -152,15 +154,21 @@ export default function PremiumDashboardPage() {
   return (
     <div className="space-y-8 max-w-6xl mx-auto pb-16">
       {/* Top Header */}
-      <div className="border-b border-[#1e202c] pb-5">
-        <div className="flex items-center gap-2.5">
-          <h1 className="text-2xl font-bold text-white tracking-tight">Premium & Code Redemption</h1>
+      <div className="border-b border-[#1e202c] pb-8 mb-8">
+        <div className="flex items-center gap-4 mb-2">
+          <div className="h-px w-12 bg-red-500" />
+          <span className="text-[10px] sm:text-xs font-black uppercase tracking-[4px] text-red-500">
+            Subscription Tier
+          </span>
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
             <Crown size={12} className="fill-amber-400 text-amber-400" />
             Server License
           </span>
         </div>
-        <p className="text-xs text-white/60 mt-1">
+        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tighter uppercase italic text-white">
+          Server <span className="text-red-500">Premium</span>
+        </h1>
+        <p className="mt-2 text-xs sm:text-sm text-white/50 max-w-xl leading-relaxed">
           Manage your server's premium subscription, redeem access codes, and view all unlocked perks.
         </p>
       </div>
@@ -310,25 +318,25 @@ export default function PremiumDashboardPage() {
               type="text"
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              placeholder="e.g. URANIUM-PREM-XXXX-XXXX"
-              className="w-full rounded-xl border border-[#262838] bg-[#101118] px-4 py-2.5 text-xs font-mono tracking-wider text-white placeholder:text-white/30 outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition uppercase"
+              placeholder="Enter premium code (small or capital letters)"
+              className="w-full rounded-xl border border-[#262838] bg-[#101118] px-4 py-3 text-sm font-mono tracking-wider text-white placeholder:text-white/30 outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition"
             />
           </div>
 
           <button
             type="submit"
             disabled={redeeming || !code.trim()}
-            className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 active:scale-95 text-black font-bold text-xs transition shadow-lg shadow-amber-500/20 disabled:opacity-40 disabled:pointer-events-none flex items-center justify-center gap-2"
+            className="px-6 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 active:scale-95 text-black font-bold text-sm transition shadow-lg shadow-amber-500/20 disabled:opacity-40 disabled:pointer-events-none flex items-center justify-center gap-2 shrink-0"
           >
-            <Crown size={14} className="fill-black" />
-            <span>{redeeming ? 'Verifying Code...' : 'Redeem for Server'}</span>
+            <Crown size={15} className="fill-black" />
+            <span>{redeeming ? 'Verifying Code...' : 'Redeem Code'}</span>
           </button>
         </form>
 
-        <p className="text-[11px] text-white/40 flex items-center gap-1.5">
-          <AlertCircle size={12} className="text-white/40" />
+        <p className="text-xs text-white/40 flex items-center gap-1.5">
+          <AlertCircle size={13} className="text-white/40 shrink-0" />
           <span>
-            Redeemed codes apply directly to <strong>{premiumData.guildName}</strong> and cannot be transferred once consumed.
+            Redeemed codes activate instantly for <strong>{premiumData.guildName}</strong> and apply per-server.
           </span>
         </p>
       </div>
@@ -336,11 +344,11 @@ export default function PremiumDashboardPage() {
       {/* Perks Showcase Grid */}
       <div className="space-y-4">
         <div>
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-            Unlocked Premium Perks
+          <h2 className="text-base font-bold text-white uppercase tracking-wider">
+            Included Premium Perks
           </h2>
           <p className="text-xs text-white/50 mt-0.5">
-            Everything included with an active Uranium server subscription.
+            Unlocked automatically with an active server subscription.
           </p>
         </div>
 
@@ -348,49 +356,49 @@ export default function PremiumDashboardPage() {
           {[
             {
               title: 'Bot Personalizer',
-              desc: 'Custom per-server avatar (Image or animated GIF), custom banner, and custom bio for your server.',
+              desc: 'Custom per-server animated GIF or image avatar, custom banner, and bio.',
               icon: Palette,
-              highlight: 'GIF & Image support',
+              highlight: 'GIF & Image Avatars',
               color: 'text-pink-400',
               bg: 'bg-pink-500/10'
             },
             {
-              title: 'Full AI Assistant Suite',
-              desc: 'Unlimited AI chat, drawing generation, character roleplay, and conversational commands.',
-              icon: Sparkles,
-              highlight: 'Zero rate-limits',
+              title: '20 User Playlists',
+              desc: 'Create, edit, and play up to 20 user playlists across web and Discord (free tier: 1).',
+              icon: Music,
+              highlight: '20 Saved Playlists',
+              color: 'text-rose-400',
+              bg: 'bg-rose-500/10'
+            },
+            {
+              title: 'Continuous Autoplay',
+              desc: 'Intelligent track recommendations queue automatically when the current queue finishes.',
+              icon: Radio,
+              highlight: 'Continuous Audio',
               color: 'text-amber-400',
               bg: 'bg-amber-500/10'
             },
             {
-              title: 'YouTube Verification',
-              desc: 'Automated `/ytverify` subscription verification with instant Discord role assignment for fans.',
-              icon: ShieldCheck,
-              highlight: 'Automated verification',
-              color: 'text-red-400',
-              bg: 'bg-red-500/10'
-            },
-            {
-              title: 'Expanded Server Backups',
-              desc: 'Unlock +2 extra backup slots (up to 5 total) with a rapid 24-hour restore cooldown.',
+              title: '5 Server Backups',
+              desc: 'Automated server backup slots with rapid 24-hour restore cooldown for roles & channels.',
               icon: Database,
-              highlight: '5 backup slots',
+              highlight: '5 Backup Slots',
               color: 'text-blue-400',
               bg: 'bg-blue-500/10'
             },
             {
-              title: 'Advanced Ticket Panels',
-              desc: 'Multiple interactive ticket panels with custom drop-down selectors and transcript exports.',
+              title: 'Multi-Panel Tickets',
+              desc: 'Multiple interactive ticket panels with custom dropdown departments and transcripts.',
               icon: MessageSquare,
-              highlight: 'Unlimited panels',
+              highlight: 'Unlimited Panels',
               color: 'text-emerald-400',
               bg: 'bg-emerald-500/10'
             },
             {
               title: '20 Embed Templates',
-              desc: 'Create, save, and reuse up to 20 rich embed templates in the dashboard (free tier: 3).',
+              desc: 'Create, design, and reuse up to 20 rich embed builder templates (free tier: 3).',
               icon: FileCode2,
-              highlight: '20 saved templates',
+              highlight: '20 Templates',
               color: 'text-purple-400',
               bg: 'bg-purple-500/10'
             }
@@ -400,16 +408,16 @@ export default function PremiumDashboardPage() {
               className="rounded-2xl border border-[#1e202c] bg-[#14151e] p-5 space-y-3 hover:border-[#2a2c3e] transition"
             >
               <div className="flex items-center justify-between">
-                <span className={`grid h-9 w-9 place-items-center rounded-xl ${bg} ${color}`}>
-                  <Icon size={18} />
+                <span className={`grid h-10 w-10 place-items-center rounded-xl ${bg} ${color}`}>
+                  <Icon size={19} />
                 </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/5 text-white/60">
+                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-white/5 text-white/60">
                   {highlight}
                 </span>
               </div>
               <div>
-                <h3 className="text-xs font-bold text-white">{title}</h3>
-                <p className="text-[11px] text-white/50 mt-1 leading-relaxed">{desc}</p>
+                <h3 className="text-sm font-bold text-white">{title}</h3>
+                <p className="text-xs text-white/50 mt-1 leading-relaxed">{desc}</p>
               </div>
             </div>
           ))}

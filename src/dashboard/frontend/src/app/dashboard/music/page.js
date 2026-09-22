@@ -15,12 +15,31 @@ export default function MusicPage() {
 
   return (
     <div className="lucent-page mx-auto max-w-7xl pb-12">
-      <header className="mb-6">
-        <p className="lucent-kicker mb-2">Music</p>
-        <h1 className="lucent-title text-4xl sm:text-5xl">Listen together.</h1>
-        <p className="lucent-subtitle mt-3">
-          Control music for the selected server. You need to be in the same voice channel as the bot to make changes.
-        </p>
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+        <div>
+          <div className="flex items-center gap-4 mb-2">
+            <div className="h-px w-12 bg-red-500" />
+            <span className="text-[10px] sm:text-xs font-black uppercase tracking-[4px] text-red-500">
+              Audio System
+            </span>
+          </div>
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tighter uppercase italic text-white">
+            Music <span className="text-red-500">Center</span>
+          </h1>
+          <p className="mt-2 text-xs sm:text-sm text-white/50 max-w-xl leading-relaxed">
+            Lossless 320kbps audio playback, queue management, studio audio filters, and live voice channel synchronization.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Link
+            href={`/dashboard/music/player${guildId ? `?guild=${guildId}` : ''}`}
+            className="flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-red-500 hover:bg-red-600 active:scale-95 text-white font-black uppercase tracking-wider text-xs shadow-lg shadow-red-500/20 transition-all"
+          >
+            <Headphones size={16} />
+            <span>Open Web Player</span>
+          </Link>
+        </div>
       </header>
 
       {/* Full Web Music Player Promo Banner */}

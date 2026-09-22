@@ -139,20 +139,27 @@ export default function BotSettingsPage() {
 
   return (
     <div className="lucent-page mx-auto max-w-5xl">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
         <div>
-          <p className="lucent-kicker mb-2">Bot settings</p>
-          <h1 className="lucent-title text-3xl sm:text-5xl">Make it feel at home.</h1>
-          <p className="lucent-subtitle mt-3 text-sm sm:text-base">
-            Configure how Uranium identifies and communicates in this server.
+          <div className="flex items-center gap-4 mb-2">
+            <div className="h-px w-12 bg-red-500" />
+            <span className="text-[10px] sm:text-xs font-black uppercase tracking-[4px] text-red-500">
+              Configuration
+            </span>
+          </div>
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tighter uppercase italic text-white">
+            Server <span className="text-red-500">Settings</span>
+          </h1>
+          <p className="mt-2 text-xs sm:text-sm text-white/50 max-w-xl leading-relaxed">
+            Configure server-wide bot prefixes, notifications, logging channels, and administrative permissions.
           </p>
         </div>
         <button
           onClick={load}
-          className="lucent-button h-11 w-11 shrink-0 rounded-2xl p-0 self-start"
+          className="p-4 rounded-2xl bg-white/5 border border-white/10 text-white/60 hover:text-white hover:border-white/20 transition-all active:scale-95 disabled:opacity-50 self-start md:self-auto"
           aria-label="Refresh settings"
         >
-          <RefreshCw size={17} className={loading ? 'animate-spin text-rose-300' : ''} />
+          <RefreshCw size={18} className={loading ? 'animate-spin text-red-500' : ''} />
         </button>
       </div>
 

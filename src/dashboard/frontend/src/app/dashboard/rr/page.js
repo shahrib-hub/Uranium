@@ -357,6 +357,9 @@ export default function ReactionRolesPage() {
           >
             Reaction <span className="text-red-500">Roles</span>
           </motion.h1>
+          <p className="mt-2 text-xs sm:text-sm text-white/50 max-w-xl leading-relaxed">
+            Create interactive button and select dropdown panels for members to self-assign server roles.
+          </p>
         </div>
 
         <div className="flex items-center gap-4">

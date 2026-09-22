@@ -186,43 +186,43 @@ export default function Sidebar() {
         {/* Navigation List */}
         <div className="flex-1 overflow-y-auto px-3 py-3 space-y-4">
           {/* Main Top Links */}
-          <div className="space-y-0.5">
+          <div className="space-y-1">
             <Link
               href={withGuild('/dashboard')}
               onClick={() => setSidebarOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold transition ${
                 pathname === '/dashboard'
                   ? 'bg-[#222432] text-white'
                   : 'text-[#949ba4] hover:text-white hover:bg-[#1a1b24]'
               }`}
             >
-              <LayoutDashboard size={16} className={pathname === '/dashboard' ? 'text-rose-400' : ''} />
+              <LayoutDashboard size={17} className={pathname === '/dashboard' ? 'text-red-400' : ''} />
               <span>Dashboard</span>
             </Link>
 
             <Link
               href={withGuild('/dashboard/personalize')}
               onClick={() => setSidebarOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold transition ${
                 pathname === '/dashboard/personalize'
                   ? 'bg-[#222432] text-white'
                   : 'text-[#949ba4] hover:text-white hover:bg-[#1a1b24]'
               }`}
             >
-              <Palette size={16} className={pathname === '/dashboard/personalize' ? 'text-rose-400' : ''} />
+              <Palette size={17} className={pathname === '/dashboard/personalize' ? 'text-red-400' : ''} />
               <span>Bot Personalizer</span>
             </Link>
 
             <Link
               href={withGuild('/commands')}
               onClick={() => setSidebarOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold transition ${
                 pathname === '/commands'
                   ? 'bg-[#222432] text-white'
                   : 'text-[#949ba4] hover:text-white hover:bg-[#1a1b24]'
               }`}
             >
-              <BookOpen size={16} className={pathname === '/commands' ? 'text-rose-400' : ''} />
+              <BookOpen size={17} className={pathname === '/commands' ? 'text-red-400' : ''} />
               <span>Commands</span>
             </Link>
           </div>
@@ -232,7 +232,7 @@ export default function Sidebar() {
             <button
               type="button"
               onClick={() => setEssentialsOpen(!essentialsOpen)}
-              className="flex w-full items-center justify-between px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white/40 hover:text-white/70 transition"
+              className="flex w-full items-center justify-between px-3 py-1.5 text-[11px] font-black uppercase tracking-wider text-white/40 hover:text-white/70 transition"
             >
               <span>Essentials</span>
               <ChevronDown
@@ -258,7 +258,7 @@ export default function Sidebar() {
                       key={href}
                       href={withGuild(href)}
                       onClick={() => setSidebarOpen(false)}
-                      className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
+                      className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-semibold transition ${
                         active
                           ? 'bg-[#222432] text-white'
                           : 'text-[#949ba4] hover:text-white hover:bg-[#1a1b24]'
@@ -305,21 +305,9 @@ export default function Sidebar() {
                     highlight: true
                   },
                   {
-                    href: withGuild('/commands') + '&search=ai',
-                    label: 'AI Characters & Chat',
-                    icon: Sparkles,
-                    isInternal: true
-                  },
-                  {
-                    href: withGuild('/commands') + '&search=ytverify',
-                    label: 'YouTube Verification',
-                    icon: Check,
-                    isInternal: true
-                  },
-                  {
-                    href: withGuild('/commands') + '&search=backup',
-                    label: 'Server Backups',
-                    icon: Database,
+                    href: withGuild('/dashboard/personalize'),
+                    label: 'Bot Personalizer',
+                    icon: Palette,
                     isInternal: true
                   },
                   {
@@ -336,7 +324,7 @@ export default function Sidebar() {
                         key={label}
                         href={href}
                         onClick={() => setSidebarOpen(false)}
-                        className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition group ${
+                        className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-semibold transition group ${
                           isActive
                             ? 'bg-[#222432] text-amber-300'
                             : highlight
@@ -345,10 +333,10 @@ export default function Sidebar() {
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <Icon size={16} className={isActive || highlight ? 'text-amber-400' : 'text-amber-400/80 group-hover:text-amber-300'} />
+                          <Icon size={17} className={isActive || highlight ? 'text-amber-400' : 'text-amber-400/80 group-hover:text-amber-300'} />
                           <span>{label}</span>
                         </div>
-                        <Crown size={12} className="fill-amber-400 text-amber-400 shrink-0" />
+                        <Crown size={13} className="fill-amber-400 text-amber-400 shrink-0" />
                       </Link>
                     );
                   }
@@ -359,10 +347,10 @@ export default function Sidebar() {
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => setSidebarOpen(false)}
-                      className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-[#949ba4] hover:text-white hover:bg-[#1a1b24] transition group"
+                      className="flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-semibold text-[#949ba4] hover:text-white hover:bg-[#1a1b24] transition group"
                     >
                       <div className="flex items-center gap-3">
-                        <Icon size={16} className="text-amber-400/80 group-hover:text-amber-300" />
+                        <Icon size={17} className="text-amber-400/80 group-hover:text-amber-300" />
                         <span>{label}</span>
                       </div>
                       <ExternalLink size={12} className="text-white/40 group-hover:text-white/70 shrink-0" />

@@ -708,20 +708,34 @@ async function connectToMongo() {
   if (isConnected) return;
 
   try {
+    const timeoutMs = parseInt(process.env.MONGODB_TIMEOUT_MS) || 15000;
     logger.info('[Database] Connecting to MongoDB...');
-    await mongoose.connect(mongoURI, {
-      serverSelectionTimeoutMS: 2500,
-      family: 4 // Force IPv4 to avoid certain DNS resolution issues
-    });
+    const connectOptions = {
+      serverSelectionTimeoutMS: timeoutMs,
+      connectTimeoutMS: timeoutMs,
+      socketTimeoutMS: 45000
+    };
+    if (process.env.MONGODB_FORCE_IPV4 === 'true') {
+      connectOptions.family = 4;
+    }
+    await mongoose.connect(mongoURI, connectOptions);
     isConnected = true;
     logger.info('[Database] Successfully connected to MongoDB.');
   } catch (err) {
-    const isDnsError = err.message.includes('ENOTFOUND');
+    const isDnsError = err.message.includes('ENOTFOUND') || err.message.includes('querySrv');
     logger.error('[Database] Failed to connect to MongoDB: %s', err.message);
     if (isDnsError) {
       logger.error('💡 HINT: This is a DNS error. Please ensure your host machine can resolve the MongoDB Atlas address.');
+      logger.error('   If you are on a VPS/network with custom DNS, try setting your DNS servers to 8.8.8.8 or 1.1.1.1.');
     } else if (err.message.includes('Server selection timed out')) {
-      logger.error('💡 HINT: Connection timed out. This often means your server\'s IP is not whitelisted in MongoDB Atlas "Network Access".');
+      logger.error('💡 HINT: Connection timed out. This usually means:');
+      logger.error('   1. Your current IP is not whitelisted in MongoDB Atlas under "Network Access" (add 0.0.0.0/0 to allow all IPs).');
+      logger.error('   2. Network latency to MongoDB Atlas exceeded the timeout threshold.');
+      if (mongoURI.includes('localhost') || mongoURI.includes('127.0.0.1')) {
+        logger.error('   3. Connecting to localhost:27017 failed because the local MongoDB service is not running.');
+      }
+    } else if (err.message.includes('Authentication failed') || err.message.includes('bad auth')) {
+      logger.error('💡 HINT: MongoDB authentication failed. Please verify the username and password in your MONGODB_URI.');
     }
   }
 

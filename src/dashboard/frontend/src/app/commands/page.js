@@ -74,19 +74,20 @@ export default function CommandsPage() {
       <section className="lucent-card rounded-[2rem] p-6 sm:p-10 border border-white/10 bg-gradient-to-b from-white/[0.05] to-transparent">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-1 rounded-md bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-bold uppercase tracking-wider">
+            <div className="flex items-center gap-4 mb-2">
+              <div className="h-px w-12 bg-red-500" />
+              <span className="text-[10px] sm:text-xs font-black uppercase tracking-[4px] text-red-500">
                 Command Directory
               </span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold uppercase tracking-wider">
-                <Crown size={12} className="fill-amber-400 text-amber-400" />
-                {premiumCount} Premium Commands
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-bold uppercase tracking-wider">
+                <Crown size={11} className="fill-amber-400 text-amber-400" />
+                {premiumCount} Premium
               </span>
             </div>
-            <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white">
-              Commands Reference
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tighter uppercase italic text-white">
+              Commands <span className="text-red-500">Catalog</span>
             </h1>
-            <p className="text-sm sm:text-base text-white/60 max-w-2xl leading-relaxed">
+            <p className="mt-2 text-xs sm:text-sm text-white/50 max-w-2xl leading-relaxed">
               Explore all {totalCount} slash commands available in Uranium. Look for the gold crown icon next to premium-tier commands.
             </p>
           </div>

@@ -216,47 +216,40 @@ export default function GiveawaysPage() {
     <div className="lucent-page mx-auto max-w-7xl space-y-6">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      {/* Hero Header */}
-      <section className="lucent-card overflow-hidden rounded-[2rem] p-6 sm:p-8 relative">
-        <div className="absolute -right-16 -bottom-16 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-        
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 relative z-10">
-          <div className="flex items-center gap-4">
-            <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 text-emerald-400 ring-1 ring-emerald-500/30 shadow-lg shadow-emerald-500/10">
-              <Gift size={32} />
+      {/* Header */}
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+        <div>
+          <div className="flex items-center gap-4 mb-2">
+            <div className="h-px w-12 bg-red-500" />
+            <span className="text-[10px] sm:text-xs font-black uppercase tracking-[4px] text-red-500">
+              Community Module
             </span>
-            <div>
-              <span className="lucent-kicker mb-1 flex items-center gap-1.5 text-emerald-400">
-                <Sparkles size={12} /> Interactive Giveaways
-              </span>
-              <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                Giveaways Command Center
-              </h1>
-              <p className="mt-1 text-sm text-[var(--muted)] max-w-xl">
-                Launch, edit, and track live Discord giveaways with automated countdowns, random winner selection, and instant Discord synchronization.
-              </p>
-            </div>
           </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => fetchGiveaways(true)}
-              disabled={refreshing}
-              className="lucent-button h-11 rounded-xl px-4 text-xs font-bold uppercase tracking-wider disabled:opacity-50"
-            >
-              <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} />
-              Sync
-            </button>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="h-11 px-5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 text-black text-xs font-black uppercase tracking-wider flex items-center gap-2 hover:brightness-110 transition-all shadow-lg shadow-emerald-500/20"
-            >
-              <Plus size={16} />
-              Launch Giveaway
-            </button>
-          </div>
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tighter uppercase italic text-white">
+            Custom <span className="text-red-500">Giveaways</span>
+          </h1>
+          <p className="mt-2 text-xs sm:text-sm text-white/50 max-w-xl leading-relaxed">
+            Launch, schedule, and track live Discord giveaways with automated timers, role requirement gates, and fair winner rolls.
+          </p>
         </div>
-      </section>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => fetchGiveaways(true)}
+            disabled={refreshing}
+            className="p-4 rounded-2xl bg-white/5 border border-white/10 text-white/60 hover:text-white hover:border-white/20 transition-all active:scale-95 disabled:opacity-50"
+          >
+            <RefreshCw size={18} className={refreshing ? 'animate-spin text-red-500' : ''} />
+          </button>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-red-500 text-black font-black uppercase tracking-wider text-xs shadow-lg shadow-red-500/20 hover:scale-105 active:scale-95 transition-all"
+          >
+            <Plus size={16} />
+            Launch Giveaway
+          </button>
+        </div>
+      </header>
 
       {/* Metric Cards */}
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

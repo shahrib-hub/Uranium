@@ -97,12 +97,18 @@ function generateCode(code, createdBy, durationStr, uses) {
   save(codesPath, codes);
 }
 
-function redeemCode(code, guildId, userId) {
+function redeemCode(rawCode, guildId, userId) {
   const codes = load(codesPath);
   const guilds = load(guildsPath);
   const users = load(usersPath);
 
-  const entry = codes[code];
+  const query = String(rawCode || '').trim().toLowerCase();
+  if (!query) return { success: false, reason: 'Invalid code.' };
+
+  const matchedKey = Object.keys(codes).find(k => k.trim().toLowerCase() === query);
+  if (!matchedKey) return { success: false, reason: 'Invalid code.' };
+
+  const entry = codes[matchedKey];
   if (!entry) return { success: false, reason: 'Invalid code.' };
   if (new Date(entry.validUntil) < new Date()) return { success: false, reason: 'Code expired.' };
   if (entry.usesLeft <= 0) return { success: false, reason: 'Code has no uses left.' };
@@ -122,7 +128,7 @@ function redeemCode(code, guildId, userId) {
   };
 
   entry.usesLeft -= 1;
-  if (entry.usesLeft <= 0) delete codes[code];
+  if (entry.usesLeft <= 0) delete codes[matchedKey];
 
   save(guildsPath, guilds);
   save(usersPath, users);
@@ -131,10 +137,14 @@ function redeemCode(code, guildId, userId) {
   return { success: true, expiresAt };
 }
 
-function deleteCode(code) {
+function deleteCode(rawCode) {
   const codes = load(codesPath);
-  delete codes[code];
-  save(codesPath, codes);
+  const query = String(rawCode || '').trim().toLowerCase();
+  const matchedKey = Object.keys(codes).find(k => k.trim().toLowerCase() === query);
+  if (matchedKey) {
+    delete codes[matchedKey];
+    save(codesPath, codes);
+  }
 }
 
 // ✅ Listing

@@ -42,10 +42,12 @@ const { useMongoDB } = require('./config/database');
   // ---------- Database Cleanup (Remove MusicHub data) ----------
   try {
     const mongoose = require('mongoose');
-    const collections = await mongoose.connection.db.listCollections({ name: 'musichubs' }).toArray();
-    if (collections.length > 0) {
-      await mongoose.connection.db.collection('musichubs').drop();
-      logger.info(chalk.green('🧹 [Database] Central Music Hub data cleared.'));
+    if (useMongoDB && getDbStatus() && mongoose.connection?.db) {
+      const collections = await mongoose.connection.db.listCollections({ name: 'musichubs' }).toArray();
+      if (collections.length > 0) {
+        await mongoose.connection.db.collection('musichubs').drop();
+        logger.info(chalk.green('🧹 [Database] Central Music Hub data cleared.'));
+      }
     }
   } catch (e) {
     logger.warn('[Database] Failed to clear MusicHub data: %s', e?.message || e);

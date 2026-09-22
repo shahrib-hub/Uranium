@@ -456,7 +456,7 @@ function createApiRouter(client) {
 
       res.json({
         totalServers,
-        ping: ping + 'ms',
+        ping: typeof ping === 'number' && ping >= 0 ? Math.round(ping) : 0,
         uptime: formatUptime(uptime),
         nodeVersion,
         cpuUsage,
@@ -1014,31 +1014,16 @@ function createApiRouter(client) {
   });
 
   // ---------- MUSIC FEED & DISCOVERY API ----------
+  const spotifyFeed = require('./data/spotifyFeed');
   router.get('/music/feed', async (req, res) => {
     try {
-      const popularToday = [
-        { id: 'f1', title: 'DtMF', author: 'Bad Bunny', duration: 237000, thumbnail: 'https://i.scdn.co/image/ab67616d0000b273b754e63b65cb68a7ebdf4d32', rank: 1, streams: '2.4M' },
-        { id: 'f2', title: 'We Are Charlie Kirk', author: 'Spalxxma', duration: 184000, thumbnail: 'https://i.scdn.co/image/ab67616d0000b273c52a06dd876cb862b2173f4d', rank: 2, streams: '1.9M' },
-        { id: 'f3', title: 'Tití Me Preguntó', author: 'Bad Bunny', duration: 243000, thumbnail: 'https://i.scdn.co/image/ab67616d0000b27349d694203245f241a1bcaa70', rank: 3, streams: '1.8M' },
-        { id: 'f4', title: 'Babydoll', author: 'Dominic Fike', duration: 176000, thumbnail: 'https://i.scdn.co/image/ab67616d0000b27364b4c730e2f5f19db1d60768', rank: 4, streams: '1.5M' },
-        { id: 'f5', title: 'BAILE INOLVIDABLE', author: 'Bad Bunny', duration: 198000, thumbnail: 'https://i.scdn.co/image/ab67616d0000b27393433e5c94be0600cf9d6945', rank: 5, streams: '1.3M' },
-        { id: 'f6', title: 'Judas', author: 'Lady Gaga', duration: 249000, thumbnail: 'https://i.scdn.co/image/ab67616d0000b27339ebacb0f55cf64a0656640c', rank: 6, streams: '1.2M' },
-        { id: 'f7', title: 'End of Beginning', author: 'Djo', duration: 159000, thumbnail: 'https://i.scdn.co/image/ab67616d0000b27341ea226d9c6e3b5dfbe3bf63', rank: 7, streams: '1.1M' }
-      ];
-
-      const recentlyPlayed = [
-        { id: 'r1', title: 'Gone Gone Gone', author: 'David Guetta, Teddy Swims', duration: 198000, timeAgo: '1m ago', thumbnail: 'https://i.scdn.co/image/ab67616d0000b273c52a06dd876cb862b2173f4d' },
-        { id: 'r2', title: 'Wicked Game', author: 'Chris Isaak', duration: 289000, timeAgo: '4m ago', thumbnail: 'https://i.scdn.co/image/ab67616d0000b273b754e63b65cb68a7ebdf4d32' },
-        { id: 'r3', title: 'Eyes Without A Face', author: 'Billy Idol', duration: 299000, timeAgo: '7m ago', thumbnail: 'https://i.scdn.co/image/ab67616d0000b27364b4c730e2f5f19db1d60768' },
-        { id: 'r4', title: 'Murder on My Mind', author: 'YNW Melly', duration: 268000, timeAgo: '10m ago', thumbnail: 'https://i.scdn.co/image/ab67616d0000b27349d694203245f241a1bcaa70' },
-        { id: 'r5', title: 'Catalina', author: 'Cheu-B', duration: 212000, timeAgo: '15m ago', thumbnail: 'https://i.scdn.co/image/ab67616d0000b27393433e5c94be0600cf9d6945' },
-        { id: 'r6', title: 'EL GEMANO', author: 'Genev10', duration: 185000, timeAgo: '20m ago', thumbnail: 'https://i.scdn.co/image/ab67616d0000b27341ea226d9c6e3b5dfbe3bf63' }
-      ];
-
-      const genres = ['All', 'Pop', 'Hip-Hop', 'Lo-Fi', 'Rock', 'Electronic', 'R&B', 'Phonk', 'Chill & Study'];
-      const regions = ['Global Top 50', 'United States', 'United Kingdom', 'Latin America', 'Japan', 'South Korea'];
-
-      res.json({ popularToday, recentlyPlayed, genres, regions });
+      res.json({
+        popularToday: spotifyFeed.popularToday,
+        recentlyPlayed: spotifyFeed.recentlyPlayed,
+        genreTracks: spotifyFeed.genreTracks,
+        genres: spotifyFeed.genres,
+        regions: spotifyFeed.regions
+      });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

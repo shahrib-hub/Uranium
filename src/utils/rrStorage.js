@@ -1,6 +1,7 @@
 // src/utils/rrStorage.js - REVAMPED
 const rrdb = require('./rrdb');
 const { useMongoDB } = require('../config/database');
+const { isMongoReady } = require('../database/dbUtils');
 const { RRSetup, RRItem, RRLog, RRCounter } = require('../database/mongoose');
 const logger = require('./logger');
 const chalk = require('chalk');
@@ -120,12 +121,13 @@ async function validateRoleAssignment(member, item, setup) {
 // ========== CRUD OPERATIONS WITH CACHE ==========
 async function initStorage() {
   await rrdb.init();
-  logger.info(chalk.magenta('[RR] Storage layer initialized (mode: %s)'), useMongoDB ? 'MongoDB' : 'SQLite');
+  const activeMode = isMongoReady() ? 'MongoDB' : (useMongoDB ? 'SQLite (Fallback: MongoDB offline)' : 'SQLite');
+  logger.info(chalk.magenta('[RR] Storage layer initialized (mode: %s)'), activeMode);
 }
 
 async function createSetup({ guildId, channelId, mode = 'buttons', title = '', description = '', creatorId, config = {} }) {
   const ts = now();
-  if (useMongoDB) {
+  if (isMongoReady()) {
     // Use global counter to avoid duplicate ID conflicts across guilds
     const counter = await RRCounter.findOneAndUpdate(
       { guildId: 'GLOBAL' },
@@ -150,7 +152,7 @@ async function createSetup({ guildId, channelId, mode = 'buttons', title = '', d
 }
 
 async function updateSetupMessageId(setupId, messageId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await RRSetup.findByIdAndUpdate(setupId, { messageId, updatedAt: now() }).catch(() => null);
     cacheInvalidateSetup(setupId);
     return;
@@ -169,7 +171,7 @@ async function getSetupById(setupId) {
   if (cached) return cached;
 
   let result;
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const doc = await RRSetup.findById(sid).catch(() => null);
     if (!doc) return null;
     result = {
@@ -209,7 +211,7 @@ async function getSetupByMessage(guildId, messageId) {
   if (cached) return cached;
 
   let result;
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const doc = await RRSetup.findOne({ guildId, messageId, active: true });
     if (!doc) return null;
     result = {
@@ -244,7 +246,7 @@ async function getSetupByMessage(guildId, messageId) {
 }
 
 async function listSetupsForGuild(guildId) {
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const docs = await RRSetup.find({ guildId }).sort({ createdAt: -1 });
     return docs.map(doc => ({
       id: doc._id.toString(),
@@ -270,7 +272,7 @@ async function listSetupsForGuild(guildId) {
 
 async function deleteSetup(setupId) {
   const sid = String(setupId);
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await RRSetup.findByIdAndDelete(sid).catch(() => null);
     await RRItem.deleteMany({ setupId: sid });
     await RRLog.deleteMany({ setupId: sid });
@@ -284,7 +286,7 @@ async function deleteSetup(setupId) {
 async function addItem({ setupId, emoji, emojiIdentifier, label = null, roleId, position = 0, style = 0, description = null, metadata = {} }) {
   const ts = now();
   const sid = String(setupId);
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const counter = await RRCounter.findOneAndUpdate(
       { guildId: 'GLOBAL_ITEMS' }, // Special key for global item counter
       { $inc: { nextId: 1 } },
@@ -313,7 +315,7 @@ async function removeItem(itemId) {
   const item = await findItemById(itemId);
   if (!item) return;
   
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await RRItem.findByIdAndDelete(itemId).catch(() => null);
     cacheInvalidateSetup(item.setup_id);
     return;
@@ -324,7 +326,7 @@ async function removeItem(itemId) {
 
 async function clearAllItems(setupId) {
   const sid = String(setupId);
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await RRItem.deleteMany({ setupId: sid });
   } else {
     await rrdb.instance.run(`DELETE FROM rr_items WHERE setup_id = ?;`, [sid]);
@@ -339,7 +341,7 @@ async function listItems(setupId) {
   if (cached) return cached;
 
   let result;
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const docs = await RRItem.find({ setupId: sid }).sort({ position: 1, _id: 1 });
     result = docs.map(doc => ({
       id: doc._id.toString(),
@@ -378,7 +380,7 @@ async function findItemById(itemId) {
   if (cached) return cached;
 
   let result;
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const doc = await RRItem.findById(itemId).catch(() => null);
     if (!doc) return null;
     result = {
@@ -403,7 +405,7 @@ async function findItemById(itemId) {
 
 async function findItemsByRoleId(roleId) {
   // Efficient lookup for cleanup when a role is deleted
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const docs = await RRItem.find({ roleId }).sort({ createdAt: 1 });
     return docs.map(doc => ({
       id: doc._id.toString(),
@@ -423,7 +425,7 @@ async function updateItem(itemId, updates) {
   const item = await findItemById(itemId);
   if (!item) return;
 
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const updateObj = { ...updates };
     if (!updateObj.updatedAt) updateObj.updatedAt = now();
     await RRItem.findByIdAndUpdate(itemId, updateObj).catch(() => null);
@@ -445,7 +447,7 @@ async function updateSetupConfig(setupId, config) {
     requiredRoles: config.requiredRoles instanceof Map ? Object.fromEntries(config.requiredRoles) : config.requiredRoles
   };
 
-  if (useMongoDB) {
+  if (isMongoReady()) {
     await RRSetup.findByIdAndUpdate(sid, { 
       config: serializableConfig,
       updatedAt: now()
@@ -463,7 +465,7 @@ async function updateSetupConfig(setupId, config) {
 async function logAction({ guildId, userId, roleId, setupId, action, error = null, metadata = {} }) {
   const ts = now();
   try {
-    if (useMongoDB) {
+    if (isMongoReady()) {
       await RRLog.create({ 
         guildId, userId, roleId, setupId: String(setupId), action, ts,
         error, metadata
@@ -484,7 +486,7 @@ async function getSetupStats(setupId) {
   // Get statistics for a setup (counts per action in last 24h)
   const since = now() - 24*60*60;
   const sid = String(setupId);
-  if (useMongoDB) {
+  if (isMongoReady()) {
     const counts = await RRLog.aggregate([
       { $match: { setupId: sid, ts: { $gte: since } } },
       { $group: { _id: '$action', count: { $sum: 1 } } }

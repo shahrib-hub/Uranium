@@ -2,14 +2,18 @@
 import { Play, Pause, SkipForward, SkipBack, Square, Volume2, Repeat, Shuffle, RefreshCw, Activity, Zap } from 'lucide-react';
 import { useStore } from '@/store';
 import PremiumButton from './PremiumButton';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function MusicControls() {
   const { player } = useStore();
   const [localVolume, setLocalVolume] = useState(player?.volume || 100);
+  const isDraggingVolumeRef = useRef(false);
+  const volumeDebounceRef = useRef(null);
 
   useEffect(() => {
-    if (player?.volume !== undefined) setLocalVolume(player.volume);
+    if (!isDraggingVolumeRef.current && player?.volume !== undefined) {
+      setLocalVolume(player.volume);
+    }
   }, [player?.volume]);
 
   const handleAction = (action, body = {}) => {
@@ -21,9 +25,14 @@ export default function MusicControls() {
   };
 
   const handleVolumeChange = (e) => {
-    const vol = Math.min(100, Math.max(0, parseInt(e.target.value)));
+    const vol = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
     setLocalVolume(vol);
-    handleAction('volume', { value: vol });
+    isDraggingVolumeRef.current = true;
+    if (volumeDebounceRef.current) clearTimeout(volumeDebounceRef.current);
+    volumeDebounceRef.current = setTimeout(() => {
+      isDraggingVolumeRef.current = false;
+      handleAction('volume', { value: vol });
+    }, 120);
   };
 
   const handleSeek = (e) => {
@@ -157,16 +166,21 @@ export default function MusicControls() {
 
         </div>
 
-        <div className="w-full sm:w-auto flex items-center justify-center gap-4 bg-white/5 p-3 rounded-2xl border border-white/10">
-          <Volume2 size={16} className="text-white/20" />
+        <div className="w-full sm:w-auto flex items-center justify-center gap-3 bg-white/5 px-3.5 py-2.5 rounded-2xl border border-white/10">
+          <Volume2 size={16} className="text-white/40 shrink-0" />
           <input 
             type="range" 
             min="0" 
             max="100" 
             value={localVolume}
+            onPointerDown={() => { isDraggingVolumeRef.current = true; }}
+            onPointerUp={() => { isDraggingVolumeRef.current = false; }}
             onChange={handleVolumeChange}
-            className="w-full sm:w-24 h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-red-500"
+            className="w-full sm:w-24 h-1.5 bg-white/10 rounded-full appearance-none cursor-pointer accent-red-500"
           />
+          <span className="text-[11px] font-mono text-white/50 w-7 text-right select-none">
+            {localVolume}%
+          </span>
         </div>
       </div>
     </div>

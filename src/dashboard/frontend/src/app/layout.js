@@ -14,7 +14,8 @@ function AppShell({ children }) {
   const searchParams = useSearchParams();
   const { setPlayer, setUser } = useStore();
   const guildId = searchParams.get('guild');
-  const dashboardArea = pathname.startsWith('/dashboard') || pathname.startsWith('/commands');
+  const isFullMusicPlayer = pathname === '/dashboard/music/player' || pathname.startsWith('/dashboard/music/player');
+  const dashboardArea = (pathname.startsWith('/dashboard') || pathname.startsWith('/commands')) && !isFullMusicPlayer;
 
   useEffect(() => {
     fetch('/api/me').then((response) => {
@@ -49,7 +50,7 @@ function AppShell({ children }) {
     <div className="min-h-screen bg-[#0e0f15] text-[#f3f4f6]">
       {dashboardArea && <Header />}
       {dashboardArea && <Sidebar />}
-      <main className={dashboardArea ? 'min-h-screen pt-14 lg:pl-64 bg-[#0e0f15]' : 'min-h-screen'}>
+      <main className={dashboardArea ? 'min-h-screen pt-14 lg:pl-64 bg-[#0e0f15]' : 'min-h-screen bg-[#0e0f15]'}>
         {children}
       </main>
     </div>

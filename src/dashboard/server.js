@@ -20,15 +20,10 @@ function startDashboard(client) {
   app.set('trust proxy', 1);
 
   // Session middleware
-  const sessionMiddleware = session({
+  const sessionOptions = {
     secret: process.env.SESSION_SECRET || 'uranium-secret',
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({
-      mongoUrl: process.env.MONGODB_URI,
-      collectionName: 'dashboard_sessions',
-      ttl: 7 * 24 * 60 * 60 // 7 days
-    }),
     cookie: {
       // Secure if HTTPS or in production
       secure: process.env.DASHBOARD_URL?.startsWith('https') || process.env.NODE_ENV === 'production',
@@ -36,7 +31,21 @@ function startDashboard(client) {
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     }
-  });
+  };
+
+  if (process.env.MONGODB_URI) {
+    try {
+      sessionOptions.store = MongoStore.create({
+        mongoUrl: process.env.MONGODB_URI,
+        collectionName: 'dashboard_sessions',
+        ttl: 7 * 24 * 60 * 60 // 7 days
+      });
+    } catch (storeErr) {
+      console.warn('[Dashboard] Could not initialize MongoStore for sessions, using MemoryStore:', storeErr.message);
+    }
+  }
+
+  const sessionMiddleware = session(sessionOptions);
 
   // Middleware
   // In production with Vercel Rewrites, the origin will be the Vercel URL
