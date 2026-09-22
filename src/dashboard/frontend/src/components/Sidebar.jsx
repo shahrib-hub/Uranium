@@ -19,7 +19,8 @@ import {
   ExternalLink,
   Check,
   Search,
-  Server
+  Server,
+  Palette
 } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useStore } from '@/store';
@@ -200,6 +201,19 @@ export default function Sidebar() {
             </Link>
 
             <Link
+              href={withGuild('/dashboard/personalize')}
+              onClick={() => setSidebarOpen(false)}
+              className={`flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition ${
+                pathname === '/dashboard/personalize'
+                  ? 'bg-[#222432] text-white'
+                  : 'text-[#949ba4] hover:text-white hover:bg-[#1a1b24]'
+              }`}
+            >
+              <Palette size={16} className={pathname === '/dashboard/personalize' ? 'text-rose-400' : ''} />
+              <span>Bot Personalizer</span>
+            </Link>
+
+            <Link
               href={withGuild('/commands')}
               onClick={() => setSidebarOpen(false)}
               className={`flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition ${
@@ -284,33 +298,66 @@ export default function Sidebar() {
               <div className="space-y-0.5 pt-0.5">
                 {[
                   {
+                    href: withGuild('/dashboard/premium'),
+                    label: 'Premium & Codes',
+                    icon: Crown,
+                    isInternal: true,
+                    highlight: true
+                  },
+                  {
                     href: withGuild('/commands') + '&search=ai',
                     label: 'AI Characters & Chat',
-                    icon: Sparkles
+                    icon: Sparkles,
+                    isInternal: true
                   },
                   {
                     href: withGuild('/commands') + '&search=ytverify',
                     label: 'YouTube Verification',
-                    icon: Check
+                    icon: Check,
+                    isInternal: true
                   },
                   {
                     href: withGuild('/commands') + '&search=backup',
                     label: 'Server Backups',
-                    icon: Database
+                    icon: Database,
+                    isInternal: true
                   },
                   {
                     href: 'https://discord.gg/26ThFyckFX',
-                    label: 'Upgrade / Buy Code',
-                    icon: Crown,
+                    label: 'Buy Premium License',
+                    icon: ExternalLink,
                     external: true
                   }
-                ].map(({ href, label, icon: Icon, external }) => {
+                ].map(({ href, label, icon: Icon, external, isInternal, highlight }) => {
+                  const isActive = isInternal && pathname === href.split('?')[0];
+                  if (isInternal) {
+                    return (
+                      <Link
+                        key={label}
+                        href={href}
+                        onClick={() => setSidebarOpen(false)}
+                        className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition group ${
+                          isActive
+                            ? 'bg-[#222432] text-amber-300'
+                            : highlight
+                            ? 'text-amber-300/90 hover:text-amber-200 hover:bg-amber-500/10'
+                            : 'text-[#949ba4] hover:text-white hover:bg-[#1a1b24]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Icon size={16} className={isActive || highlight ? 'text-amber-400' : 'text-amber-400/80 group-hover:text-amber-300'} />
+                          <span>{label}</span>
+                        </div>
+                        <Crown size={12} className="fill-amber-400 text-amber-400 shrink-0" />
+                      </Link>
+                    );
+                  }
                   return (
                     <a
                       key={label}
                       href={href}
-                      target={external ? '_blank' : undefined}
-                      rel={external ? 'noopener noreferrer' : undefined}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       onClick={() => setSidebarOpen(false)}
                       className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-[#949ba4] hover:text-white hover:bg-[#1a1b24] transition group"
                     >
@@ -318,7 +365,7 @@ export default function Sidebar() {
                         <Icon size={16} className="text-amber-400/80 group-hover:text-amber-300" />
                         <span>{label}</span>
                       </div>
-                      <Crown size={12} className="fill-amber-400 text-amber-400 shrink-0" />
+                      <ExternalLink size={12} className="text-white/40 group-hover:text-white/70 shrink-0" />
                     </a>
                   );
                 })}

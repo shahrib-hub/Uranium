@@ -7,6 +7,8 @@ const ms = require('ms');
 const rrStorage = require('../utils/rrStorage');
 const modStorage = require('../utils/modStorage');
 const automodStorage = require('../utils/automodStorage');
+const personalizationStorage = require('../utils/personalizationStorage');
+const { isPremiumGuild, redeemCode, listPremiumGuilds } = require('../utils/premium');
 const { createSocketToken } = require('./socketAuth');
 
 function createApiRouter(client) {
@@ -771,6 +773,128 @@ function createApiRouter(client) {
       await setBotLanguage(req.params.guildId, botLanguage);
       res.json({ success: true, botLanguage });
     } catch (err) { res.status(500).json({ error: err.message }); }
+  });
+
+  // ---------- BOT PERSONALIZER API ----------
+  router.get('/guild/:guildId/personalization', requireGuildAccess(client), async (req, res) => {
+    try {
+      const guildId = req.params.guildId;
+      const guild = await client.guilds.fetch(guildId).catch(() => null);
+      if (!guild) return res.status(404).json({ error: 'Guild not found' });
+
+      const isPremium = !!isPremiumGuild(guildId);
+      const personalization = personalizationStorage.getPersonalization(guildId);
+      const me = await guild.members.fetchMe().catch(() => null);
+      const currentNickname = me?.nickname || personalization.nickname || '';
+
+      res.json({
+        personalization: {
+          ...personalization,
+          nickname: currentNickname
+        },
+        isPremium,
+        botUser: {
+          username: client.user.username,
+          tag: client.user.tag || `${client.user.username}#0000`,
+          defaultAvatarUrl: client.user.displayAvatarURL({ dynamic: true, size: 256 })
+        }
+      });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  router.post('/guild/:guildId/personalization', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
+    try {
+      const guildId = req.params.guildId;
+      const guild = await client.guilds.fetch(guildId).catch(() => null);
+      if (!guild) return res.status(404).json({ error: 'Guild not found' });
+
+      const isPremium = !!isPremiumGuild(guildId);
+      const { nickname, avatarUrl, bannerUrl, bio } = req.body;
+
+      const currentPers = personalizationStorage.getPersonalization(guildId);
+      const isAlteringAvatar = typeof avatarUrl === 'string' && avatarUrl.trim() !== (currentPers.avatarUrl || '');
+      const isAlteringBanner = typeof bannerUrl === 'string' && bannerUrl.trim() !== (currentPers.bannerUrl || '');
+      const isAlteringBio = typeof bio === 'string' && bio.trim() !== (currentPers.bio || '');
+
+      // Premium restriction check:
+      // Only the nickname set feature is free. Avatar, banner, and bio require active premium.
+      if (!isPremium && (isAlteringAvatar || isAlteringBanner || isAlteringBio)) {
+        return res.status(403).json({
+          error: 'Avatar, banner, and bio customizations are exclusive to servers with an active Premium subscription. Upgrading unlocks all personalization perks!'
+        });
+      }
+
+      // Handle Nickname (Free feature)
+      const me = await guild.members.fetchMe().catch(() => null);
+      if (typeof nickname === 'string' && me) {
+        if (!guild.members.me.permissions.has(PermissionFlagsBits.ChangeNickname) && !guild.members.me.permissions.has(PermissionFlagsBits.ManageNicknames)) {
+          console.warn('[Personalization API] Missing nickname permission in guild', guildId);
+        } else {
+          await me.setNickname(nickname.trim() === '' ? null : nickname.trim().slice(0, 32)).catch((e) => {
+            console.warn('[Personalization API] setNickname failed:', e.message);
+          });
+        }
+      }
+
+      // Save to personalization storage
+      const updated = personalizationStorage.setPersonalization(guildId, {
+        nickname: typeof nickname === 'string' ? nickname.trim() : currentPers.nickname,
+        avatarUrl: isPremium && typeof avatarUrl === 'string' ? avatarUrl.trim() : (isPremium ? currentPers.avatarUrl : ''),
+        bannerUrl: isPremium && typeof bannerUrl === 'string' ? bannerUrl.trim() : (isPremium ? currentPers.bannerUrl : ''),
+        bio: isPremium && typeof bio === 'string' ? bio.trim() : (isPremium ? currentPers.bio : '')
+      });
+
+      res.json({ success: true, personalization: updated, isPremium });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ---------- PREMIUM STATUS & REDEEM API ----------
+  router.get('/guild/:guildId/premium', requireGuildAccess(client), async (req, res) => {
+    try {
+      const guildId = req.params.guildId;
+      const isPremium = !!isPremiumGuild(guildId);
+      const allGuilds = listPremiumGuilds();
+      const entry = allGuilds[guildId] || null;
+
+      res.json({
+        isPremium,
+        expiresAt: entry ? entry.expiresAt : null,
+        addedAt: entry ? entry.addedAt : null,
+        addedBy: entry ? entry.addedBy : null,
+        guildName: req.guild?.name || 'Selected Server'
+      });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  router.post('/guild/:guildId/premium/redeem', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
+    try {
+      const guildId = req.params.guildId;
+      const { code } = req.body;
+      if (!code || typeof code !== 'string') {
+        return res.status(400).json({ success: false, reason: 'Please enter a valid code.' });
+      }
+
+      const userId = req.session.user.id;
+      const result = redeemCode(code.trim(), guildId, userId);
+
+      if (!result.success) {
+        return res.status(400).json(result);
+      }
+
+      res.json({
+        success: true,
+        expiresAt: result.expiresAt,
+        message: 'Premium has been successfully activated for this server!'
+      });
+    } catch (err) {
+      res.status(500).json({ success: false, reason: err.message });
+    }
   });
 
   // ---------- GIVEAWAYS API ----------

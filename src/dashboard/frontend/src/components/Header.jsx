@@ -2,12 +2,16 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Crown, Bell, LogOut, UserRound, Menu, X, Zap, ChevronDown, Server } from 'lucide-react';
 import { useStore } from '@/store';
 
 export default function Header() {
   const { user, sidebarOpen, setSidebarOpen } = useStore();
   const [profileOpen, setProfileOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const guildId = searchParams.get('guild');
+  const premiumHref = guildId ? `/dashboard/premium?guild=${guildId}` : '/dashboard/premium';
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 h-14 bg-[#111218] border-b border-[#1e202c] px-4 sm:px-6 flex items-center justify-between">
@@ -35,15 +39,13 @@ export default function Header() {
       {/* Right: Upgrade to Premium + Bell + User Profile */}
       <div className="flex items-center gap-2.5 sm:gap-3.5">
         {/* Upgrade to Premium Button (MEE6 gold pill style) */}
-        <a
-          href="https://discord.gg/26ThFyckFX"
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link
+          href={premiumHref}
           className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-[#252014] hover:bg-[#322a19] border border-[#52411e] text-xs font-bold text-amber-300 transition-all shadow-sm active:scale-95"
         >
           <span>Upgrade to Premium</span>
           <Crown size={13} className="fill-amber-400 text-amber-400" />
-        </a>
+        </Link>
 
         {/* Notifications */}
         <button
