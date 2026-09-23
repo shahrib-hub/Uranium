@@ -1,473 +1,349 @@
 // src/utils/welcomeCardRenderer.js
-const { createCanvas, loadImage, registerFont } = require('canvas');
-const fetch = require('node-fetch'); // if you have native fetch, you can replace this
-
-// Optional: register a bundled font for consistent rendering
-// registerFont(path.join(__dirname, '../assets/fonts/Inter-Bold.ttf'), { family: 'Inter' });
+const { createCanvas, loadImage } = require('canvas');
+const axios = require('axios');
 
 const WIDTH = 1024;
-const HEIGHT = 450;
+const HEIGHT = 500;
+
+// Preset theme configurations
+const THEMES = {
+  modern_obsidian: {
+    bgGradient: ['#090a0f', '#121420'],
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    avatarRing: '#f43f5e',
+    avatarGlow: 'rgba(244, 63, 94, 0.35)',
+    textColor: '#ffffff',
+    subtextColor: '#8b91a7',
+    badgeColor: '#f43f5e',
+    badgeBg: 'rgba(244, 63, 94, 0.15)'
+  },
+  cyberpunk: {
+    bgGradient: ['#0f0714', '#1f0d2b'],
+    borderColor: 'rgba(236, 72, 153, 0.3)',
+    avatarRing: '#ec4899',
+    avatarGlow: 'rgba(236, 72, 153, 0.5)',
+    textColor: '#ffffff',
+    subtextColor: '#d946ef',
+    badgeColor: '#06b6d4',
+    badgeBg: 'rgba(6, 182, 212, 0.2)'
+  },
+  cosmic_aurora: {
+    bgGradient: ['#080a1a', '#1e1b4b'],
+    borderColor: 'rgba(168, 85, 247, 0.25)',
+    avatarRing: '#a855f7',
+    avatarGlow: 'rgba(168, 85, 247, 0.4)',
+    textColor: '#ffffff',
+    subtextColor: '#c084fc',
+    badgeColor: '#a855f7',
+    badgeBg: 'rgba(168, 85, 247, 0.2)'
+  },
+  minimal_frosted: {
+    bgGradient: ['#12131a', '#1a1c27'],
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    avatarRing: '#3b82f6',
+    avatarGlow: 'rgba(59, 130, 246, 0.3)',
+    textColor: '#f1f3f9',
+    subtextColor: '#94a3b8',
+    badgeColor: '#3b82f6',
+    badgeBg: 'rgba(59, 130, 246, 0.15)'
+  },
+  golden_royale: {
+    bgGradient: ['#141008', '#261b0d'],
+    borderColor: 'rgba(245, 158, 11, 0.3)',
+    avatarRing: '#f59e0b',
+    avatarGlow: 'rgba(245, 158, 11, 0.45)',
+    textColor: '#ffffff',
+    subtextColor: '#fbbf24',
+    badgeColor: '#f59e0b',
+    badgeBg: 'rgba(245, 158, 11, 0.2)'
+  },
+  emerald_horizon: {
+    bgGradient: ['#06140e', '#0d281e'],
+    borderColor: 'rgba(16, 185, 129, 0.25)',
+    avatarRing: '#10b981',
+    avatarGlow: 'rgba(16, 185, 129, 0.4)',
+    textColor: '#ffffff',
+    subtextColor: '#6ee7b7',
+    badgeColor: '#10b981',
+    badgeBg: 'rgba(16, 185, 129, 0.2)'
+  }
+};
 
 /**
- * Draw circular clipped image from given URL (cover-fit).
+ * Fetch image buffer safely.
  */
-async function drawCircularImage(ctx, imageUrl, x, y, size) {
-  if (!imageUrl) return;
+async function fetchImageBuffer(url) {
+  if (!url) return null;
   try {
-    const res = await fetch(imageUrl);
-    const arrayBuffer = await res.arrayBuffer();
-    const img = await loadImage(Buffer.from(arrayBuffer));
-    const radius = size / 2;
-    const cx = x + radius;
-    const cy = y + radius;
+    const res = await axios.get(url, { responseType: 'arraybuffer', timeout: 5000 });
+    return Buffer.from(res.data);
+  } catch (err) {
+    return null;
+  }
+}
 
+/**
+ * Draw circular clipped image with high-definition border ring and ambient glow.
+ */
+async function drawCircularAvatar(ctx, avatarBuffer, cx, cy, radius, ringColor, glowColor) {
+  if (!avatarBuffer) return;
+  try {
+    const img = await loadImage(avatarBuffer);
+
+    // Ambient glow behind avatar
+    if (glowColor) {
+      const g = ctx.createRadialGradient(cx, cy, radius * 0.8, cx, cy, radius + 25);
+      g.addColorStop(0, glowColor);
+      g.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius + 25, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Outer accent ring
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius + 5, 0, Math.PI * 2);
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = ringColor || '#f43f5e';
+    ctx.stroke();
+
+    // Clip circular avatar
     ctx.save();
     ctx.beginPath();
     ctx.arc(cx, cy, radius, 0, Math.PI * 2);
     ctx.closePath();
     ctx.clip();
 
-    // cover-style draw
+    // Cover-fit image
+    const size = radius * 2;
     const scale = Math.max(size / img.width, size / img.height);
     const iw = img.width * scale;
     const ih = img.height * scale;
-    const ix = cx - iw / 2;
-    const iy = cy - ih / 2;
-    ctx.drawImage(img, ix, iy, iw, ih);
-
+    ctx.drawImage(img, cx - iw / 2, cy - ih / 2, iw, ih);
     ctx.restore();
-
-    // subtle ring
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius + 4, 0, Math.PI * 2);
-    ctx.lineWidth = 6;
-    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-    ctx.stroke();
   } catch (err) {
-    // swallow avatar errors
-    console.warn('[welcomeCard] avatar load failed:', err?.message || err);
+    console.warn('[welcomeCardRenderer] Avatar draw error:', err?.message || err);
   }
 }
 
 /**
- * Soft radial glow helper.
- */
-function radialGlow(ctx, cx, cy, r, color) {
-  const g = ctx.createRadialGradient(cx, cy, r * 0.05, cx, cy, r);
-  g.addColorStop(0, color);
-  g.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = g;
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-/**
- * Generate welcome card PNG buffer.
- * opts: { username, discriminator, avatarUrl, guildName, memberCount, templateIndex (1..10) }
+ * Generate high-definition welcome card PNG buffer.
+ *
+ * @param {Object} opts
+ * @param {string} opts.username - User's username
+ * @param {string} opts.discriminator - User's discriminator (or '0')
+ * @param {string} opts.avatarUrl - Avatar URL
+ * @param {string} opts.guildName - Server name
+ * @param {number|string} opts.memberCount - Server member count
+ * @param {string} opts.cardTheme - Theme key (modern_obsidian, cyberpunk, cosmic_aurora, etc.)
+ * @param {string} opts.cardFont - Font family name
+ * @param {string} opts.cardTextColor - Custom text color (hex)
+ * @param {string} opts.cardBgColor - Custom background color (hex)
+ * @param {number} opts.cardOverlayOpacity - Background overlay opacity (0-100)
+ * @param {string} opts.cardBgImage - Background image URL or preset
+ * @param {string} opts.cardTitle - Custom title template string (e.g. "{username} just joined the server")
+ * @param {string} opts.cardSubtitle - Custom subtitle template string (e.g. "Member #{count}")
+ * @param {boolean} opts.isGoodbye - True if rendering a goodbye card
  */
 async function generateWelcomeCard(opts = {}) {
+  const cc = opts.cardConfig || {};
   const {
     username = 'New Member',
-    discriminator = '0000',
+    discriminator = '0',
     avatarUrl = null,
-    guildName = 'Server',
-    memberCount = null,
-    templateIndex = 1
+    guildName = 'Discord Server',
+    memberCount = '1',
+    cardTheme = opts.cardTheme || cc.theme || 'modern_obsidian',
+    cardFont = opts.cardFont || cc.font || 'Inter',
+    cardTextColor = opts.cardTextColor || cc.textColor || null,
+    cardBgColor = opts.cardBgColor || cc.backgroundColor || null,
+    cardOverlayOpacity = opts.cardOverlayOpacity ?? (cc.overlayOpacity != null ? Math.round(cc.overlayOpacity * 100) : 40),
+    cardBgImage = opts.cardBgImage || cc.backgroundUrl || null,
+    cardTitle = opts.cardTitle || cc.titleTemplate || null,
+    cardSubtitle = opts.cardSubtitle || cc.subtitleTemplate || null,
+    isGoodbye = opts.isGoodbye || false
   } = opts;
 
   const canvas = createCanvas(WIDTH, HEIGHT);
   const ctx = canvas.getContext('2d');
 
-  const uname = `${username}#${discriminator}`.slice(0, 40);
-  const guild = String(guildName).slice(0, 40);
-  const countText = memberCount ? `Member #${memberCount}` : '';
+  const theme = THEMES[cardTheme] || THEMES.modern_obsidian;
 
-  const tpl = Math.min(Math.max(Number(templateIndex) || 1, 1), 10);
-
-  // Shared small helpers
-  function drawWatermark() {
-    ctx.font = '14px Sans';
-    ctx.fillStyle = 'rgba(255,255,255,0.08)';
-    ctx.textAlign = 'right';
-    ctx.fillText(guild, WIDTH - 24, HEIGHT - 18);
-    ctx.textAlign = 'start';
+  // 1. Draw Background
+  let customBgBuffer = null;
+  if (cardBgImage && cardBgImage.startsWith('http')) {
+    customBgBuffer = await fetchImageBuffer(cardBgImage);
   }
 
-  // --- Templates ---
-  switch (tpl) {
-    case 1: {
-      // Modern gradient banner + left avatar
-      const g = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
-      g.addColorStop(0, '#0f172a');
-      g.addColorStop(1, '#0f6b9a');
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  if (customBgBuffer) {
+    try {
+      const bgImg = await loadImage(customBgBuffer);
+      const scale = Math.max(WIDTH / bgImg.width, HEIGHT / bgImg.height);
+      const w = bgImg.width * scale;
+      const h = bgImg.height * scale;
+      ctx.drawImage(bgImg, (WIDTH - w) / 2, (HEIGHT - h) / 2, w, h);
+    } catch {
+      // Fallback to gradient
+    }
+  } else {
+    // Elegant gradient background
+    const grad = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
+    if (cardBgColor) {
+      grad.addColorStop(0, cardBgColor);
+      grad.addColorStop(1, '#050608');
+    } else {
+      grad.addColorStop(0, theme.bgGradient[0]);
+      grad.addColorStop(1, theme.bgGradient[1]);
+    }
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-      ctx.globalAlpha = 0.08;
-      for (let i = 0; i < 5; i++) {
-        ctx.fillStyle = i % 2 === 0 ? '#ffffff' : '#000000';
+    // Subtle modern grid / dot accents
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.025)';
+    for (let x = 30; x < WIDTH; x += 40) {
+      for (let y = 30; y < HEIGHT; y += 40) {
         ctx.beginPath();
-        ctx.ellipse(120 + i * 160, 80 + (i % 3) * 30, 420 - i * 60, 120 + i * 10, -0.25, 0, Math.PI * 2);
+        ctx.arc(x, y, 1.2, 0, Math.PI * 2);
         ctx.fill();
       }
-      ctx.globalAlpha = 1;
-
-      // panel
-      ctx.fillStyle = 'rgba(255,255,255,0.04)';
-      ctx.fillRect(48, 64, 420, HEIGHT - 128);
-
-      await drawCircularImage(ctx, avatarUrl, 100, 110, 220);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 36px Sans';
-      ctx.fillText('Welcome,', 560, 160);
-
-      ctx.font = 'bold 48px Sans';
-      ctx.fillText(uname, 560, 220);
-
-      ctx.font = '20px Sans';
-      ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      ctx.fillText(guild, 560, 260);
-
-      if (countText) {
-        ctx.font = '18px Sans';
-        ctx.fillStyle = 'rgba(255,255,255,0.75)';
-        ctx.fillText(countText, 560, 296);
-      }
-
-      drawWatermark();
-      break;
-    }
-
-    case 2: {
-      // Warm swoosh
-      const g = ctx.createLinearGradient(0, 0, WIDTH, 0);
-      g.addColorStop(0, '#f6d365');
-      g.addColorStop(1, '#fda085');
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-      ctx.fillStyle = 'rgba(255,255,255,0.06)';
-      ctx.beginPath();
-      ctx.moveTo(0, HEIGHT * 0.62);
-      ctx.quadraticCurveTo(WIDTH * 0.25, HEIGHT * 0.55, WIDTH * 0.45, HEIGHT * 0.7);
-      ctx.quadraticCurveTo(WIDTH * 0.7, HEIGHT * 0.85, WIDTH, HEIGHT * 0.7);
-      ctx.lineTo(WIDTH, HEIGHT);
-      ctx.lineTo(0, HEIGHT);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.fillStyle = '#1f1f1f';
-      ctx.font = 'bold 64px Sans';
-      ctx.fillText('Welcome!', 60, 140);
-
-      ctx.font = 'bold 44px Sans';
-      ctx.fillText(uname, 60, 210);
-
-      await drawCircularImage(ctx, avatarUrl, WIDTH - 320, 80, 240);
-
-      ctx.fillStyle = 'rgba(0,0,0,0.6)';
-      ctx.font = '22px Sans';
-      ctx.fillText(guild, 60, 260);
-
-      drawWatermark();
-      break;
-    }
-
-    case 3: {
-      // Dark neon
-      ctx.fillStyle = '#0b0f1a';
-      ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-      ctx.strokeStyle = 'rgba(126,249,255,0.06)';
-      ctx.lineWidth = 6;
-      ctx.strokeRect(24, 24, WIDTH - 48, HEIGHT - 48);
-
-      const accent = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
-      accent.addColorStop(0, '#7ef9ff');
-      accent.addColorStop(1, '#c77dff');
-      ctx.fillStyle = accent;
-      ctx.globalAlpha = 0.06;
-      ctx.fillRect(0, HEIGHT * 0.55, WIDTH, HEIGHT * 0.45);
-      ctx.globalAlpha = 1;
-
-      await drawCircularImage(ctx, avatarUrl, 60, 100, 220);
-      radialGlow(ctx, 170, 210, 160, 'rgba(126,249,255,0.08)');
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 42px Sans';
-      ctx.fillText(uname, 320, 170);
-
-      ctx.font = '20px Sans';
-      ctx.fillStyle = 'rgba(255,255,255,0.7)';
-      ctx.fillText('joined', 320, 210);
-
-      ctx.font = '28px Sans';
-      ctx.fillStyle = '#c77dff';
-      ctx.fillText(guild, 320, 260);
-
-      drawWatermark();
-      break;
-    }
-
-    case 4: {
-      // Minimal banner
-      ctx.fillStyle = '#eef2ff';
-      ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(40, 40, WIDTH - 80, 140);
-
-      ctx.fillStyle = 'rgba(0,0,0,0.04)';
-      ctx.fillRect(40, 186, WIDTH - 80, 6);
-
-      await drawCircularImage(ctx, avatarUrl, 80, 60, 120);
-
-      ctx.fillStyle = '#111827';
-      ctx.font = 'bold 36px Sans';
-      ctx.fillText(uname, 220, 110);
-
-      ctx.font = '20px Sans';
-      ctx.fillStyle = 'rgba(17,24,39,0.7)';
-      ctx.fillText(`Welcome to ${guild}`, 220, 145);
-
-      if (countText) {
-        ctx.font = '18px Sans';
-        ctx.fillStyle = '#6b7280';
-        ctx.fillText(countText, 220, 175);
-      }
-
-      drawWatermark();
-      break;
-    }
-
-    case 5: {
-      // Playful colorful
-      const g = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
-      g.addColorStop(0, '#ff7a7a');
-      g.addColorStop(0.5, '#ffd27a');
-      g.addColorStop(1, '#7affc2');
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-      for (let i = 0; i < 60; i++) {
-        ctx.fillStyle = `rgba(${Math.round(Math.random()*255)}, ${Math.round(Math.random()*255)}, ${Math.round(Math.random()*255)}, 0.12)`;
-        const rx = Math.random() * WIDTH;
-        const ry = Math.random() * HEIGHT;
-        const r = 6 + Math.random() * 10;
-        ctx.beginPath();
-        ctx.ellipse(rx, ry, r, r, Math.random()*Math.PI, 0, Math.PI*2);
-        ctx.fill();
-      }
-
-      ctx.fillStyle = '#06121a';
-      ctx.font = 'bold 64px Sans';
-      ctx.textAlign = 'center';
-      ctx.fillText('WELCOME', WIDTH / 2, 140);
-
-      ctx.font = 'bold 42px Sans';
-      ctx.fillText(uname, WIDTH / 2, 230);
-
-      await drawCircularImage(ctx, avatarUrl, 64, HEIGHT - 170, 140);
-
-      ctx.textAlign = 'left';
-      ctx.font = '18px Sans';
-      ctx.fillStyle = 'rgba(0,0,0,0.65)';
-      ctx.fillText(guild, 240, HEIGHT - 110);
-      if (countText) ctx.fillText(countText, 240, HEIGHT - 80);
-
-      ctx.textAlign = 'start';
-      drawWatermark();
-      break;
-    }
-
-    case 6: {
-      // Mosaic / geometric
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-      // geometric tiles
-      for (let i = 0; i < 12; i++) {
-        ctx.fillStyle = `rgba(${30 + i*10}, ${80 + i*8}, ${140 + i*6}, 0.06)`;
-        ctx.beginPath();
-        ctx.moveTo(i * 90, 0);
-        ctx.lineTo((i + 1) * 90, 0);
-        ctx.lineTo((i + 1) * 90, HEIGHT);
-        ctx.lineTo(i * 90, HEIGHT);
-        ctx.closePath();
-        ctx.fill();
-      }
-
-      // center card
-      ctx.fillStyle = 'rgba(255,255,255,0.03)';
-      ctx.fillRect(120, 60, WIDTH - 240, HEIGHT - 120);
-
-      await drawCircularImage(ctx, avatarUrl, WIDTH/2 - 110, 86, 220);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 44px Sans';
-      ctx.fillText(uname, 120, 360);
-
-      ctx.font = '22px Sans';
-      ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      ctx.fillText(`Welcome to ${guild}`, 120, 394);
-
-      if (countText) {
-        ctx.font = '18px Sans';
-        ctx.fillStyle = 'rgba(255,255,255,0.7)';
-        ctx.fillText(countText, 120, 422);
-      }
-
-      drawWatermark();
-      break;
-    }
-
-    case 7: {
-      // Polaroid / photo
-      ctx.fillStyle = '#f3f4f6';
-      ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-      // polaroid frame
-      ctx.fillStyle = '#ffffff';
-      const fw = 640, fh = 320, fx = 180, fy = 55;
-      ctx.fillRect(fx, fy, fw, fh);
-      ctx.fillStyle = 'rgba(0,0,0,0.03)';
-      ctx.fillRect(fx, fy + fh, fw, 28);
-
-      // avatar as photo
-      await drawCircularImage(ctx, avatarUrl, fx + 30, fy + 30, 260);
-
-      ctx.fillStyle = '#111827';
-      ctx.font = 'bold 32px Sans';
-      ctx.fillText(uname, fx + 320, fy + 110);
-
-      ctx.font = '18px Sans';
-      ctx.fillStyle = 'rgba(17,24,39,0.7)';
-      ctx.fillText(`Welcome to ${guild}`, fx + 320, fy + 150);
-
-      drawWatermark();
-      break;
-    }
-
-    case 8: {
-      // Comic / sticker style
-      ctx.fillStyle = '#fff6ea';
-      ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-      // speech bubble
-      ctx.fillStyle = '#ffefc7';
-      ctx.beginPath();
-      ctx.roundRect ? ctx.roundRect(48, 60, WIDTH - 96, HEIGHT - 140, 28) : null; // older node-canvas may not support roundRect
-      ctx.fillRect(48, 60, WIDTH - 96, HEIGHT - 140);
-
-      await drawCircularImage(ctx, avatarUrl, 80, 120, 180);
-
-      ctx.fillStyle = '#2b2b2b';
-      ctx.font = 'bold 42px Sans';
-      ctx.fillText('Hey!', 300, 160);
-
-      ctx.font = 'bold 36px Sans';
-      ctx.fillText(uname, 300, 210);
-
-      ctx.font = '18px Sans';
-      ctx.fillStyle = '#4b5563';
-      ctx.fillText(`joined ${guild}`, 300, 250);
-
-      drawWatermark();
-      break;
-    }
-
-    case 9: {
-      // Glassmorphism style
-      const bg = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
-      bg.addColorStop(0, '#0f172a');
-      bg.addColorStop(1, '#08263b');
-      ctx.fillStyle = bg;
-      ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-      // translucent frosted panel
-      ctx.fillStyle = 'rgba(255,255,255,0.06)';
-      ctx.fillRect(80, 50, WIDTH - 160, HEIGHT - 100);
-
-      // frosted blur-like rings (simulated)
-      radialGlow(ctx, WIDTH - 220, 130, 160, 'rgba(255,255,255,0.04)');
-      radialGlow(ctx, 180, HEIGHT - 120, 120, 'rgba(255,255,255,0.03)');
-
-      await drawCircularImage(ctx, avatarUrl, 120, 92, 180);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 40px Sans';
-      ctx.fillText(uname, 340, 170);
-
-      ctx.font = '20px Sans';
-      ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      ctx.fillText(`Welcome to ${guild}`, 340, 206);
-
-      drawWatermark();
-      break;
-    }
-
-    case 10: {
-      // Luxe gold card
-      const g = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
-      g.addColorStop(0, '#0b1220');
-      g.addColorStop(1, '#1a1f2b');
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-      // golden stripe
-      ctx.fillStyle = '#b8872a';
-      ctx.fillRect(48, 64, WIDTH - 96, 24);
-
-      await drawCircularImage(ctx, avatarUrl, 80, 120, 200);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 44px Sans';
-      ctx.fillText(uname, 320, 170);
-
-      ctx.font = '20px Sans';
-      ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      ctx.fillText(`Welcome to ${guild}`, 320, 206);
-
-      if (countText) {
-        ctx.font = '18px Sans';
-        ctx.fillStyle = 'rgba(255,255,255,0.75)';
-        ctx.fillText(countText, 320, 240);
-      }
-
-      // small gold accent at bottom
-      ctx.fillStyle = 'rgba(184,135,42,0.08)';
-      ctx.fillRect(48, HEIGHT - 76, WIDTH - 96, 48);
-
-      drawWatermark();
-      break;
-    }
-
-    default: {
-      // fallback simple card
-      ctx.fillStyle = '#111827';
-      ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-      await drawCircularImage(ctx, avatarUrl, 64, 64, 160);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 42px Sans';
-      ctx.fillText(`Welcome ${uname}`, 260, 140);
-
-      ctx.font = '20px Sans';
-      ctx.fillStyle = 'rgba(255,255,255,0.8)';
-      ctx.fillText(`to ${guild}`, 260, 180);
-
-      drawWatermark();
-      break;
     }
   }
 
-  // ensure defaults
-  ctx.textAlign = 'start';
+  // Darkening overlay (based on cardOverlayOpacity)
+  const overlayAlpha = Math.min(100, Math.max(0, cardOverlayOpacity || 40)) / 100;
+  if (overlayAlpha > 0) {
+    ctx.fillStyle = `rgba(8, 9, 14, ${overlayAlpha})`;
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  }
+
+  // Outer framing border
+  ctx.strokeStyle = theme.borderColor;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(16, 16, WIDTH - 32, HEIGHT - 32);
+
+  // Top header status tag: "WELCOME TO SERVER" or "GOODBYE"
+  const tagText = isGoodbye ? `GOODBYE FROM ${guildName.toUpperCase()}` : `WELCOME TO ${guildName.toUpperCase()}`;
+  ctx.font = 'bold 12px sans-serif';
+  ctx.letterSpacing = '3px';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = isGoodbye ? '#f87171' : theme.badgeColor;
+  ctx.fillText(tagText.slice(0, 48), WIDTH / 2, 54);
+
+  // 2. Fetch and draw Avatar (Centered at cx = WIDTH / 2, cy = 180, radius = 72)
+  const cx = WIDTH / 2;
+  const cy = 185;
+  const avatarRadius = 72;
+
+  let avatarBuffer = null;
+  if (avatarUrl) {
+    avatarBuffer = await fetchImageBuffer(avatarUrl);
+  }
+
+  if (avatarBuffer) {
+    await drawCircularAvatar(ctx, avatarBuffer, cx, cy, avatarRadius, theme.avatarRing, theme.avatarGlow);
+  } else {
+    // Default placeholder circle with initial
+    ctx.beginPath();
+    ctx.arc(cx, cy, avatarRadius, 0, Math.PI * 2);
+    ctx.fillStyle = '#1e202e';
+    ctx.fill();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = theme.avatarRing;
+    ctx.stroke();
+
+    ctx.font = 'bold 48px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText((username || '?')[0].toUpperCase(), cx, cy + 18);
+  }
+
+  // 3. Resolve Title & Subtitle text
+  const cleanUser = username;
+  const countStr = String(memberCount || '1');
+
+  let titleStr = cardTitle;
+  if (!titleStr) {
+    titleStr = isGoodbye 
+      ? `${cleanUser} just left the server` 
+      : `${cleanUser} just joined the server`;
+  } else {
+    titleStr = titleStr
+      .replace(/{username}/gi, cleanUser)
+      .replace(/{user}/gi, cleanUser)
+      .replace(/{server}/gi, guildName)
+      .replace(/{guild}/gi, guildName)
+      .replace(/{count}/gi, countStr);
+  }
+
+  let subtitleStr = cardSubtitle;
+  if (!subtitleStr) {
+    subtitleStr = `Member #${countStr}`;
+  } else {
+    subtitleStr = subtitleStr
+      .replace(/{username}/gi, cleanUser)
+      .replace(/{user}/gi, cleanUser)
+      .replace(/{server}/gi, guildName)
+      .replace(/{guild}/gi, guildName)
+      .replace(/{count}/gi, countStr);
+  }
+
+  let fontFamily = 'sans-serif';
+  if (cardFont === 'Orbitron') fontFamily = 'Courier New, monospace';
+  else if (cardFont === 'Cinzel') fontFamily = 'Georgia, serif';
+  else if (cardFont === 'Poppins' || cardFont === 'Inter' || cardFont === 'Geist' || cardFont === 'Montserrat') fontFamily = 'Segoe UI, Arial, sans-serif';
+
+  const primaryTextColor = cardTextColor || theme.textColor;
+  const secondaryTextColor = theme.subtextColor;
+
+
+  // 4. Draw Title
+  ctx.textAlign = 'center';
+  ctx.font = `bold 32px ${fontFamily}`;
+  ctx.fillStyle = primaryTextColor;
+
+  // Subtle text shadow for crisp readability
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 2;
+  ctx.fillText(titleStr.slice(0, 50), WIDTH / 2, 335);
+
+  // 5. Draw Subtitle
+  ctx.font = `500 20px ${fontFamily}`;
+  ctx.fillStyle = secondaryTextColor;
+  ctx.shadowBlur = 8;
+  ctx.fillText(subtitleStr.slice(0, 60), WIDTH / 2, 385);
+
+  // Reset shadow
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+
+  // 6. Member Count Pill Badge at Bottom Center
+  const badgeWidth = 180;
+  const badgeHeight = 32;
+  const badgeX = (WIDTH - badgeWidth) / 2;
+  const badgeY = 425;
+
+  ctx.fillStyle = theme.badgeBg;
+  ctx.beginPath();
+  ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 16);
+  ctx.fill();
+
+  ctx.strokeStyle = theme.borderColor;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.font = 'bold 12px sans-serif';
+  ctx.fillStyle = theme.badgeColor;
+  ctx.textAlign = 'center';
+  ctx.fillText(`TOTAL MEMBERS: ${countStr}`, WIDTH / 2, badgeY + 20);
 
   return canvas.toBuffer('image/png');
 }
 
-module.exports = { generateWelcomeCard };
+module.exports = {
+  generateWelcomeCard,
+  renderWelcomeCard: generateWelcomeCard,
+  THEMES
+};

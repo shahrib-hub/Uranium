@@ -110,7 +110,12 @@ export default function BotPersonalizerPage() {
         throw new Error(data.error || 'Failed to save changes');
       }
 
-      toast.success('Bot profile updated successfully for this server!');
+      if (data.notice) {
+        toast.info(data.notice);
+      } else {
+        toast.success(data.message || 'Bot profile updated successfully for this server!');
+      }
+
       setInitialData({
         nickname: nickname.trim(),
         avatarUrl: isPremium ? avatarUrl.trim() : '',
@@ -224,7 +229,7 @@ export default function BotPersonalizerPage() {
                       Unlock Avatar, Banner & Bio with Premium
                     </h3>
                     <p className="text-[11px] text-white/60 mt-0.5 leading-relaxed">
-                      Changing bot nickname is 100% free! Custom animated/static avatars, banners, and custom bios are unlocked with server premium.
+                      Changing bot nickname is 100% free! Custom animated/static avatars, banners, and custom bios require server premium status.
                     </p>
                   </div>
                 </div>
@@ -240,7 +245,7 @@ export default function BotPersonalizerPage() {
             </div>
           )}
 
-          {/* Section 1: Bot Nickname */}
+          {/* Section 1: Bot Nickname (Free feature) */}
           <div className="rounded-2xl border border-[#1e202c] bg-[#14151e] p-5 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm font-bold text-white tracking-wide">
@@ -313,7 +318,7 @@ export default function BotPersonalizerPage() {
                   }}
                   placeholder={
                     isPremium
-                      ? 'https://example.com/avatar.gif or .png'
+                      ? 'https://example.com/avatar.gif or .png (leave blank to reset)'
                       : 'Upgrade to Premium to customize avatar'
                   }
                   className={`w-full rounded-xl border border-[#262838] bg-[#101118] px-3.5 py-2.5 text-xs text-white placeholder:text-white/30 outline-none transition ${
@@ -377,7 +382,7 @@ export default function BotPersonalizerPage() {
                 }}
                 placeholder={
                   isPremium
-                    ? 'https://example.com/banner.gif or .png'
+                    ? 'https://example.com/banner.gif or .png (leave blank to reset)'
                     : 'Upgrade to Premium to customize banner'
                 }
                 className={`w-full rounded-xl border border-[#262838] bg-[#101118] px-3.5 py-2.5 text-xs text-white placeholder:text-white/30 outline-none transition ${

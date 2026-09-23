@@ -20,7 +20,8 @@ import {
   Check,
   Search,
   Server,
-  Palette
+  Palette,
+  UserPlus
 } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useStore } from '@/store';
@@ -246,6 +247,7 @@ export default function Sidebar() {
             {essentialsOpen && (
               <div className="space-y-0.5 pt-0.5">
                 {[
+                  { href: '/dashboard/welcome', label: 'Welcome & Goodbye', icon: UserPlus },
                   { href: '/dashboard/moderation', label: 'Moderator & AutoMod', icon: ShieldAlert },
                   { href: '/dashboard/rr', label: 'Reaction Roles', icon: Users },
                   { href: '/dashboard/music', label: 'Music & Audio', icon: Music2 },

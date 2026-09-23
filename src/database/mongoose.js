@@ -479,19 +479,21 @@ const OtpCodeSchema = new mongoose.Schema({
 });
 OtpCodeSchema.index({ guildId: 1, userId: 1 }, { unique: true });
 
-// 23. Welcome / Leave Configurations (from welcome.db)_config, leave_config)
+// 23. Welcome / Leave Configurations (from welcome.db)
 const WelcomeConfigSchema = new mongoose.Schema({
   guildId: { type: String, required: true, unique: true },
   channelId: { type: String, default: null },
   messageJson: { type: String, default: '{}' },
-  enabled: { type: Boolean, default: false }
+  enabled: { type: Boolean, default: false },
+  dataJson: { type: String, default: '{}' }
 });
 
 const LeaveConfigSchema = new mongoose.Schema({
   guildId: { type: String, required: true, unique: true },
   channelId: { type: String, default: null },
   messageJson: { type: String, default: '{}' },
-  enabled: { type: Boolean, default: false }
+  enabled: { type: Boolean, default: false },
+  dataJson: { type: String, default: '{}' }
 });
 
 
