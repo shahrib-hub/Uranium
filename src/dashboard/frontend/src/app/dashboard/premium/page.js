@@ -202,13 +202,9 @@ export default function PremiumDashboardPage() {
                 </span>
                 <h2 className="text-lg font-black text-white flex items-center gap-2">
                   <span>{premiumData.guildName}</span>
-                  {premiumData.isPremium ? (
+                  {premiumData.isPremium && (
                     <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
                       Active
-                    </span>
-                  ) : (
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-white/10 text-white/60">
-                      Free Plan
                     </span>
                   )}
                 </h2>

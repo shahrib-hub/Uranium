@@ -17,7 +17,9 @@ import {
   Sparkles,
   Sliders,
   Crown,
-  Palette
+  Palette,
+  UserPlus,
+  ShieldCheck
 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useStore } from '@/store';
@@ -237,6 +239,18 @@ export default function DashboardPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[
             {
+              title: 'Welcome & Goodbye',
+              desc: 'Custom canvas welcome cards, greetings, autoroles, and goodbye notices.',
+              href: `/dashboard/welcome?guild=${guildId}`,
+              icon: UserPlus
+            },
+            {
+              title: 'Server Verification',
+              desc: 'One-click and 2FA OTP gatekeeping to protect your server from raid bots.',
+              href: `/dashboard/verification?guild=${guildId}`,
+              icon: ShieldCheck
+            },
+            {
               title: 'Moderator & AutoMod',
               desc: 'Anti-raid, anti-spam, link purges, and automatic strikes.',
               href: `/dashboard/moderation?guild=${guildId}`,
@@ -270,8 +284,7 @@ export default function DashboardPage() {
               title: 'Bot Personalizer',
               desc: 'Custom per-server avatar, animated GIF banner, bio, and nicknames.',
               href: `/dashboard/personalize?guild=${guildId}`,
-              icon: Palette,
-              isPremium: true
+              icon: Palette
             }
           ].map((plugin) => {
             const Icon = plugin.icon;

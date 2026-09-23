@@ -21,7 +21,8 @@ import {
   Search,
   Server,
   Palette,
-  UserPlus
+  UserPlus,
+  ShieldCheck
 } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useStore } from '@/store';
@@ -248,6 +249,7 @@ export default function Sidebar() {
               <div className="space-y-0.5 pt-0.5">
                 {[
                   { href: '/dashboard/welcome', label: 'Welcome & Goodbye', icon: UserPlus },
+                  { href: '/dashboard/verification', label: 'Server Verification', icon: ShieldCheck },
                   { href: '/dashboard/moderation', label: 'Moderator & AutoMod', icon: ShieldAlert },
                   { href: '/dashboard/rr', label: 'Reaction Roles', icon: Users },
                   { href: '/dashboard/music', label: 'Music & Audio', icon: Music2 },
@@ -305,12 +307,6 @@ export default function Sidebar() {
                     icon: Crown,
                     isInternal: true,
                     highlight: true
-                  },
-                  {
-                    href: withGuild('/dashboard/personalize'),
-                    label: 'Bot Personalizer',
-                    icon: Palette,
-                    isInternal: true
                   },
                   {
                     href: 'https://discord.gg/26ThFyckFX',

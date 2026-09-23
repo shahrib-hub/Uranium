@@ -114,9 +114,7 @@ export default function WelcomeGoodbyePage() {
       title: 'Goodbye!',
       description: '**{username}** has departed from **{server}**.',
       color: '#64748b'
-    },
-    // Captcha Verification
-    captchaEnabled: false
+    }
   });
 
   const showToast = (message, type = 'info') => {
@@ -285,11 +283,8 @@ export default function WelcomeGoodbyePage() {
               <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-rose-500/20 to-indigo-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400">
                 <UserPlus size={20} />
               </div>
-              <h1 className="text-xl md:text-2xl font-black tracking-tight text-white flex items-center gap-2">
+              <h1 className="text-xl md:text-2xl font-black tracking-tight text-white">
                 Welcome & Goodbye
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  Free & Unlocked
-                </span>
               </h1>
             </div>
             <p className="text-xs md:text-sm text-white/50 mt-1 max-w-2xl">
@@ -321,33 +316,6 @@ export default function WelcomeGoodbyePage() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 space-y-6">
-
-
-        {/* Captcha Verification Row */}
-        <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#151722] p-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center">
-              <ShieldCheck size={19} />
-            </div>
-            <div>
-              <span className="text-sm font-bold text-white">Use a captcha to verify that new members are humans</span>
-              <p className="text-xs text-white/40">Deters bot raids by sending an interactive verification prompt before giving member roles</p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => setSettings(s => ({ ...s, captchaEnabled: !s.captchaEnabled }))}
-            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-              settings.captchaEnabled ? 'bg-blue-500' : 'bg-white/20'
-            }`}
-          >
-            <span
-              className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${
-                settings.captchaEnabled ? 'translate-x-5' : 'translate-x-0'
-              }`}
-            />
-          </button>
-        </div>
 
         {/* ========================================================================= */}
         {/* SECTION 1: Send a message when a user joins the server */}
@@ -596,9 +564,6 @@ export default function WelcomeGoodbyePage() {
               <div className="flex items-center gap-2">
                 <Palette size={20} className="text-rose-400" />
                 <h2 className="text-base font-bold text-white">Customize your welcome card</h2>
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                  100% Free
-                </span>
               </div>
               <p className="text-xs text-white/40 mt-0.5">
                 Fine-tune fonts, color palettes, background themes, opacity, and template titles

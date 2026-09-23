@@ -261,17 +261,13 @@ export default function CommandsPage() {
                           </span>
 
                           {/* Premium Gold Badge */}
-                          {isPrem ? (
+                          {isPrem && (
                             <span
                               title="Requires Multi-Bot / Uranium Premium"
                               className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-gradient-to-r from-amber-500/25 to-yellow-500/20 border border-amber-500/40 text-[10px] font-black uppercase tracking-wider text-amber-300 shadow-sm shadow-amber-500/10"
                             >
                               <Crown size={11} className="fill-amber-400 text-amber-400 drop-shadow-[0_0_4px_rgba(251,191,36,0.8)]" />
                               <span>PREMIUM</span>
-                            </span>
-                          ) : (
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-white/30">
-                              Free
                             </span>
                           )}
                         </div>

@@ -127,7 +127,7 @@ export default function PlayerSidebar({
           <span>
             Quota: <strong className="text-[#c3c7d6]">{playlistQuota.count}/{playlistQuota.max}</strong>
           </span>
-          {!playlistQuota.isPremium ? (
+          {!playlistQuota.isPremium && !playlistQuota.canCreate && (
             <Link
               href={`/dashboard/premium${guildId ? `?guild=${guildId}` : ''}`}
               className="text-amber-400 hover:text-amber-300 font-medium flex items-center gap-1 text-[10px]"
@@ -135,8 +135,6 @@ export default function PlayerSidebar({
               <Crown size={10} className="fill-amber-400" />
               <span>Upgrade</span>
             </Link>
-          ) : (
-            <span className="text-amber-400 font-medium text-[10px]">👑 Premium</span>
           )}
         </div>
 

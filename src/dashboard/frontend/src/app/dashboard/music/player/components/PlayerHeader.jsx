@@ -139,7 +139,7 @@ export default function PlayerHeader({
         )}
       </div>
 
-      {/* Right: Discord Voice Session Indicator & Premium */}
+      {/* Right: Discord Voice Session Indicator */}
       <div className="flex items-center gap-2.5 shrink-0">
         {/* Connection status badge */}
         <div className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-[#12131d] border border-[#1c1d29] text-xs">
@@ -150,16 +150,6 @@ export default function PlayerHeader({
             {player.active ? player.channelName : 'Voice Idle'}
           </span>
         </div>
-
-        {/* Premium Badge Link */}
-        <Link
-          href={`/dashboard/premium${guildId ? `?guild=${guildId}` : ''}`}
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/10 hover:bg-amber-500/15 border border-amber-500/20 text-amber-300 text-xs font-semibold transition"
-          title="Uranium Premium Tier"
-        >
-          <Crown size={12} className="fill-amber-400 text-amber-400" />
-          <span className="hidden sm:inline">Premium</span>
-        </Link>
       </div>
     </header>
   );

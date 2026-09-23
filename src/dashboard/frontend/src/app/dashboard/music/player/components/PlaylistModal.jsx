@@ -47,8 +47,8 @@ export default function PlaylistModal({
 
           <div className="flex items-center justify-between text-[11px] text-[#6b7289] pt-1">
             <span>Quota usage: {quota.count}/{quota.max}</span>
-            {!quota.isPremium && (
-              <span className="text-amber-400 font-medium">Free Tier (1 Max)</span>
+            {!quota.isPremium && !quota.canCreate && (
+              <span className="text-amber-400 font-medium text-[10px]">Quota Reached</span>
             )}
           </div>
 

@@ -20,7 +20,13 @@ import {
   Copy,
   Check,
   AlertTriangle,
-  Crown
+  Crown,
+  ShieldCheck,
+  UserPlus,
+  Palette,
+  Settings,
+  Headphones,
+  MessageSquare
 } from 'lucide-react';
 
 const DOCS_SECTIONS = [
@@ -34,19 +40,20 @@ const DOCS_SECTIONS = [
         title: 'Introduction to Uranium',
         description: 'Learn about Uranium, its capabilities, and why Discord communities rely on it.',
         content: `
-**Uranium** is a high-performance, all-in-one Discord bot engineered for modern communities, gaming squads, and content creators. It combines lossless 320kbps audio streaming, zero-latency AutoMod security, self-assignable reaction roles, and fully customizable giveaways into a unified experience.
+**Uranium** is a high-performance, all-in-one Discord bot engineered for modern communities, gaming squads, and content creators. It combines lossless 320kbps audio streaming, zero-latency AutoMod security, self-assignable reaction roles, interactive giveaways, server verification gates, and canvas welcome cards into a single unified platform.
 
 ### Why Choose Uranium?
-- **All-in-One Powerhouse**: Replace 4+ separate bots with one reliable, zero-latency solution.
-- **Generous Free Core & Premium Perks**: Core audio, AutoMod, and reaction roles are free to use, with expanded limits and advanced AI systems unlocked with Premium.
-- **Enterprise-Grade Uptime**: Hosted on multi-cluster infrastructure with 99.98% reliability.
-- **Live Two-Way Dashboard Sync**: Manage your server from Discord slash commands or the web dashboard with real-time synchronization.
+- **All-in-One Powerhouse**: Replace 5+ separate bots with one reliable, zero-latency solution.
+- **Generous Free Core Features**: Audio playback, server verification, AutoMod, reaction roles, and welcome card customizations are 100% free with zero paywalls.
+- **Enterprise-Grade Uptime**: Hosted on multi-cluster infrastructure with 99.98% monitored reliability.
+- **Live Two-Way Dashboard Sync**: Manage your server seamlessly from Discord slash commands or the rich web dashboard with real-time synchronization.
 
-### Recommended Next Steps:
+### Recommended First Steps:
 1. [Invite Uranium to your server](#invite-bot) with Administrator or Manage Channels permissions.
-2. Configure your [AutoMod & Anti-Raid Defense](#automod).
-3. Set up a dedicated [Music Channel](#music-streaming).
-4. Launch your first [Custom Giveaway](#giveaways-guide).
+2. Set up [Server Verification](#verification-overview) to prevent raid accounts from joining.
+3. Configure your [AutoMod & Anti-Raid Defense](#automod).
+4. Customize your [Welcome & Goodbye Suite](#welcome-setup).
+5. Open the [Music Studio & Web Player](#music-streaming) for 320kbps lossless streaming.
 `
       },
       {
@@ -61,13 +68,205 @@ Click the link below to invite Uranium via the official Discord OAuth2 authoriza
 - [Add Uranium to Discord](https://discord.com/oauth2/authorize?client_id=932136827605905489&permissions=8&scope=bot%20applications.commands)
 
 ### Step 2: Role Hierarchy Placement
-For moderation commands (ban, kick, timeout) and reaction roles to function correctly:
+For moderation commands (ban, kick, timeout), autoroles, and verification to function correctly:
 1. Open **Server Settings** > **Roles**.
-2. Drag the **Uranium** bot role **above** any roles you want the bot to manage or moderate.
-3. Ensure Uranium has **Manage Roles**, **Manage Channels**, and **Send Messages** enabled.
+2. Drag the **Uranium** bot role **above** any roles you want the bot to manage or assign (such as \`@Verified\`, \`@Member\`, \`@Unverified\`).
+3. Ensure Uranium has **Manage Roles**, **Manage Channels**, and **Send Messages** permissions enabled.
 
 > [!IMPORTANT]
-> Discord security rules prevent bots from managing members or roles placed higher than the bot's own highest role. Always place the Uranium bot role above member roles!
+> Discord security rules strictly prevent any bot from assigning, removing, or moderating roles placed higher than the bot's own highest role. Always place the Uranium bot role near the top of your server roles list!
+`
+      }
+    ]
+  },
+  {
+    id: 'verification',
+    category: 'Server Verification',
+    icon: ShieldCheck,
+    items: [
+      {
+        id: 'verification-overview',
+        title: 'Verification Setup & Discord Gate',
+        description: 'How to set up an automated verification gate in your Discord server with custom embeds and buttons.',
+        content: `
+Uranium's **Server Verification Center** safeguards your server from automated self-bots, token raids, and malicious spam accounts by requiring new members to complete a verification step before unlocking access to your channels.
+
+### How to Configure Verification
+1. Navigate to the [Server Verification Center](/dashboard/verification) in your dashboard.
+2. Choose your **Security Method**:
+   - **One-Click Button**: Fast single-click button for rapid, user-friendly onboarding.
+   - **2FA Direct Message OTP**: Generates a random 5-character security code sent to user DMs, entered in a modal to stop self-bots.
+3. Select your **Verification Channel** (e.g. \`#verify\` or \`#rules\`).
+4. Select your **Verified Role** (the role granted upon passing).
+5. (Optional) Select an **Unverified Role** to automatically strip from members once verified.
+6. Customize your **Embed Appearance** (title, description, accent hex color, optional banner image, and footer).
+7. Customize your **Action Button** (label, color style, and custom emoji).
+8. Click **Publish to Discord** — Uranium will immediately dispatch the interactive verification gate to your designated channel!
+
+### Practical Community Use Cases
+- **Anti-Raid Quarantine**: Restrict all new joins to a single read-only \`#verify\` channel until verified.
+- **Rule Agreement Check**: Pair the verification embed with community guidelines so members acknowledge server rules before joining conversations.
+- **Bot Farm Deterrence**: The 2FA OTP challenge stops token accounts because automated scripts cannot easily read DMs and complete custom modal challenges.
+`
+      },
+      {
+        id: 'verification-modes',
+        title: 'One-Click vs. 2FA Direct Message OTP',
+        description: 'Understand the differences between instant button verification and two-factor OTP challenges.',
+        content: `
+Uranium offers two distinct verification modes tailored to your server's security posture:
+
+### 1. One-Click Button Verification
+- **Mechanism**: Members click the designated button (e.g. \`✅ Verify\`) in the verification channel.
+- **Security Level**: Low to Medium.
+- **User Friction**: Zero. Instant 1-second role assignment.
+- **Best For**: Gaming communities, friendly hangout servers, and public servers with minimal raid risk.
+
+### 2. 2FA Direct Message OTP Challenge
+- **Mechanism**: 
+  1. Member clicks the verification button.
+  2. Uranium sends a private direct message (DM) containing a 5-character alphanumeric one-time password (e.g. \`K9X4B\`).
+  3. The member clicks **Enter OTP** in the channel, submits the code into a native Discord modal popup, and is verified.
+- **Security Level**: High / Raid-Proof.
+- **User Friction**: Minimal (takes ~10 seconds).
+- **Best For**: Large public servers, NFT/crypto communities, partnered servers, and servers experiencing frequent bot attacks.
+
+> [!TIP]
+> Both verification modes are 100% unlocked in the free tier for all servers!
+`
+      },
+      {
+        id: 'role-isolation',
+        title: 'Channel Lockdown & Unverified Role Strategy',
+        description: 'How to structure channel permissions so unverified members only see the verification channel.',
+        content: `
+To create an airtight verification gate, configure your Discord channel permission overrides using the **Role Isolation Strategy**:
+
+### Step 1: Default Role (@everyone) Permissions
+1. Go to **Server Settings** > **Roles** > **@everyone**.
+2. Turn **OFF** \`View Channels\` for \`@everyone\`.
+3. Now all server channels are hidden by default from unverified members.
+
+### Step 2: Verification Channel Permissions
+1. Open the settings for your \`#verify\` channel.
+2. Under **Permissions**, add **@everyone** and set \`View Channel: ALLOW\` and \`Read Message History: ALLOW\`. Set \`Send Messages: DENY\`.
+3. Ensure **Uranium** has \`View Channel\`, \`Send Messages\`, \`Embed Links\`, and \`Use External Emojis\` set to **ALLOW**.
+
+### Step 3: Verified Member Role
+1. Create a role called \`@Member\` or \`@Verified\`.
+2. For all your community channels (e.g. \`#general\`, \`#gaming\`, \`#voice\`), grant \`View Channel: ALLOW\` to your \`@Member\` role.
+3. In Uranium's dashboard, set **Verified Role** to \`@Member\`.
+
+Once a user clicks verify, Uranium gives them \`@Member\` and the entire server unlocks for them seamlessly!
+`
+      }
+    ]
+  },
+  {
+    id: 'welcome-goodbye',
+    category: 'Welcome & Goodbye',
+    icon: UserPlus,
+    items: [
+      {
+        id: 'welcome-setup',
+        title: 'Welcome & Departure Messages',
+        description: 'Automatically greet newcomers and announce departures with text or rich embeds.',
+        content: `
+The **Welcome & Goodbye Suite** ([/dashboard/welcome](/dashboard/welcome)) helps create memorable first impressions for every new member joining your server.
+
+### Key Capabilities
+- **Join Channel Messages**: Dispatch rich welcome text or embeds into your designated welcome channel.
+- **Dynamic Variable Tags**:
+  - \`{user}\` — Mentions the member (e.g. <@123456789>)
+  - \`{username}\` — Member username (e.g. shahrib)
+  - \`{server}\` / \`{guild}\` — Server name
+  - \`{server.member_count}\` / \`{count}\` — Total server members after join
+- **Direct Message Greetings**: Send private welcome messages and onboarding guides directly to newcomers.
+- **Departure Notices**: Automatically announce departures in your log channel to track member exits.
+
+### How to Enable:
+1. Open [Welcome & Goodbye](/dashboard/welcome).
+2. Toggle the master **Active** switch to **ON**.
+3. Under **Send a message when a user joins**, select your welcome channel.
+4. Choose **Text message** or **Embed message** mode and write your greeting.
+5. Click **Save Changes** and test using the **Send Test Message** button!
+`
+      },
+      {
+        id: 'welcome-cards',
+        title: 'Custom Canvas Welcome Cards',
+        description: 'Fine-tune fonts, color palettes, background themes, opacity, and template titles.',
+        content: `
+Uranium features an advanced high-resolution (1024x500) canvas rendering engine that produces studio-quality graphic welcome cards with zero lag.
+
+### 6 Curated Theme Presets
+- **Modern Obsidian**: Deep obsidian blacks with glowing rose accents.
+- **Cyberpunk Neon**: High-contrast purple and cyan synthwave grid.
+- **Cosmic Aurora**: Deep space violet nebulae and celestial starlight.
+- **Minimal Frosted**: Sleek modern glassmorphism with subtle borders.
+- **Golden Royale**: Elegant bronze-gold trim for luxury and gaming clubs.
+- **Emerald Horizon**: Clean, vivid emerald greens for modern tech communities.
+
+### Card Customizations
+- **Font Styling**: Modern Sans, Outfit, Editorial Serif, and Terminal Mono.
+- **Color Palettes**: Primary text colors and background overlay tints.
+- **Overlay Opacity**: Adjust transparency from 0% to 100% to blend background artwork.
+- **Custom Background URLs**: Upload or link direct PNG/JPG/WEBP images to use as the card background.
+- **Dynamic Title & Subtitle**: Format card headers with \`{user}\`, \`{username}\`, and \`{count}\`.
+`
+      },
+      {
+        id: 'autoroles-dms',
+        title: 'Autoroles & Private DM Onboarding',
+        description: 'Instantly assign community roles and deliver private welcome guides.',
+        content: `
+### Automatic Role Assignment (Autoroles)
+Automatically assign roles to new members the second they join your server:
+1. Scroll to **Give a role to new users (Autoroles)** on [/dashboard/welcome](/dashboard/welcome).
+2. Use the searchable multi-select picker to choose one or more roles.
+3. Save settings.
+
+> [!NOTE]
+> Make sure the **Uranium** bot role is placed higher than your autoroles in Discord Server Settings > Roles!
+
+### Private Direct Message (DM) Greetings
+Deliver custom onboarding links, server rules, or getting-started FAQs directly into member DMs:
+- Toggle **Send a private message to new users (DM)**.
+- Choose between plain text or rich embeds with custom colors.
+- Attach the rendered welcome card directly to their DM for a personalized touch!
+`
+      }
+    ]
+  },
+  {
+    id: 'security-defense',
+    category: 'Moderation & AutoMod',
+    icon: Shield,
+    items: [
+      {
+        id: 'automod',
+        title: 'Intelligent AutoMod Engine',
+        description: 'Protect your community against spam, discord invite leaks, mass mentions, and toxic words.',
+        content: `
+Uranium features a comprehensive zero-delay moderation defense system that operates 24/7 without requiring manual staff intervention.
+
+### AutoMod Protection Modules
+1. **Anti-Spam**: Flags and mutes accounts sending more than 5 messages per 3 seconds.
+2. **Anti-Invite & Domain Filter**: Automatically detects and deletes unauthorized Discord server invites (\`discord.gg/...\`) and raw domain links.
+3. **Mass Mention Protection**: Restricts mentions to a maximum of 4 per message to stop mention raids.
+4. **Banned Words & Regex Filter**: Custom dictionary of prohibited phrases that are immediately purged.
+5. **Whitelist System**: Safelist trusted roles (e.g. \`@Moderator\`, \`@VIP\`) and channels from AutoMod inspection.
+
+### Moderation Slash Commands
+\`\`\`bash
+/mute <@user> <duration> [reason]    # Timeout a member
+/unmute <@user>                      # Remove timeout
+/ban <@user> [reason]                # Permanently ban a rulebreaker
+/unban <user_id>                     # Unban a user
+/clear <amount>                      # Bulk delete up to 100 messages
+/lock [channel]                      # Emergency channel lockdown
+/unlock [channel]                    # Lift channel lockdown
+\`\`\`
 `
       }
     ]
@@ -124,37 +323,19 @@ You can apply filters via slash command:
 \`\`\`
 Or use the interactive buttons on the Discord player embed and the web dashboard!
 `
-      }
-    ]
-  },
-  {
-    id: 'security-defense',
-    category: 'Moderation & AutoMod',
-    icon: Shield,
-    items: [
+      },
       {
-        id: 'automod',
-        title: 'Intelligent AutoMod Engine',
-        description: 'Protect your community against spam, discord invite leaks, mass mentions, and toxic words.',
+        id: 'web-player-playlists',
+        title: 'Full Web Music Player & Playlists',
+        description: 'Spotify-style web player with queue management, personal playlists, and voice synchronization.',
         content: `
-Uranium features a comprehensive zero-delay moderation defense system that operates 24/7 without requiring manual staff intervention.
+Uranium includes a dedicated full-screen Web Music Player ([/dashboard/music/player](/dashboard/music/player)) that brings desktop streaming software directly to your browser.
 
-### AutoMod Protection Modules
-1. **Anti-Spam**: Flags and mutes accounts sending more than 5 messages per 3 seconds.
-2. **Anti-Invite**: Automatically deletes unauthorized Discord server invites (\`discord.gg/...\`).
-3. **Mass Mention Protection**: Restricts mentions to a maximum of 4 per message to stop mention raids.
-4. **Banned Words & Regex Filter**: Custom dictionary of prohibited phrases that are immediately purged.
-5. **Whitelist System**: Safelist trusted roles (e.g. \`@Moderator\`, \`@VIP\`) and channels from AutoMod inspection.
-
-### Moderation Slash Commands
-\`\`\`bash
-/mute <@user> <duration> [reason]    # Timeout a member
-/unmute <@user>                      # Remove timeout
-/ban <@user> [reason]                # Permanently ban a rulebreaker
-/unban <user_id>                     # Unban a user
-/clear <amount>                      # Bulk delete up to 100 messages
-/clear-roles <@user>                 # Strip all assigned roles from a member
-\`\`\`
+### Web Player Features
+- **Real-Time Voice Channel Sync**: View active channels, ping latency, and track progress live.
+- **Interactive Queue Management**: Drag, reorder, remove, or jump to any track in queue.
+- **Personal Playlists**: Create custom playlists, add your favorite tracks, and load entire collections into Discord with one click.
+- **Continuous Autoplay**: Intelligent music recommendations keep the music going even after the queue finishes.
 `
       }
     ]
@@ -218,6 +399,65 @@ Uranium giveaway system is built for high community engagement with total visual
     ]
   },
   {
+    id: 'personalize',
+    category: 'Bot Personalizer',
+    icon: Palette,
+    items: [
+      {
+        id: 'personalize-guide',
+        title: 'Per-Server Bot Identity Customization',
+        description: 'Customize Uranium display name, animated avatars, banners, and bios strictly per-server.',
+        content: `
+The **Bot Personalizer** ([/dashboard/personalize](/dashboard/personalize)) allows servers to customize Uranium's appearance specifically inside their server.
+
+### Free vs. Premium Features:
+- **Bot Nickname (100% Free)**:
+  - Custom display name strictly inside your server.
+  - Unlocked for all servers with no restrictions.
+  - Leave blank to reset to default bot username.
+- **Server Bot Avatar (Premium)**:
+  - Custom static PNG/JPG or animated GIF avatar.
+  - Updates the bot's server profile via Discord's \`PATCH /guilds/{guildId}/members/@me\`.
+- **Server Profile Banner (Premium)**:
+  - Custom static or animated profile banner displayed in the bot's user popout.
+- **Server About Me / Bio (Premium)**:
+  - Up to 190 characters of custom backstory or server description.
+
+### Live Discord Previews
+The personalizer includes a real-time reactive Discord preview showing:
+1. **Member List Preview**: How Uranium looks in your server member sidebar with the \`APP\` badge.
+2. **Full Profile Card Preview**: Protruding circular avatar, banner header, username, and About Me bio.
+`
+      }
+    ]
+  },
+  {
+    id: 'settings-system',
+    category: 'Settings & Diagnostics',
+    icon: Settings,
+    items: [
+      {
+        id: 'server-configuration',
+        title: 'Server Settings & Prefix Setup',
+        description: 'Configure bot prefixes, primary language, log channels, and monitor system diagnostics.',
+        content: `
+Configure core bot operations via the [Bot Settings](/dashboard/settings) module:
+
+### Configuration Options
+- **Command Prefix**: Set custom prefixes (e.g. \`!\`, \`?\`, \`.\`) alongside standard Discord slash commands.
+- **Primary Language**: English, Spanish, French, German, or Portuguese for bot system responses and embeds.
+- **Audit Log Channel**: Dedicated channel where bot events, errors, and system notices are recorded.
+
+### Diagnostics & Monitoring
+The dashboard overview displays live server health metrics:
+- **Connected Shard**: Shard cluster identifier.
+- **Gateway Ping**: Real-time Discord WebSocket latency.
+- **Node.js Runtime & RAM**: Live memory usage tracking.
+`
+      }
+    ]
+  },
+  {
     id: 'premium-perks',
     category: 'Premium & Perks',
     icon: Crown,
@@ -229,13 +469,13 @@ Uranium giveaway system is built for high community engagement with total visual
         content: `
 Uranium provides powerful core functionality for any community, alongside an optional **Premium Tier** designed for large communities, gaming hubs, and creator servers that need expanded limits and advanced tools.
 
-### 🔥 Current Premium Perks & Features
-- **🤖 Full AI Engine**: Interactive chat, custom persona styling, and server assistant with \`/ai chat\` and \`/ai setup\`.
+### Current Premium Perks & Features
+- **🎨 Bot Personalizer**: Custom per-server animated GIF/image avatar, profile banner, and custom server bio.
+- **🎵 20 User Playlists**: Save and load up to 20 personal playlists across web and Discord (Free tier: 1).
+- **📻 Continuous Autoplay**: Uninterrupted audio recommendations when queue completes.
 - **✨ YouTube Verification**: Automate role granting for verified YouTube channel subscribers with \`/ytverify\`.
 - **🗃️ Expanded Server Backups**: Unlock +2 extra backup slots, instant restores, and a 24-hour reduced cooldown.
 - **🎨 Embed Template Vault**: Save and load up to 20 custom embed templates (Free limit: 3).
-- **🎫 Multi-Panel Ticket Systems**: Create multiple custom ticket reaction/button panels across different departments.
-- **🚀 Priority Processing**: Accelerated queue processing and priority customer support.
 
 ### Managing Your Premium Subscription
 You can view, redeem, and manage your server's premium status directly on Discord:

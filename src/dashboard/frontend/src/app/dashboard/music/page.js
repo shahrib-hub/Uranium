@@ -51,9 +51,6 @@ export default function MusicPage() {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-bold text-white">Experience the Full Web Music Player</h2>
-              <span className="px-2 py-0.5 rounded text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/30 uppercase tracking-wider">
-                NEW
-              </span>
             </div>
             <p className="text-xs text-white/60 mt-0.5 max-w-xl leading-relaxed">
               Full-screen Spotify-style player with personal playlists, autoplay, genre & region filters, and trending music feeds.

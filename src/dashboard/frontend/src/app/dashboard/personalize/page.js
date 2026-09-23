@@ -169,16 +169,6 @@ export default function BotPersonalizerPage() {
             <span className="text-[10px] sm:text-xs font-black uppercase tracking-[4px] text-red-500">
               Identity Module
             </span>
-            {isPremium ? (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                <Crown size={11} className="fill-amber-400 text-amber-400" />
-                Premium Active
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-white/10 text-white/70">
-                Free Server
-              </span>
-            )}
           </div>
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tighter uppercase italic text-white">
             Bot <span className="text-red-500">Personalizer</span>
@@ -217,6 +207,7 @@ export default function BotPersonalizerPage() {
         {/* Left Column: Form Controls (7 Cols) */}
         <div className="lg:col-span-7 space-y-6">
           {/* Non-Premium Notice Banner */}
+          {/* Non-Premium Notice Banner */}
           {!isPremium && (
             <div className="rounded-2xl border border-amber-500/20 bg-gradient-to-r from-amber-500/10 via-[#181923] to-[#181923] p-4 text-white">
               <div className="flex items-start justify-between gap-4">
@@ -229,7 +220,7 @@ export default function BotPersonalizerPage() {
                       Unlock Avatar, Banner & Bio with Premium
                     </h3>
                     <p className="text-[11px] text-white/60 mt-0.5 leading-relaxed">
-                      Changing bot nickname is 100% free! Custom animated/static avatars, banners, and custom bios require server premium status.
+                      Bot nickname customization is available for all servers. Avatars, banners, and bios require server premium status.
                     </p>
                   </div>
                 </div>
@@ -275,8 +266,8 @@ export default function BotPersonalizerPage() {
 
           {/* Section 2: Bot Avatar (PREMIUM ONLY) */}
           <div
-            className={`relative rounded-2xl border border-[#1e202c] bg-[#14151e] p-5 space-y-3 transition ${
-              !isPremium ? 'opacity-85' : ''
+            className={`relative rounded-2xl border bg-[#14151e] p-5 space-y-3 transition ${
+              !isPremium ? 'border-white/5 opacity-75' : 'border-[#1e202c]'
             }`}
           >
             <div className="flex items-center justify-between">
@@ -284,10 +275,12 @@ export default function BotPersonalizerPage() {
                 <span className="text-xs font-bold text-white uppercase tracking-wider">
                   Server Bot Avatar
                 </span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1">
-                  <Crown size={10} className="fill-amber-400" />
-                  Premium
-                </span>
+                {!isPremium && (
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1">
+                    <Crown size={10} className="fill-amber-400" />
+                    Premium
+                  </span>
+                )}
               </div>
               <span className="text-[11px] text-white/40">Image or Animated GIF</span>
             </div>
@@ -321,10 +314,10 @@ export default function BotPersonalizerPage() {
                       ? 'https://example.com/avatar.gif or .png (leave blank to reset)'
                       : 'Upgrade to Premium to customize avatar'
                   }
-                  className={`w-full rounded-xl border border-[#262838] bg-[#101118] px-3.5 py-2.5 text-xs text-white placeholder:text-white/30 outline-none transition ${
+                  className={`w-full rounded-xl border px-3.5 py-2.5 text-xs text-white placeholder:text-white/30 outline-none transition ${
                     isPremium
-                      ? 'focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/30'
-                      : 'cursor-not-allowed text-white/40 bg-[#0d0e14]'
+                      ? 'border-[#262838] bg-[#101118] focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/30'
+                      : 'cursor-not-allowed border-white/5 text-white/40 bg-[#0d0e14]'
                   }`}
                 />
               </div>
@@ -335,7 +328,7 @@ export default function BotPersonalizerPage() {
               <div className="pt-2 flex items-center justify-between border-t border-[#1e202c]">
                 <div className="flex items-center gap-1.5 text-[11px] text-white/50">
                   <Lock size={12} className="text-amber-400" />
-                  <span>Avatar customization is locked for free servers</span>
+                  <span>Requires Uranium Premium</span>
                 </div>
                 <Link
                   href={`/dashboard/premium?guild=${guildId}`}
@@ -350,8 +343,8 @@ export default function BotPersonalizerPage() {
 
           {/* Section 3: Bot Banner (PREMIUM ONLY) */}
           <div
-            className={`relative rounded-2xl border border-[#1e202c] bg-[#14151e] p-5 space-y-3 transition ${
-              !isPremium ? 'opacity-85' : ''
+            className={`relative rounded-2xl border bg-[#14151e] p-5 space-y-3 transition ${
+              !isPremium ? 'border-white/5 opacity-75' : 'border-[#1e202c]'
             }`}
           >
             <div className="flex items-center justify-between">
@@ -359,10 +352,12 @@ export default function BotPersonalizerPage() {
                 <span className="text-xs font-bold text-white uppercase tracking-wider">
                   Server Profile Banner
                 </span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1">
-                  <Crown size={10} className="fill-amber-400" />
-                  Premium
-                </span>
+                {!isPremium && (
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1">
+                    <Crown size={10} className="fill-amber-400" />
+                    Premium
+                  </span>
+                )}
               </div>
               <span className="text-[11px] text-white/40">Image or Animated GIF</span>
             </div>
@@ -385,10 +380,10 @@ export default function BotPersonalizerPage() {
                     ? 'https://example.com/banner.gif or .png (leave blank to reset)'
                     : 'Upgrade to Premium to customize banner'
                 }
-                className={`w-full rounded-xl border border-[#262838] bg-[#101118] px-3.5 py-2.5 text-xs text-white placeholder:text-white/30 outline-none transition ${
+                className={`w-full rounded-xl border px-3.5 py-2.5 text-xs text-white placeholder:text-white/30 outline-none transition ${
                   isPremium
-                    ? 'focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/30'
-                    : 'cursor-not-allowed text-white/40 bg-[#0d0e14]'
+                    ? 'border-[#262838] bg-[#101118] focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/30'
+                    : 'cursor-not-allowed border-white/5 text-white/40 bg-[#0d0e14]'
                 }`}
               />
             </div>
@@ -398,7 +393,7 @@ export default function BotPersonalizerPage() {
               <div className="pt-2 flex items-center justify-between border-t border-[#1e202c]">
                 <div className="flex items-center gap-1.5 text-[11px] text-white/50">
                   <Lock size={12} className="text-amber-400" />
-                  <span>Banner customization is locked for free servers</span>
+                  <span>Requires Uranium Premium</span>
                 </div>
                 <Link
                   href={`/dashboard/premium?guild=${guildId}`}
@@ -413,8 +408,8 @@ export default function BotPersonalizerPage() {
 
           {/* Section 4: Bot Bio / Backstory (PREMIUM ONLY) */}
           <div
-            className={`relative rounded-2xl border border-[#1e202c] bg-[#14151e] p-5 space-y-3 transition ${
-              !isPremium ? 'opacity-85' : ''
+            className={`relative rounded-2xl border bg-[#14151e] p-5 space-y-3 transition ${
+              !isPremium ? 'border-white/5 opacity-75' : 'border-[#1e202c]'
             }`}
           >
             <div className="flex items-center justify-between">
@@ -422,10 +417,12 @@ export default function BotPersonalizerPage() {
                 <span className="text-xs font-bold text-white uppercase tracking-wider">
                   Server Bot Bio / About Me
                 </span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1">
-                  <Crown size={10} className="fill-amber-400" />
-                  Premium
-                </span>
+                {!isPremium && (
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1">
+                    <Crown size={10} className="fill-amber-400" />
+                    Premium
+                  </span>
+                )}
               </div>
               <span className="text-[11px] text-white/40">{bio.length}/190</span>
             </div>
@@ -446,10 +443,10 @@ export default function BotPersonalizerPage() {
                     ? 'Write a custom bio or description for Uranium in this server...'
                     : 'Upgrade to Premium to set a custom server bio'
                 }
-                className={`w-full rounded-xl border border-[#262838] bg-[#101118] px-3.5 py-2.5 text-xs text-white placeholder:text-white/30 outline-none resize-none transition ${
+                className={`w-full rounded-xl border px-3.5 py-2.5 text-xs text-white placeholder:text-white/30 outline-none resize-none transition ${
                   isPremium
-                    ? 'focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/30'
-                    : 'cursor-not-allowed text-white/40 bg-[#0d0e14]'
+                    ? 'border-[#262838] bg-[#101118] focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/30'
+                    : 'cursor-not-allowed border-white/5 text-white/40 bg-[#0d0e14]'
                 }`}
               />
             </div>
@@ -459,7 +456,7 @@ export default function BotPersonalizerPage() {
               <div className="pt-2 flex items-center justify-between border-t border-[#1e202c]">
                 <div className="flex items-center gap-1.5 text-[11px] text-white/50">
                   <Lock size={12} className="text-amber-400" />
-                  <span>Bio customization is locked for free servers</span>
+                  <span>Requires Uranium Premium</span>
                 </div>
                 <Link
                   href={`/dashboard/premium?guild=${guildId}`}

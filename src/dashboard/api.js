@@ -1,6 +1,6 @@
 // src/dashboard/api.js — Backend API for Uranium Dashboard
 const { Router } = require('express');
-const { PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
+const { PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, Routes } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const ms = require('ms');
@@ -12,6 +12,7 @@ const { generateWelcomeCard } = require('../utils/welcomeCardRenderer');
 const personalizationStorage = require('../utils/personalizationStorage');
 const playlistStorage = require('../utils/playlistStorage');
 const { isPremiumGuild, isPremiumUser, redeemCode, listPremiumGuilds } = require('../utils/premium');
+const verificationUtils = require('../utils/verification');
 const { createSocketToken } = require('./socketAuth');
 
 function createApiRouter(client) {
@@ -2434,6 +2435,186 @@ function createApiRouter(client) {
 
       res.set('Content-Type', 'image/png');
       res.send(cardBuf);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // VERIFICATION MODULE API
+  // ─────────────────────────────────────────────────────────────────────────────
+  router.get('/guild/:guildId/verification', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
+    try {
+      const guild = req.guild;
+      const guildId = req.params.guildId;
+
+      const [config, verifiedCount] = await Promise.all([
+        verificationUtils.getVerificationConfig(guildId),
+        verificationUtils.getVerifiedUsersCount(guildId)
+      ]);
+
+      const channels = guild.channels.cache
+        .filter(c => c.isTextBased() && !c.isThread() && !c.isVoiceBased())
+        .map(c => ({ id: c.id, name: c.name, type: c.type }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      const botMember = guild.members.me;
+      const roles = guild.roles.cache
+        .filter(r => !r.managed && r.id !== guild.id)
+        .map(r => ({
+          id: r.id,
+          name: r.name,
+          color: r.hexColor !== '#000000' ? r.hexColor : '#94a3b8',
+          position: r.position,
+          assignable: botMember ? botMember.roles.highest.position > r.position : true
+        }))
+        .sort((a, b) => b.position - a.position);
+
+      res.json({
+        config: config || {
+          guild_id: guildId,
+          channel_id: '',
+          role_id: '',
+          unverified_role_id: '',
+          log_channel_id: '',
+          embed_title: 'Verify Yourself',
+          embed_message: 'Click the button below to verify yourself and gain access to the server.',
+          embed_color: '#10b981',
+          embed_image: '',
+          embed_footer: 'Uranium Security Verification',
+          type: 'button',
+          button_label: 'Verify',
+          button_style: 'Success',
+          button_emoji: '✅',
+          send_dm: false,
+          dm_message: 'You have been successfully verified in **{server}**!',
+          enabled: true
+        },
+        channels,
+        roles,
+        verifiedCount: verifiedCount || 0
+      });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  router.post('/guild/:guildId/verification', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
+    try {
+      const guildId = req.params.guildId;
+      await verificationUtils.saveVerificationConfig(guildId, req.body);
+      res.json({ success: true, message: 'Verification settings saved successfully!' });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  router.post('/guild/:guildId/verification/publish', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
+    try {
+      const guild = req.guild;
+      const guildId = req.params.guildId;
+      const body = req.body || {};
+
+      const channelId = body.channel_id;
+      if (!channelId) {
+        return res.status(400).json({ error: 'Please choose a target channel to publish the verification message.' });
+      }
+
+      const channel = guild.channels.cache.get(channelId);
+      if (!channel || !channel.isTextBased()) {
+        return res.status(400).json({ error: 'Target verification channel not found or not a text channel.' });
+      }
+
+      // Save settings first
+      await verificationUtils.saveVerificationConfig(guildId, body);
+
+      // Map button style
+      let btnStyle = ButtonStyle.Success;
+      if (body.button_style === 'Primary') btnStyle = ButtonStyle.Primary;
+      else if (body.button_style === 'Secondary') btnStyle = ButtonStyle.Secondary;
+      else if (body.button_style === 'Danger') btnStyle = ButtonStyle.Danger;
+
+      const embed = new EmbedBuilder()
+        .setTitle(body.embed_title || 'Verify Yourself')
+        .setDescription(
+          (body.embed_message || 'Click the button below to verify yourself and gain access to the server.')
+            .replace(/{server}/gi, guild.name)
+        )
+        .setColor(body.embed_color || '#10b981');
+
+      if (body.embed_image && body.embed_image.trim()) {
+        embed.setImage(body.embed_image.trim());
+      }
+      if (body.embed_footer && body.embed_footer.trim()) {
+        embed.setFooter({ text: body.embed_footer.trim(), iconURL: client.user.displayAvatarURL() });
+      } else {
+        embed.setFooter({ text: 'Uranium Security Verification', iconURL: client.user.displayAvatarURL() });
+      }
+
+      const button = new ButtonBuilder()
+        .setCustomId('verify_button')
+        .setLabel(body.button_label || 'Verify')
+        .setStyle(btnStyle);
+
+      if (body.button_emoji && body.button_emoji.trim()) {
+        const emojiStr = body.button_emoji.trim();
+        const customEmojiMatch = emojiStr.match(/<a?:(\w+):(\d+)>/);
+        if (customEmojiMatch) {
+          button.setEmoji(customEmojiMatch[2]);
+        } else {
+          button.setEmoji(emojiStr);
+        }
+      }
+
+      const row = new ActionRowBuilder().addComponents(button);
+
+      await channel.send({ embeds: [embed], components: [row] });
+
+      res.json({
+        success: true,
+        message: `Verification gate published directly to #${channel.name}!`
+      });
+    } catch (err) {
+      console.error('[verification/publish error]:', err);
+      res.status(500).json({ error: err.message || 'Failed to dispatch verification embed' });
+    }
+  });
+
+  router.post('/guild/:guildId/verification/manual', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
+    try {
+      const guild = req.guild;
+      const guildId = req.params.guildId;
+      const { userId, action } = req.body;
+
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID is required' });
+      }
+
+      const config = await verificationUtils.getVerificationConfig(guildId);
+      const member = await guild.members.fetch(userId).catch(() => null);
+      if (!member) {
+        return res.status(404).json({ error: 'Member not found in this server.' });
+      }
+
+      if (action === 'unverify') {
+        if (config?.role_id) {
+          await member.roles.remove(config.role_id).catch(() => null);
+        }
+        if (config?.unverified_role_id) {
+          await member.roles.add(config.unverified_role_id).catch(() => null);
+        }
+        await verificationUtils.removeUserVerification(guildId, userId);
+        return res.json({ success: true, message: `Removed verification from ${member.user.tag}` });
+      } else {
+        if (config?.role_id) {
+          await member.roles.add(config.role_id).catch(() => null);
+        }
+        if (config?.unverified_role_id) {
+          await member.roles.remove(config.unverified_role_id).catch(() => null);
+        }
+        await verificationUtils.markUserVerified(guildId, userId);
+        return res.json({ success: true, message: `Manually verified ${member.user.tag}` });
+      }
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

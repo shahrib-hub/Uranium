@@ -460,8 +460,21 @@ const VerificationConfigSchema = new mongoose.Schema({
   guildId: { type: String, required: true, unique: true },
   channelId: { type: String, default: null },
   roleId: { type: String, default: null },
-  embedMessage: { type: String, default: null },
-  type: { type: String, default: null }
+  unverifiedRoleId: { type: String, default: null },
+  logChannelId: { type: String, default: null },
+  embedTitle: { type: String, default: 'Verify Yourself' },
+  embedMessage: { type: String, default: 'Click the button below to verify yourself and gain access to the server.' },
+  embedColor: { type: String, default: '#10b981' },
+  embedImage: { type: String, default: null },
+  embedFooter: { type: String, default: 'Uranium Security Verification' },
+  type: { type: String, default: 'button' },
+  buttonLabel: { type: String, default: 'Verify' },
+  buttonStyle: { type: String, default: 'Success' },
+  buttonEmoji: { type: String, default: '✅' },
+  sendDm: { type: Boolean, default: false },
+  dmMessage: { type: String, default: 'You have been successfully verified in **{server}**!' },
+  enabled: { type: Boolean, default: true },
+  dataJson: { type: String, default: '{}' }
 });
 
 const VerifiedUserSchema = new mongoose.Schema({
