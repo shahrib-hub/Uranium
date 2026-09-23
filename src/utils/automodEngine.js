@@ -6,16 +6,40 @@ const { formatMember } = (() => {
   try { return require('./logFormatter'); } catch { return { formatMember: (m)=> m?.user?.tag || m?.id || 'Unknown'}; }
 })();
 
-const urlRx = /https?:\/\/[^\s]+/i;
-const inviteRx = /(discord(?:\.gg|app\.com\/invite)\/[^\s/]+)/i;
+const tlds = 'com|org|net|edu|gov|io|co|gg|ai|me|tv|xyz|info|biz|online|site|store|tech|app|dev|cloud|live|link|pro|club|space|fun|vip|top|icu|shop|blog|design|news|art|work|press|agency|media|zone|today|life|world|cc|to|ly|gl|is|in|uk|us|ca|de|fr|ru|cn|jp|br|au|nl|pl|es|it|ch|se|no|fi|kr|id|mx|nz|at|be|cz|gr|hu|ro|sk|za|ua|vn|my|sg|ph|th|eu';
 
-function domainFromUrl(url) {
+// Matches URLs with http/https, www, bare domain names with common TLDs (e.g. discord.com), or any domain with a path
+const urlRx = new RegExp(
+  '(?:https?:\\/\\/|www\\.)[^\\s<>]+|' +
+  '\\b(?:[a-zA-Z0-9][-a-zA-Z0-9]*\\.)+(?:' + tlds + ')(?::\\d+)?(?:\\/[^\\s<>]*)?\\b|' +
+  '\\b(?:[a-zA-Z0-9][-a-zA-Z0-9]*\\.)+[a-zA-Z]{2,}\\/[^\\s<>]*',
+  'i'
+);
+
+// Matches discord invites (discord.gg/..., discord.com/invite/..., discordapp.com/invite/..., dsc.gg/..., etc.)
+const inviteRx = /(?:https?:\/\/)?(?:www\.)?(?:discord(?:\.gg|(?:app)?\.com\/invite)|dsc\.gg|discord\.me|discord\.io|invite\.gg)\/([^\s/]+)/i;
+
+function domainFromUrl(rawUrl) {
   try {
-    const u = new URL(url);
+    if (!rawUrl) return null;
+    let str = rawUrl.trim().replace(/^[<([{"'`]+|[>)\]}"'`.,;:!?]+$/g, '');
+    const hasProto = /^[a-z0-9+.-]+:\/\//i.test(str);
+    const u = new URL(hasProto ? str : 'http://' + str);
     return u.hostname.replace(/^www\./, '').toLowerCase();
   } catch {
     return null;
   }
+}
+
+function isDomainWhitelisted(domain, whitelistedDomains) {
+  if (!domain || !Array.isArray(whitelistedDomains) || !whitelistedDomains.length) return false;
+  const cleanDomain = domain.toLowerCase().replace(/^www\./, '');
+  return whitelistedDomains.some(w => {
+    if (!w) return false;
+    const cleanW = String(w).toLowerCase().trim().replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+    if (!cleanW) return false;
+    return cleanDomain === cleanW || cleanDomain.endsWith('.' + cleanW);
+  });
 }
 
 // tokenize lower-case words (basic)
@@ -75,7 +99,7 @@ module.exports = {
     if (cfg.AntiInvite?.enabled && inv) {
       // check if whitelisted: if any whitelisted domain matches invite host (rare)
       const domain = domainFromUrl(inv[0]) || '';
-      const whitelisted = cfg.AntiLink?.whitelistedDomains?.some(d => domain.endsWith(d));
+      const whitelisted = isDomainWhitelisted(domain, cfg.AntiLink?.whitelistedDomains);
       if (!whitelisted) {
         const embed = { title: 'Automod: Invite detected', description: `${message.author.tag} posted an invite in ${message.channel}` };
         await automodActions.performAction(cfg.AntiInvite.action || 'delete', { message, member: message.member, guild: message.guild, user: message.author, client, embedForLog: embed });
@@ -87,7 +111,7 @@ module.exports = {
     const url = urlRx.exec(content);
     if (cfg.AntiLink?.enabled && url) {
       const domain = domainFromUrl(url[0]) || '';
-      const whitelisted = cfg.AntiLink.whitelistedDomains?.some(d => domain.endsWith(d));
+      const whitelisted = isDomainWhitelisted(domain, cfg.AntiLink.whitelistedDomains);
       if (!whitelisted) {
         const embed = { title: 'Automod: Link detected', description: `${message.author.tag} posted a link in ${message.channel}` };
         await automodActions.performAction(cfg.AntiLink.action || 'delete', { message, member: message.member, guild: message.guild, user: message.author, client, embedForLog: embed });

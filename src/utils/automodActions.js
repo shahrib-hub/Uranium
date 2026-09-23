@@ -50,9 +50,12 @@ async function saveCaseRecord(guildId, data) {
 module.exports = {
   async deleteMessage(message) {
     try {
-      if (!message.deletable) return false;
-      await message.delete().catch(() => {});
-      return true;
+      if (!message) return false;
+      if (typeof message.delete === 'function') {
+        await message.delete().catch(() => {});
+        return true;
+      }
+      return false;
     } catch { return false; }
   },
 
@@ -153,8 +156,13 @@ module.exports = {
     const { message, member, guild, user, durationMs, moderator, client, embedForLog } = context;
     let ok = false;
     try {
+      // Offending messages should always be deleted upon automod rule violation
+      if (message) {
+        await this.deleteMessage(message);
+      }
+
       if (action === 'delete') {
-        ok = await this.deleteMessage(message);
+        ok = true;
       } else if (action === 'warn') {
         ok = await this.warnUser(guild, moderator || client.user, user || (member && member.user), 'Automod action', client);
       } else if (action === 'timeout') {
@@ -171,7 +179,7 @@ module.exports = {
     }
 
     // log via webhook/storage
-    if (embedForLog) {
+    if (embedForLog && guild?.id) {
       tryLog(guild.id, client, embedForLog).catch(() => {});
     }
 
