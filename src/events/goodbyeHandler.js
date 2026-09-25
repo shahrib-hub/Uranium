@@ -13,14 +13,21 @@ module.exports = {
       const guildId = guild.id;
 
       const settings = await welcomeStorage.getSettings(guildId);
-      if (!settings || !settings.enabled) return;
-      if (!settings.goodbyeEnabled || !settings.goodbyeChannelId) return;
+      if (!settings || (!settings.enabled && !settings.active)) return;
+      if ((!settings.goodbyeEnabled && !settings.sendGoodbyeMessage) || !settings.goodbyeChannelId) return;
 
-      const channel = guild.channels.cache.get(String(settings.goodbyeChannelId));
+      let channel = guild.channels.cache.get(String(settings.goodbyeChannelId));
+      if (!channel) {
+        channel = await guild.channels.fetch(String(settings.goodbyeChannelId)).catch(() => null);
+      }
       if (!channel || !channel.isTextBased()) return;
 
-      const botMember = guild.members.me;
-      if (!botMember || !channel.permissionsFor(botMember)?.has(PermissionsBitField.Flags.SendMessages)) return;
+      const botMember = guild.members.me || await guild.members.fetchMe().catch(() => null);
+      const perms = botMember ? channel.permissionsFor(botMember) : null;
+      if (!perms || !perms.has(PermissionsBitField.Flags.SendMessages)) {
+        console.warn(`[goodbyeHandler] Bot lacks SendMessages permission in goodbye channel #${channel.name}`);
+        return;
+      }
 
       const memberCount = guild.memberCount || 1;
       const avatarUrl = member.user?.displayAvatarURL?.({ extension: 'png', size: 512 });
@@ -34,7 +41,14 @@ module.exports = {
           .replace(/{server}/gi, guild.name)
           .replace(/{guild}/gi, guild.name)
           .replace(/{server\.member_count}/gi, String(memberCount))
+          .replace(/{member_count}/gi, String(memberCount))
           .replace(/{count}/gi, String(memberCount));
+      };
+
+      const parseColor = (col) => {
+        if (!col) return 0x717892;
+        if (typeof col === 'number') return col;
+        return parseInt(String(col).replace('#', ''), 16) || 0x717892;
       };
 
       const parsedText = formatPlaceholders(
@@ -44,7 +58,7 @@ module.exports = {
       const files = [];
 
       // Optional goodbye card
-      if (settings.goodbyeCardEnabled) {
+      if ((settings.goodbyeCardEnabled || settings.sendGoodbyeCard) && perms.has(PermissionsBitField.Flags.AttachFiles)) {
         try {
           const cardBuffer = await generateWelcomeCard({
             username: member.user?.username || 'Member',
@@ -52,14 +66,15 @@ module.exports = {
             avatarUrl,
             guildName: guild.name,
             memberCount,
-            cardTheme: settings.cardTheme || 'modern_obsidian',
-            cardFont: settings.cardFont || 'Inter',
-            cardTextColor: settings.cardTextColor,
-            cardBgColor: settings.cardBgColor,
-            cardOverlayOpacity: settings.cardOverlayOpacity,
-            cardBgImage: settings.cardBgImage,
-            cardTitle: `${member.user?.username || 'Member'} left the server`,
-            cardSubtitle: `We now have ${memberCount} members`,
+            cardConfig: settings.welcomeCardConfig,
+            cardTheme: settings.cardTheme || settings.welcomeCardConfig?.theme || 'modern_obsidian',
+            cardFont: settings.cardFont || settings.welcomeCardConfig?.font || 'Segoe UI, Arial, sans-serif',
+            cardTextColor: settings.cardTextColor || settings.welcomeCardConfig?.textColor,
+            cardBgColor: settings.cardBgColor || settings.welcomeCardConfig?.backgroundColor,
+            cardOverlayOpacity: settings.cardOverlayOpacity ?? (settings.welcomeCardConfig?.overlayOpacity != null ? Math.round(settings.welcomeCardConfig.overlayOpacity * 100) : 75),
+            cardBgImage: settings.cardBgImage || settings.welcomeCardConfig?.backgroundUrl,
+            cardTitle: settings.cardTitle || `${member.user?.username || 'Member'} left the server`,
+            cardSubtitle: settings.cardSubtitle || `We now have ${memberCount} members`,
             isGoodbye: true
           });
           if (cardBuffer) {
@@ -70,12 +85,12 @@ module.exports = {
         }
       }
 
-      if (settings.goodbyeMessageType === 'embed') {
+      if (settings.goodbyeMessageType === 'embed' && perms.has(PermissionsBitField.Flags.EmbedLinks)) {
         const embConfig = settings.goodbyeEmbed || {};
         const embed = new EmbedBuilder()
           .setTitle(formatPlaceholders(embConfig.title || 'Goodbye!'))
           .setDescription(parsedText || formatPlaceholders(embConfig.description || '{username} has left the server.'))
-          .setColor(embConfig.color ? parseInt(embConfig.color.replace('#', ''), 16) || 0x717892 : 0x717892)
+          .setColor(parseColor(embConfig.color))
           .setTimestamp();
 
         if (files.length > 0) {
@@ -85,9 +100,15 @@ module.exports = {
           embed.setFooter({ text: formatPlaceholders(embConfig.footer) });
         }
 
-        await channel.send({ embeds: [embed], files }).catch(() => {});
+        await channel.send({ embeds: [embed], files }).catch(async (sendErr) => {
+          console.warn('[goodbyeHandler] Failed to send embed, falling back to text:', sendErr.message);
+          await channel.send({ content: parsedText }).catch(() => {});
+        });
       } else {
-        await channel.send({ content: parsedText, files }).catch(() => {});
+        await channel.send({ content: parsedText, files }).catch(async (sendErr) => {
+          console.warn('[goodbyeHandler] Failed to send with files, falling back to text:', sendErr.message);
+          await channel.send({ content: parsedText }).catch(() => {});
+        });
       }
     } catch (err) {
       console.error('[goodbyeHandler] Error executing goodbye:', err?.message || err);

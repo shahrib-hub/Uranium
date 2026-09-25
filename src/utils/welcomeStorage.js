@@ -170,11 +170,193 @@ function parseJson(str, fallback) {
   try { return JSON.parse(str); } catch { return fallback; }
 }
 
+// Comprehensive normalizer that guarantees 100% synchronization of all alias pairs
+function normalizeSettings(data = {}, guildId = '') {
+  const def = defaultConfig(guildId);
+  const raw = { ...def, ...data };
+
+  // Master active toggle
+  const isEnabled = raw.active !== undefined 
+    ? Boolean(raw.active) 
+    : (raw.enabled !== undefined ? (typeof raw.enabled === 'number' ? raw.enabled === 1 : Boolean(raw.enabled)) : true);
+
+  // Welcome channel message toggle
+  const isWelcomeChannelEnabled = raw.sendWelcomeMessage !== undefined
+    ? Boolean(raw.sendWelcomeMessage)
+    : (raw.welcomeChannelEnabled !== undefined ? Boolean(raw.welcomeChannelEnabled) : Boolean(raw.channelId || raw.welcomeChannelId));
+
+  // Welcome channel ID
+  const welcomeChannelId = raw.welcomeChannelId || raw.channelId || null;
+
+  // Welcome message text & type
+  const welcomeMessage = raw.welcomeMessage || raw.message || def.welcomeMessage;
+  const welcomeMessageType = raw.welcomeMessageType === 'embed' ? 'embed' : 'text';
+
+  // Welcome card toggle
+  const isWelcomeCardEnabled = raw.sendWelcomeCard !== undefined
+    ? Boolean(raw.sendWelcomeCard)
+    : (raw.welcomeCardEnabled !== undefined ? Boolean(raw.welcomeCardEnabled) : true);
+
+  // DM settings
+  const isDmEnabled = raw.sendWelcomeDm !== undefined
+    ? Boolean(raw.sendWelcomeDm)
+    : (raw.dmEnabled !== undefined ? Boolean(raw.dmEnabled) : (Number(raw.dm) === 1));
+
+  const dmMessageType = raw.welcomeDmMessageType || raw.dmMessageType || 'text';
+  const dmMessage = raw.welcomeDmMessage || raw.dmMessage || def.dmMessage;
+
+  const isDmCardEnabled = raw.sendWelcomeDmCard !== undefined
+    ? Boolean(raw.sendWelcomeDmCard)
+    : (raw.dmCardEnabled !== undefined ? Boolean(raw.dmCardEnabled) : false);
+
+  // Autorole settings
+  const isAutoroleEnabled = raw.autorolesEnabled !== undefined
+    ? Boolean(raw.autorolesEnabled)
+    : (raw.autoroleEnabled !== undefined ? Boolean(raw.autoroleEnabled) : false);
+
+  const autoroleIds = Array.isArray(raw.autoroleIds) ? raw.autoroleIds : [];
+
+  // Goodbye settings
+  const isGoodbyeEnabled = raw.sendGoodbyeMessage !== undefined
+    ? Boolean(raw.sendGoodbyeMessage)
+    : (raw.goodbyeEnabled !== undefined ? Boolean(raw.goodbyeEnabled) : false);
+
+  const goodbyeChannelId = raw.goodbyeChannelId || null;
+  const goodbyeMessageType = raw.goodbyeMessageType === 'embed' ? 'embed' : 'text';
+  const goodbyeMessage = raw.goodbyeMessage || def.goodbyeMessage;
+
+  const isGoodbyeCardEnabled = raw.sendGoodbyeCard !== undefined
+    ? Boolean(raw.sendGoodbyeCard)
+    : (raw.goodbyeCardEnabled !== undefined ? Boolean(raw.goodbyeCardEnabled) : false);
+
+  // Card configuration
+  const cc = raw.welcomeCardConfig || {};
+  const font = cc.font || raw.cardFont || 'Segoe UI, Arial, sans-serif';
+  const textColor = cc.textColor || raw.cardTextColor || '#FFFFFF';
+  const backgroundColor = cc.backgroundColor || raw.cardBgColor || '#0B0D14';
+
+  let rawOpacity = cc.overlayOpacity !== undefined 
+    ? cc.overlayOpacity 
+    : (raw.cardOverlayOpacity != null ? raw.cardOverlayOpacity : 75);
+
+  let overlayOpacityDecimal = 0.75;
+  if (typeof rawOpacity === 'number') {
+    if (rawOpacity > 1) {
+      overlayOpacityDecimal = rawOpacity / 100;
+    } else {
+      overlayOpacityDecimal = rawOpacity;
+    }
+  }
+  const overlayOpacityPercent = Math.round(overlayOpacityDecimal * 100);
+
+  const theme = cc.theme || raw.cardTheme || 'modern_obsidian';
+  const backgroundUrl = cc.backgroundUrl !== undefined 
+    ? cc.backgroundUrl 
+    : ((typeof raw.cardBgImage === 'string' && raw.cardBgImage.startsWith('http')) ? raw.cardBgImage : '');
+
+  const titleTemplate = cc.titleTemplate || raw.cardTitle || '{user} just joined the server';
+  const subtitleTemplate = cc.subtitleTemplate || raw.cardSubtitle || 'Member #{count}';
+
+  // Embed configs
+  const welcomeEmbed = {
+    title: raw.welcomeEmbed?.title || 'Welcome to {server}!',
+    description: raw.welcomeEmbed?.description || 'Hey {user}, welcome to our server! Make sure to read the rules and have fun.',
+    color: raw.welcomeEmbed?.color || '#f43f5e',
+    footer: raw.welcomeEmbed?.footer || 'Uranium Welcome System'
+  };
+
+  const goodbyeEmbed = {
+    title: raw.goodbyeEmbed?.title || 'Goodbye!',
+    description: raw.goodbyeEmbed?.description || '**{username}** has departed from **{server}**.',
+    color: raw.goodbyeEmbed?.color || '#64748b',
+    footer: raw.goodbyeEmbed?.footer || 'Uranium Goodbye'
+  };
+
+  const dmEmbed = {
+    title: raw.dmEmbed?.title || 'Welcome to {server}!',
+    description: raw.dmEmbed?.description || 'Thank you for joining our community.',
+    color: raw.dmEmbed?.color || '#f43f5e',
+    footer: raw.dmEmbed?.footer || 'Uranium Welcome'
+  };
+
+  const welcomeCardConfig = {
+    font,
+    textColor,
+    backgroundColor,
+    overlayOpacity: overlayOpacityDecimal,
+    theme,
+    backgroundUrl,
+    titleTemplate,
+    subtitleTemplate
+  };
+
+  return {
+    guildId: guildId || raw.guildId || '',
+    captchaEnabled: Boolean(raw.captchaEnabled),
+
+    // Unified toggle state (accessible via either name)
+    enabled: isEnabled,
+    active: isEnabled,
+
+    // Welcome Channel Message
+    welcomeChannelEnabled: isWelcomeChannelEnabled,
+    sendWelcomeMessage: isWelcomeChannelEnabled,
+    welcomeChannelId,
+    channelId: welcomeChannelId,
+    welcomeMessageType,
+    welcomeMessage,
+    message: welcomeMessage,
+    welcomeCardEnabled: isWelcomeCardEnabled,
+    sendWelcomeCard: isWelcomeCardEnabled,
+    welcomeEmbed,
+
+    // Card styling
+    cardFont: font,
+    cardTextColor: textColor,
+    cardBgColor: backgroundColor,
+    cardOverlayOpacity: overlayOpacityPercent,
+    cardTheme: theme,
+    cardBgImage: backgroundUrl || `preset_${theme}`,
+    cardTitle: titleTemplate,
+    cardSubtitle: subtitleTemplate,
+    welcomeCardConfig,
+
+    // DM Message
+    dmEnabled: isDmEnabled,
+    sendWelcomeDm: isDmEnabled,
+    dmMessageType,
+    welcomeDmMessageType: dmMessageType,
+    dmMessage,
+    welcomeDmMessage: dmMessage,
+    dmCardEnabled: isDmCardEnabled,
+    sendWelcomeDmCard: isDmCardEnabled,
+    dmEmbed,
+
+    // Autoroles
+    autoroleEnabled: isAutoroleEnabled,
+    autorolesEnabled: isAutoroleEnabled,
+    autoroleIds,
+
+    // Goodbye Message
+    goodbyeEnabled: isGoodbyeEnabled,
+    sendGoodbyeMessage: isGoodbyeEnabled,
+    goodbyeChannelId,
+    goodbyeMessageType,
+    goodbyeMessage,
+    goodbyeCardEnabled: isGoodbyeCardEnabled,
+    sendGoodbyeCard: isGoodbyeCardEnabled,
+    goodbyeEmbed,
+
+    createdAt: raw.createdAt || Date.now(),
+    updatedAt: raw.updatedAt || Date.now()
+  };
+}
+
 const storage = {
   _ready: ensureSchema(),
 
   async getSettings(guildId) {
-    if (!guildId) return defaultConfig();
+    if (!guildId) return normalizeSettings({}, '');
     await storage._ready;
 
     // Check MongoDB
@@ -183,14 +365,12 @@ const storage = {
         const doc = await WelcomeConfig.findOne({ guildId });
         if (doc) {
           const parsed = parseJson(doc.dataJson, {});
-          const def = defaultConfig(guildId);
-          return {
-            ...def,
+          return normalizeSettings({
             ...parsed,
             guildId,
-            enabled: doc.enabled !== undefined ? doc.enabled : (parsed.enabled !== undefined ? parsed.enabled : def.enabled),
+            enabled: doc.enabled !== undefined ? doc.enabled : parsed.enabled,
             welcomeChannelId: doc.channelId || parsed.welcomeChannelId || null
-          };
+          }, guildId);
         }
       } catch (err) {
         console.warn('[welcomeStorage] Mongo fetch error:', err.message);
@@ -200,48 +380,23 @@ const storage = {
     // SQLite fallback
     const row = await getAsync(`SELECT * FROM welcome_settings WHERE guildId = ?`, [guildId]);
     if (!row) {
-      return defaultConfig(guildId);
+      return normalizeSettings({}, guildId);
     }
 
     const dataJsonParsed = parseJson(row.data_json, {});
-    const def = defaultConfig(guildId);
-
-    // Merge row data with priority to data_json, then legacy columns, then default
-    const merged = {
-      ...def,
+    return normalizeSettings({
       ...dataJsonParsed,
       guildId,
-      enabled: row.enabled !== null && row.enabled !== undefined ? Number(row.enabled) === 1 : def.enabled,
-      welcomeChannelId: dataJsonParsed.welcomeChannelId !== undefined ? dataJsonParsed.welcomeChannelId : (row.channelId || null),
-      welcomeChannelEnabled: dataJsonParsed.welcomeChannelEnabled !== undefined ? dataJsonParsed.welcomeChannelEnabled : (dataJsonParsed.sendWelcomeMessage !== undefined ? dataJsonParsed.sendWelcomeMessage : !!row.channelId),
-      welcomeMessage: dataJsonParsed.welcomeMessage || row.message || def.welcomeMessage,
-      dmEnabled: dataJsonParsed.dmEnabled !== undefined ? dataJsonParsed.dmEnabled : (dataJsonParsed.sendWelcomeDm !== undefined ? dataJsonParsed.sendWelcomeDm : (Number(row.dm) === 1))
-    };
-
-    // Provide friendly alias properties for both frontend and events
-    merged.active = merged.enabled;
-    merged.sendWelcomeMessage = merged.welcomeChannelEnabled;
-    merged.sendWelcomeCard = merged.welcomeCardEnabled;
-    merged.sendWelcomeDm = merged.dmEnabled;
-    merged.sendWelcomeDmCard = merged.dmCardEnabled;
-    merged.autorolesEnabled = merged.autoroleEnabled;
-    merged.sendGoodbyeMessage = merged.goodbyeEnabled;
-    merged.sendGoodbyeCard = merged.goodbyeCardEnabled;
-
-    if (!merged.welcomeCardConfig) {
-      merged.welcomeCardConfig = {
-        font: merged.cardFont || 'Segoe UI, Arial, sans-serif',
-        textColor: merged.cardTextColor || '#FFFFFF',
-        backgroundColor: merged.cardBgColor || '#0B0D14',
-        overlayOpacity: (merged.cardOverlayOpacity != null ? merged.cardOverlayOpacity / 100 : 0.75),
-        theme: merged.cardTheme || 'modern_obsidian',
-        backgroundUrl: (typeof merged.cardBgImage === 'string' && merged.cardBgImage.startsWith('http')) ? merged.cardBgImage : '',
-        titleTemplate: merged.cardTitle || '{user} just joined the server',
-        subtitleTemplate: merged.cardSubtitle || 'Member #{count}'
-      };
-    }
-
-    return merged;
+      enabled: row.enabled !== null && row.enabled !== undefined ? Number(row.enabled) === 1 : dataJsonParsed.enabled,
+      channelId: row.channelId || dataJsonParsed.channelId,
+      welcomeChannelId: dataJsonParsed.welcomeChannelId || row.channelId || null,
+      message: row.message || dataJsonParsed.message,
+      welcomeMessage: dataJsonParsed.welcomeMessage || row.message,
+      dm: row.dm,
+      dmEnabled: dataJsonParsed.dmEnabled !== undefined ? dataJsonParsed.dmEnabled : Number(row.dm) === 1,
+      createdAt: row.createdAt || dataJsonParsed.createdAt,
+      updatedAt: row.updatedAt || dataJsonParsed.updatedAt
+    }, guildId);
   },
 
   async setConfig(guildId, updates = {}) {
@@ -250,35 +405,25 @@ const storage = {
     const now = Date.now();
     const current = await storage.getSettings(guildId);
 
-    // Normalize incoming updates
-    const normalized = { ...updates };
-    if (updates.active !== undefined) normalized.enabled = updates.active;
-    if (updates.sendWelcomeMessage !== undefined) normalized.welcomeChannelEnabled = updates.sendWelcomeMessage;
-    if (updates.sendWelcomeCard !== undefined) normalized.welcomeCardEnabled = updates.sendWelcomeCard;
-    if (updates.sendWelcomeDm !== undefined) normalized.dmEnabled = updates.sendWelcomeDm;
-    if (updates.sendWelcomeDmCard !== undefined) normalized.dmCardEnabled = updates.sendWelcomeDmCard;
-    if (updates.autorolesEnabled !== undefined) normalized.autoroleEnabled = updates.autorolesEnabled;
-    if (updates.sendGoodbyeMessage !== undefined) normalized.goodbyeEnabled = updates.sendGoodbyeMessage;
-    if (updates.sendGoodbyeCard !== undefined) normalized.goodbyeCardEnabled = updates.sendGoodbyeCard;
-
-    if (updates.welcomeCardConfig) {
-      const cc = updates.welcomeCardConfig;
-      if (cc.font) normalized.cardFont = cc.font;
-      if (cc.textColor) normalized.cardTextColor = cc.textColor;
-      if (cc.backgroundColor) normalized.cardBgColor = cc.backgroundColor;
-      if (cc.overlayOpacity !== undefined) normalized.cardOverlayOpacity = Math.round(cc.overlayOpacity * 100);
-      if (cc.theme) normalized.cardTheme = cc.theme;
-      if (cc.backgroundUrl !== undefined) normalized.cardBgImage = cc.backgroundUrl;
-      if (cc.titleTemplate !== undefined) normalized.cardTitle = cc.titleTemplate;
-      if (cc.subtitleTemplate !== undefined) normalized.cardSubtitle = cc.subtitleTemplate;
-    }
-
-    const merged = {
+    // Merge current with updates through comprehensive normalizer
+    const merged = normalizeSettings({
       ...current,
-      ...normalized,
+      ...updates,
+      welcomeCardConfig: {
+        ...(current.welcomeCardConfig || {}),
+        ...(updates.welcomeCardConfig || {})
+      },
+      welcomeEmbed: {
+        ...(current.welcomeEmbed || {}),
+        ...(updates.welcomeEmbed || {})
+      },
+      goodbyeEmbed: {
+        ...(current.goodbyeEmbed || {}),
+        ...(updates.goodbyeEmbed || {})
+      },
       guildId,
       updatedAt: now
-    };
+    }, guildId);
 
     const dataJsonStr = JSON.stringify(merged);
     const enabledNum = merged.enabled ? 1 : 0;
@@ -297,7 +442,7 @@ const storage = {
             enabled: merged.enabled,
             dataJson: dataJsonStr,
             updatedAt: now,
-            $setOnInsert: { createdAt: now }
+            $setOnInsert: { createdAt: current.createdAt || now }
           },
           { upsert: true }
         );
@@ -307,7 +452,7 @@ const storage = {
     }
 
     // SQLite save
-    return runAsync(
+    await runAsync(
       `INSERT INTO welcome_settings (guildId, channelId, enabled, template, message, dm, createdAt, updatedAt, templates_json, data_json)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, '[]', ?)
        ON CONFLICT(guildId) DO UPDATE SET
@@ -320,24 +465,31 @@ const storage = {
          data_json = excluded.data_json`,
       [guildId, channelId, enabledNum, template, message, dmNum, current.createdAt || now, now, dataJsonStr]
     );
+
+    return merged;
   },
 
   async setWelcomeChannel(guildId, channelId) {
     return storage.setConfig(guildId, {
       welcomeChannelId: channelId,
       welcomeChannelEnabled: true,
-      enabled: true
+      sendWelcomeMessage: true,
+      enabled: true,
+      active: true
     });
   },
 
   async removeWelcomeChannel(guildId) {
     return storage.setConfig(guildId, {
       welcomeChannelId: null,
-      welcomeChannelEnabled: false
+      channelId: null,
+      welcomeChannelEnabled: false,
+      sendWelcomeMessage: false
     });
   },
 
-  defaultConfig
+  defaultConfig,
+  normalizeSettings
 };
 
 module.exports = storage;

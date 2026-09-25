@@ -112,8 +112,67 @@ async function setPersonalization(guildId, data = {}) {
   });
 }
 
+// Track avatar update timestamps per guild to prevent triggering Discord's AVATAR_RATE_LIMIT (2 per 10 minutes)
+const avatarHistory = new Map(); // guildId -> number[] (timestamps)
+const AVATAR_LIMIT_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+const MAX_AVATAR_CHANGES_PER_WINDOW = 2;
+
+function getAvatarCooldown(guildId) {
+  if (!guildId) {
+    return {
+      isLocked: false,
+      remainingChanges: MAX_AVATAR_CHANGES_PER_WINDOW,
+      remainingMs: 0,
+      remainingSeconds: 0,
+      remainingMinutes: 0
+    };
+  }
+  const now = Date.now();
+  const history = (avatarHistory.get(guildId) || []).filter(ts => (now - ts) < AVATAR_LIMIT_WINDOW_MS);
+  avatarHistory.set(guildId, history);
+
+  const remainingChanges = Math.max(0, MAX_AVATAR_CHANGES_PER_WINDOW - history.length);
+
+  if (history.length >= MAX_AVATAR_CHANGES_PER_WINDOW) {
+    const oldestInWindow = history[0];
+    const remainingMs = Math.max(0, (oldestInWindow + AVATAR_LIMIT_WINDOW_MS) - now);
+    return {
+      isLocked: true,
+      remainingChanges: 0,
+      remainingMs,
+      remainingSeconds: Math.ceil(remainingMs / 1000),
+      remainingMinutes: Math.ceil(remainingMs / 60000)
+    };
+  }
+  return {
+    isLocked: false,
+    remainingChanges,
+    remainingMs: 0,
+    remainingSeconds: 0,
+    remainingMinutes: 0
+  };
+}
+
+function recordAvatarChange(guildId, timestamp = Date.now()) {
+  if (!guildId) return;
+  const now = timestamp;
+  const history = (avatarHistory.get(guildId) || []).filter(ts => (now - ts) < AVATAR_LIMIT_WINDOW_MS);
+  history.push(now);
+  avatarHistory.set(guildId, history);
+}
+
+function lockAvatarCooldown(guildId) {
+  if (!guildId) return;
+  const now = Date.now();
+  // Fill history so it remains locked for the window duration
+  avatarHistory.set(guildId, [now, now]);
+}
+
 module.exports = {
   getPersonalization,
   setPersonalization,
-  getDefaultPersonalization
+  getDefaultPersonalization,
+  getAvatarCooldown,
+  recordAvatarChange,
+  lockAvatarCooldown
 };

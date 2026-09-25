@@ -8,7 +8,8 @@ const rrStorage = require('../utils/rrStorage');
 const modStorage = require('../utils/modStorage');
 const automodStorage = require('../utils/automodStorage');
 const welcomeStorage = require('../utils/welcomeStorage');
-const { generateWelcomeCard } = require('../utils/welcomeCardRenderer');
+const welcomeCardRenderer = require('../utils/welcomeCardRenderer');
+const { generateWelcomeCard, renderWelcomeCard } = welcomeCardRenderer;
 const personalizationStorage = require('../utils/personalizationStorage');
 const playlistStorage = require('../utils/playlistStorage');
 const { isPremiumGuild, isPremiumUser, redeemCode, listPremiumGuilds } = require('../utils/premium');
@@ -950,6 +951,7 @@ function createApiRouter(client) {
       const currentNickname = me?.nickname || personalization.nickname || '';
       const currentAvatarUrl = me?.avatar ? me.avatarURL({ dynamic: true, size: 512 }) : (personalization.avatarUrl || '');
       const currentBannerUrl = me?.banner ? me.bannerURL({ dynamic: true, size: 1024 }) : (personalization.bannerUrl || '');
+      const avatarCooldown = personalizationStorage.getAvatarCooldown(guildId);
 
       res.json({
         personalization: {
@@ -959,6 +961,7 @@ function createApiRouter(client) {
           bannerUrl: currentBannerUrl
         },
         isPremium,
+        avatarCooldown,
         botUser: {
           username: client.user.username,
           tag: client.user.tag || `${client.user.username}#0000`,
@@ -981,29 +984,66 @@ function createApiRouter(client) {
       const currentPers = await personalizationStorage.getPersonalization(guildId);
       const me = await guild.members.fetchMe().catch(() => null);
 
-      const isAlteringAvatar = typeof avatarUrl === 'string' && avatarUrl.trim() !== (currentPers.avatarUrl || '');
-      const isAlteringBanner = typeof bannerUrl === 'string' && bannerUrl.trim() !== (currentPers.bannerUrl || '');
-      const isAlteringBio = typeof bio === 'string' && bio.trim() !== (currentPers.bio || '');
+      // Current values in Discord vs current saved values
+      const currentNick = (me?.nickname || currentPers.nickname || '').trim();
+      const currentSavedAvatar = (currentPers.avatarUrl || '').trim();
+      const currentDiscordAvatar = (me?.avatar ? me.avatarURL({ dynamic: true, size: 512 }) : '').trim();
+
+      const currentSavedBanner = (currentPers.bannerUrl || '').trim();
+      const currentDiscordBanner = (me?.banner ? me.bannerURL({ dynamic: true, size: 1024 }) : '').trim();
+
+      const hasNickParam = typeof nickname === 'string';
+      const trimmedNick = hasNickParam ? nickname.trim() : currentNick;
+      const isAlteringNick = hasNickParam && trimmedNick !== currentNick;
+
+      const hasAvatarParam = typeof avatarUrl === 'string';
+      const trimmedAvatar = hasAvatarParam ? avatarUrl.trim() : currentSavedAvatar;
+      // Avatar is altered ONLY if a new URL is provided that doesn't match saved or current Discord avatar
+      const isAlteringAvatar = hasAvatarParam && 
+        trimmedAvatar !== currentSavedAvatar && 
+        trimmedAvatar !== currentDiscordAvatar;
+
+      const hasBannerParam = typeof bannerUrl === 'string';
+      const trimmedBanner = hasBannerParam ? bannerUrl.trim() : currentSavedBanner;
+      // Banner is altered ONLY if a new URL is provided that doesn't match saved or current Discord banner
+      const isAlteringBanner = hasBannerParam && 
+        trimmedBanner !== currentSavedBanner && 
+        trimmedBanner !== currentDiscordBanner;
+
+      const hasBioParam = typeof bio === 'string';
+      const trimmedBio = hasBioParam ? bio.trim() : (currentPers.bio || '').trim();
+      const isAlteringBio = hasBioParam && trimmedBio !== (currentPers.bio || '').trim();
 
       // Premium restriction check:
-      // Only the nickname set feature is free. Avatar, banner, and bio require active server premium status.
+      // Nickname is free. Avatar, banner, and bio require active server premium status.
       if (!isPremium && (isAlteringAvatar || isAlteringBanner || isAlteringBio)) {
         return res.status(403).json({
           error: 'Avatar, banner, and bio customizations are exclusive to servers with an active Premium subscription. Upgrading unlocks all personalization perks!'
         });
       }
 
-      // Build Discord PATCH /guilds/{guild.id}/members/@me payload
-      const discordPatchBody = {};
-
-      // 1. Server Nickname (Free feature)
-      if (typeof nickname === 'string') {
-        discordPatchBody.nick = nickname.trim() === '' ? null : nickname.trim().slice(0, 32);
+      // Check avatar rate limit lock before building payload
+      let avatarSkippedNotice = null;
+      let shouldApplyAvatar = false;
+      if (isPremium && isAlteringAvatar) {
+        const cooldown = personalizationStorage.getAvatarCooldown(guildId);
+        if (cooldown.isLocked) {
+          avatarSkippedNotice = `Avatar change skipped: Discord limits bot avatar changes to 2 per 10 minutes (cooldown expires in ~${cooldown.remainingMinutes} min). Nickname changes remain unaffected.`;
+        } else {
+          shouldApplyAvatar = true;
+        }
       }
 
-      // 2. Server Avatar (per-server only, Premium feature)
-      if (isPremium && typeof avatarUrl === 'string') {
-        const trimmedAvatar = avatarUrl.trim();
+      // Build Discord PATCH /guilds/{guild.id}/members/@me payload ONLY with fields that actually changed!
+      const discordPatchBody = {};
+
+      // 1. Server Nickname (Free feature) - ONLY if actually altered
+      if (isAlteringNick) {
+        discordPatchBody.nick = trimmedNick === '' ? null : trimmedNick.slice(0, 32);
+      }
+
+      // 2. Server Avatar (per-server only, Premium feature) - ONLY if actually altered and not locked
+      if (shouldApplyAvatar) {
         if (trimmedAvatar === '') {
           discordPatchBody.avatar = null; // Revert to default bot avatar
         } else {
@@ -1011,9 +1051,8 @@ function createApiRouter(client) {
         }
       }
 
-      // 3. Server Banner (per-server only, Premium feature)
-      if (isPremium && typeof bannerUrl === 'string') {
-        const trimmedBanner = bannerUrl.trim();
+      // 3. Server Banner (per-server only, Premium feature) - ONLY if actually altered
+      if (isPremium && isAlteringBanner) {
         if (trimmedBanner === '') {
           discordPatchBody.banner = null;
         } else {
@@ -1022,18 +1061,48 @@ function createApiRouter(client) {
       }
 
       // Apply to Discord Guild Member Profile
-      let discordNotice = null;
+      let discordNotice = avatarSkippedNotice || null;
+      let avatarAppliedSuccessfully = false;
+
       if (Object.keys(discordPatchBody).length > 0) {
         try {
           await client.rest.patch(Routes.guildMember(guildId, '@me'), {
             body: discordPatchBody,
             reason: 'Uranium Bot Server Personalizer'
           });
+          if (discordPatchBody.avatar !== undefined) {
+            personalizationStorage.recordAvatarChange(guildId);
+            avatarAppliedSuccessfully = true;
+          }
         } catch (discordErr) {
           console.warn('[Personalization API] Discord patch error:', discordErr.message);
 
-          // If Discord rejects banner (which requires Server Boost Level 2), retry without banner
-          if (discordPatchBody.banner && (discordErr.message.includes('banner') || discordErr.status === 400 || discordErr.code === 50035)) {
+          const isAvatarRateLimit = discordErr.message?.includes('AVATAR_RATE_LIMIT') || 
+            discordErr.rawError?.errors?.avatar?._errors?.some(e => e.code === 'AVATAR_RATE_LIMIT') ||
+            discordErr.message?.includes('avatar too fast');
+
+          // If Discord reports avatar rate limit: lock cooldown for 10 minutes
+          if (isAvatarRateLimit) {
+            personalizationStorage.lockAvatarCooldown(guildId);
+
+            // If a nickname change was also requested, retry with ONLY the nickname so name changes NEVER fail!
+            if (discordPatchBody.nick !== undefined) {
+              try {
+                await client.rest.patch(Routes.guildMember(guildId, '@me'), {
+                  body: { nick: discordPatchBody.nick },
+                  reason: 'Uranium Bot Server Personalizer'
+                });
+                discordNotice = 'Server nickname updated! (Note: Avatar could not be changed right now because Discord limits avatar updates to 2 per 10 minutes. You can change your avatar again in ~10 minutes).';
+              } catch (retryNickErr) {
+                throw new Error(`Failed to update server profile in Discord: ${retryNickErr.message}`);
+              }
+            } else {
+              return res.status(429).json({
+                error: 'Discord avatar rate limit: You are changing your avatar too fast. Discord allows at most 2 avatar changes per 10 minutes. Please wait ~10 minutes before changing the avatar again. (Your bot nickname can still be changed anytime!)'
+              });
+            }
+          } else if (discordPatchBody.banner && (discordErr.message?.includes('banner') || discordErr.status === 400 || discordErr.code === 50035)) {
+            // If Discord rejects banner (requires Server Boost Level 2), retry without banner
             const retryBody = { ...discordPatchBody };
             delete retryBody.banner;
             try {
@@ -1042,8 +1111,12 @@ function createApiRouter(client) {
                   body: retryBody,
                   reason: 'Uranium Bot Server Personalizer'
                 });
+                if (retryBody.avatar !== undefined) {
+                  personalizationStorage.recordAvatarChange(guildId);
+                  avatarAppliedSuccessfully = true;
+                }
               }
-              discordNotice = 'Server nickname and avatar updated in Discord! (Note: Server banner could not be applied by Discord because guild banners require Server Boost Level 2).';
+              discordNotice = 'Server profile updated in Discord! (Note: Server banner could not be applied by Discord because guild banners require Server Boost Level 2).';
             } catch (retryErr) {
               throw new Error(`Failed to update server profile in Discord: ${retryErr.message}`);
             }
@@ -1053,19 +1126,26 @@ function createApiRouter(client) {
         }
       }
 
-      // Save to personalization storage (avatar, banner, bio require active premium)
+      // Save to personalization storage
+      const finalAvatarToSave = isPremium
+        ? (avatarAppliedSuccessfully ? trimmedAvatar : (shouldApplyAvatar ? currentSavedAvatar : (hasAvatarParam ? trimmedAvatar : currentSavedAvatar)))
+        : '';
+
       const updated = await personalizationStorage.setPersonalization(guildId, {
-        nickname: typeof nickname === 'string' ? nickname.trim() : currentPers.nickname,
-        avatarUrl: isPremium && typeof avatarUrl === 'string' ? avatarUrl.trim() : (isPremium ? currentPers.avatarUrl : ''),
-        bannerUrl: isPremium && typeof bannerUrl === 'string' ? bannerUrl.trim() : (isPremium ? currentPers.bannerUrl : ''),
-        bio: isPremium && typeof bio === 'string' ? bio.trim() : (isPremium ? currentPers.bio : '')
+        nickname: hasNickParam ? trimmedNick : currentPers.nickname,
+        avatarUrl: finalAvatarToSave,
+        bannerUrl: isPremium && hasBannerParam ? trimmedBanner : (isPremium ? currentPers.bannerUrl : ''),
+        bio: isPremium && hasBioParam ? trimmedBio : (isPremium ? currentPers.bio : '')
       });
+
+      const currentCooldown = personalizationStorage.getAvatarCooldown(guildId);
 
       res.json({
         success: true,
         personalization: updated,
+        avatarCooldown: currentCooldown,
         notice: discordNotice,
-        message: discordNotice || 'Server profile updated successfully in Discord!'
+        message: discordNotice || (Object.keys(discordPatchBody).length > 0 ? 'Server profile updated successfully in Discord!' : 'Personalization saved.')
       });
     } catch (err) {
       console.error('[Personalization API] Error:', err);
@@ -2392,12 +2472,19 @@ function createApiRouter(client) {
       const guildId = req.params.guildId;
       const settings = await welcomeStorage.getSettings(guildId);
       
+      await req.guild.channels.fetch().catch(() => null);
       const channels = [];
       for (const [id, channel] of req.guild.channels.cache) {
-        if (channel.type === 0) {
-          channels.push({ id: channel.id, name: channel.name, categoryId: channel.parentId });
+        if (channel.isTextBased?.() && !channel.isThread?.()) {
+          channels.push({
+            id: channel.id,
+            name: channel.name,
+            categoryId: channel.parentId,
+            position: channel.rawPosition ?? channel.position ?? 0
+          });
         }
       }
+      channels.sort((a, b) => a.position - b.position);
 
       await req.guild.roles.fetch().catch(() => null);
       const roles = req.guild.roles.cache
@@ -2426,17 +2513,30 @@ function createApiRouter(client) {
     try {
       const guild = req.guild;
       const guildId = guild.id;
-      const { type = 'welcome', channelId } = req.body;
-      const settings = await welcomeStorage.getSettings(guildId);
+      const { type = 'welcome', channelId, settings: customSettings } = req.body;
+      const baseSettings = await welcomeStorage.getSettings(guildId);
+      const settings = customSettings 
+        ? welcomeStorage.normalizeSettings({ ...baseSettings, ...customSettings }, guildId) 
+        : baseSettings;
 
       const targetId = channelId || (type === 'goodbye' ? settings.goodbyeChannelId : settings.welcomeChannelId);
       if (!targetId) {
-        return res.status(400).json({ error: 'No target channel configured or selected for test message.' });
+        return res.status(400).json({ error: `No ${type} channel selected or configured. Please select a text channel first.` });
       }
 
-      const channel = guild.channels.cache.get(targetId);
+      let channel = guild.channels.cache.get(targetId) || await guild.channels.fetch(targetId).catch(() => null);
       if (!channel || !channel.isTextBased()) {
         return res.status(404).json({ error: 'Target text channel not found.' });
+      }
+
+      const botMember = guild.members.me || await guild.members.fetchMe().catch(() => null);
+      if (!botMember) {
+        return res.status(500).json({ error: 'Failed to resolve bot permissions in this server.' });
+      }
+
+      const perms = channel.permissionsFor(botMember);
+      if (!perms || !perms.has(PermissionFlagsBits.SendMessages)) {
+        return res.status(403).json({ error: `Bot lacks "Send Messages" permission in #${channel.name}.` });
       }
 
       const member = req.member;
@@ -2451,6 +2551,7 @@ function createApiRouter(client) {
           .replace(/{server}/gi, guild.name)
           .replace(/{guild}/gi, guild.name)
           .replace(/{server\.member_count}/gi, String(memberCount))
+          .replace(/{member_count}/gi, String(memberCount))
           .replace(/{count}/gi, String(memberCount));
       };
 
@@ -2461,7 +2562,7 @@ function createApiRouter(client) {
       const embConfig = isGoodbye ? (settings.goodbyeEmbed || {}) : (settings.welcomeEmbed || {});
 
       const files = [];
-      if (cardEnabled) {
+      if (cardEnabled && perms.has(PermissionFlagsBits.AttachFiles)) {
         try {
           const cardBuf = await generateWelcomeCard({
             username: member.user.username,
@@ -2469,14 +2570,15 @@ function createApiRouter(client) {
             avatarUrl,
             guildName: guild.name,
             memberCount,
-            cardTheme: settings.cardTheme || 'modern_obsidian',
-            cardFont: settings.cardFont || 'Inter',
-            cardTextColor: settings.cardTextColor,
-            cardBgColor: settings.cardBgColor,
-            cardOverlayOpacity: settings.cardOverlayOpacity,
-            cardBgImage: settings.cardBgImage,
-            cardTitle: settings.cardTitle,
-            cardSubtitle: settings.cardSubtitle,
+            cardConfig: settings.welcomeCardConfig,
+            cardTheme: settings.cardTheme || settings.welcomeCardConfig?.theme || 'modern_obsidian',
+            cardFont: settings.cardFont || settings.welcomeCardConfig?.font || 'Segoe UI, Arial, sans-serif',
+            cardTextColor: settings.cardTextColor || settings.welcomeCardConfig?.textColor,
+            cardBgColor: settings.cardBgColor || settings.welcomeCardConfig?.backgroundColor,
+            cardOverlayOpacity: settings.cardOverlayOpacity ?? (settings.welcomeCardConfig?.overlayOpacity != null ? Math.round(settings.welcomeCardConfig.overlayOpacity * 100) : 75),
+            cardBgImage: settings.cardBgImage || settings.welcomeCardConfig?.backgroundUrl,
+            cardTitle: isGoodbye ? (settings.cardTitle || `${member.user.username} just left the server`) : (settings.cardTitle || settings.welcomeCardConfig?.titleTemplate),
+            cardSubtitle: settings.cardSubtitle || settings.welcomeCardConfig?.subtitleTemplate,
             isGoodbye
           });
           if (cardBuf) {
@@ -2488,12 +2590,22 @@ function createApiRouter(client) {
       }
 
       const parsedText = formatPlaceholders(rawMessage);
-      if (messageType === 'embed') {
+      const parseColor = (col) => {
+        if (!col) return 0xf43f5e;
+        if (typeof col === 'number') return col;
+        return parseInt(String(col).replace('#', ''), 16) || 0xf43f5e;
+      };
+
+      if (messageType === 'embed' && perms.has(PermissionFlagsBits.EmbedLinks)) {
         const embed = new EmbedBuilder()
           .setTitle(formatPlaceholders(embConfig.title || (isGoodbye ? 'Goodbye!' : `Welcome to ${guild.name}!`)))
           .setDescription(parsedText || formatPlaceholders(embConfig.description || 'Welcome!'))
-          .setColor(embConfig.color ? parseInt(embConfig.color.replace('#', ''), 16) || 0xf43f5e : 0xf43f5e)
+          .setColor(parseColor(embConfig.color))
           .setTimestamp();
+
+        if (embConfig.footer) {
+          embed.setFooter({ text: formatPlaceholders(embConfig.footer) });
+        }
 
         if (files.length > 0) {
           embed.setImage(`attachment://${isGoodbye ? 'goodbye.png' : 'welcome.png'}`);
@@ -2513,10 +2625,15 @@ function createApiRouter(client) {
     try {
       const guild = req.guild;
       const { cardConfig = {}, isGoodbye = false } = req.body;
+      const user = req.session?.user;
+      const avatarUrl = user?.avatar 
+        ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` 
+        : (client.user?.displayAvatarURL({ extension: 'png', size: 256 }) || 'https://cdn.discordapp.com/embed/avatars/0.png');
+
       const cardBuf = await welcomeCardRenderer.renderWelcomeCard({
-        avatarUrl: req.session?.user?.id ? `https://cdn.discordapp.com/avatars/${req.session.user.id}/${req.session.user.avatar}.png` : (client.user?.displayAvatarURL({ extension: 'png', size: 256 }) || null),
-        username: req.session?.user?.username || 'shahrib',
-        discriminator: req.session?.user?.discriminator || '0',
+        avatarUrl,
+        username: user?.username || 'shahrib',
+        discriminator: user?.discriminator || '0',
         guildName: guild.name || 'Community Server',
         memberCount: guild.memberCount || 50,
         cardConfig,
@@ -2530,6 +2647,7 @@ function createApiRouter(client) {
       res.set('Content-Type', 'image/png');
       res.send(cardBuf);
     } catch (err) {
+      console.error('[welcome-goodbye render-preview error]:', err);
       res.status(500).json({ error: err.message });
     }
   });

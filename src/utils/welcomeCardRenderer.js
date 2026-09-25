@@ -210,8 +210,12 @@ async function generateWelcomeCard(opts = {}) {
     }
   }
 
-  // Darkening overlay (based on cardOverlayOpacity)
-  const overlayAlpha = Math.min(100, Math.max(0, cardOverlayOpacity || 40)) / 100;
+  // Darkening overlay (based on cardOverlayOpacity, robust to 0-1 and 0-100)
+  let rawAlpha = cardOverlayOpacity;
+  if (rawAlpha != null && rawAlpha <= 1 && rawAlpha > 0) {
+    rawAlpha = rawAlpha * 100;
+  }
+  const overlayAlpha = Math.min(100, Math.max(0, rawAlpha != null ? rawAlpha : 40)) / 100;
   if (overlayAlpha > 0) {
     ctx.fillStyle = `rgba(8, 9, 14, ${overlayAlpha})`;
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
@@ -262,36 +266,41 @@ async function generateWelcomeCard(opts = {}) {
   const cleanUser = username;
   const countStr = String(memberCount || '1');
 
+  const replacePlaceholders = (str) => {
+    if (!str) return '';
+    return str
+      .replace(/{server\.member_count}/gi, countStr)
+      .replace(/{member_count}/gi, countStr)
+      .replace(/{count}/gi, countStr)
+      .replace(/{username}/gi, cleanUser)
+      .replace(/{user}/gi, cleanUser)
+      .replace(/{server}/gi, guildName)
+      .replace(/{guild}/gi, guildName);
+  };
+
   let titleStr = cardTitle;
   if (!titleStr) {
     titleStr = isGoodbye 
       ? `${cleanUser} just left the server` 
       : `${cleanUser} just joined the server`;
   } else {
-    titleStr = titleStr
-      .replace(/{username}/gi, cleanUser)
-      .replace(/{user}/gi, cleanUser)
-      .replace(/{server}/gi, guildName)
-      .replace(/{guild}/gi, guildName)
-      .replace(/{count}/gi, countStr);
+    titleStr = replacePlaceholders(titleStr);
   }
 
   let subtitleStr = cardSubtitle;
   if (!subtitleStr) {
     subtitleStr = `Member #${countStr}`;
   } else {
-    subtitleStr = subtitleStr
-      .replace(/{username}/gi, cleanUser)
-      .replace(/{user}/gi, cleanUser)
-      .replace(/{server}/gi, guildName)
-      .replace(/{guild}/gi, guildName)
-      .replace(/{count}/gi, countStr);
+    subtitleStr = replacePlaceholders(subtitleStr);
   }
 
-  let fontFamily = 'sans-serif';
-  if (cardFont === 'Orbitron') fontFamily = 'Courier New, monospace';
-  else if (cardFont === 'Cinzel') fontFamily = 'Georgia, serif';
-  else if (cardFont === 'Poppins' || cardFont === 'Inter' || cardFont === 'Geist' || cardFont === 'Montserrat') fontFamily = 'Segoe UI, Arial, sans-serif';
+  let fontFamily = 'Segoe UI, Arial, sans-serif';
+  if (cardFont) {
+    if (cardFont.includes('monospace') || cardFont === 'Orbitron') fontFamily = 'Courier New, monospace';
+    else if (cardFont.includes('serif') && !cardFont.includes('sans-serif')) fontFamily = 'Georgia, serif';
+    else if (cardFont.includes('Outfit') || cardFont.includes('sans-serif') || cardFont === 'Inter') fontFamily = 'Segoe UI, Arial, sans-serif';
+    else fontFamily = cardFont;
+  }
 
   const primaryTextColor = cardTextColor || theme.textColor;
   const secondaryTextColor = theme.subtextColor;

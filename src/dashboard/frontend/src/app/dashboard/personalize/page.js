@@ -47,6 +47,7 @@ export default function BotPersonalizerPage() {
 
   const [avatarError, setAvatarError] = useState(false);
   const [bannerError, setBannerError] = useState(false);
+  const [avatarCooldown, setAvatarCooldown] = useState(null);
 
   useEffect(() => {
     if (!guildId) return;
@@ -65,6 +66,10 @@ export default function BotPersonalizerPage() {
 
       if (data.botUser) {
         setBotUser(data.botUser);
+      }
+
+      if (data.avatarCooldown) {
+        setAvatarCooldown(data.avatarCooldown);
       }
 
       const pers = data.personalization || {};
@@ -92,12 +97,31 @@ export default function BotPersonalizerPage() {
     if (!guildId) return;
     setSaving(true);
     try {
-      const payload = {
-        nickname: nickname.trim(),
-        avatarUrl: isPremium ? avatarUrl.trim() : undefined,
-        bannerUrl: isPremium ? bannerUrl.trim() : undefined,
-        bio: isPremium ? bio.trim() : undefined
-      };
+      // Build a delta payload containing only modified fields to avoid re-triggering Discord avatar rate limits
+      const payload = {};
+
+      if (nickname.trim() !== initialData.nickname) {
+        payload.nickname = nickname.trim();
+      }
+
+      if (isPremium) {
+        if (avatarUrl.trim() !== initialData.avatarUrl) {
+          payload.avatarUrl = avatarUrl.trim();
+        }
+        if (bannerUrl.trim() !== initialData.bannerUrl) {
+          payload.bannerUrl = bannerUrl.trim();
+        }
+        if (bio.trim() !== initialData.bio) {
+          payload.bio = bio.trim();
+        }
+      }
+
+      // If user attempted avatar change while locked, notify them
+      if (payload.avatarUrl !== undefined && avatarCooldown?.isLocked) {
+        toast.warning(
+          `Avatar is on Discord cooldown (~${avatarCooldown.remainingMinutes}m remaining). Saving your other profile changes...`
+        );
+      }
 
       const res = await fetch(`/api/guild/${guildId}/personalization`, {
         method: 'POST',
@@ -110,18 +134,37 @@ export default function BotPersonalizerPage() {
         throw new Error(data.error || 'Failed to save changes');
       }
 
+      if (data.avatarCooldown) {
+        setAvatarCooldown(data.avatarCooldown);
+      }
+
       if (data.notice) {
         toast.info(data.notice);
       } else {
         toast.success(data.message || 'Bot profile updated successfully for this server!');
       }
 
-      setInitialData({
-        nickname: nickname.trim(),
-        avatarUrl: isPremium ? avatarUrl.trim() : '',
-        bannerUrl: isPremium ? bannerUrl.trim() : '',
-        bio: isPremium ? bio.trim() : ''
-      });
+      if (data.personalization) {
+        const pers = data.personalization;
+        const updated = {
+          nickname: pers.nickname || '',
+          avatarUrl: pers.avatarUrl || '',
+          bannerUrl: pers.bannerUrl || '',
+          bio: pers.bio || ''
+        };
+        setNickname(updated.nickname);
+        setAvatarUrl(updated.avatarUrl);
+        setBannerUrl(updated.bannerUrl);
+        setBio(updated.bio);
+        setInitialData(updated);
+      } else {
+        setInitialData({
+          nickname: nickname.trim(),
+          avatarUrl: isPremium ? avatarUrl.trim() : '',
+          bannerUrl: isPremium ? bannerUrl.trim() : '',
+          bio: isPremium ? bio.trim() : ''
+        });
+      }
     } catch (err) {
       toast.error(err.message || 'Error updating bot personalization.');
     } finally {
@@ -275,10 +318,19 @@ export default function BotPersonalizerPage() {
                 <span className="text-xs font-bold text-white uppercase tracking-wider">
                   Server Bot Avatar
                 </span>
-                {!isPremium && (
+                {!isPremium ? (
                   <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1">
                     <Crown size={10} className="fill-amber-400" />
                     Premium
+                  </span>
+                ) : avatarCooldown?.isLocked ? (
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1">
+                    <Lock size={10} className="text-amber-400" />
+                    Cooldown ({avatarCooldown.remainingMinutes}m)
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                    {avatarCooldown?.remainingChanges ?? 2}/2 Available
                   </span>
                 )}
               </div>
@@ -288,6 +340,20 @@ export default function BotPersonalizerPage() {
             <p className="text-xs text-white/50">
               Provide a direct URL to any PNG, JPG, WEBP, or animated GIF image.
             </p>
+
+            {/* Avatar Cooldown Notice */}
+            {isPremium && avatarCooldown?.isLocked && (
+              <div className="flex items-start gap-2.5 px-3.5 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300 text-xs">
+                <AlertCircle size={15} className="text-amber-400 shrink-0 mt-0.5" />
+                <div className="space-y-0.5">
+                  <div className="font-semibold text-amber-300">Avatar rate limit reached (Discord cooldown)</div>
+                  <p className="text-[11px] text-amber-200/80 leading-relaxed">
+                    Discord enforces a strict limit of 2 avatar changes per 10 minutes. You can update the avatar again in ~<strong>{avatarCooldown.remainingMinutes} min</strong>.
+                    <span className="text-white/80 block mt-0.5">Bot nickname changes have no limit and will still save immediately!</span>
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="flex gap-3 items-center">
               {/* Thumbnail Display */}
@@ -322,6 +388,16 @@ export default function BotPersonalizerPage() {
                 />
               </div>
             </div>
+
+            {/* Rate limit helper text for premium users */}
+            {isPremium && !avatarCooldown?.isLocked && (
+              <div className="flex items-center justify-between text-[11px] text-white/40 px-0.5">
+                <span>Discord cooldown: 2 changes per 10 mins</span>
+                <span className="text-emerald-400 font-mono">
+                  {avatarCooldown?.remainingChanges ?? 2} left
+                </span>
+              </div>
+            )}
 
             {/* Locked Action Overlay for Non-Premium */}
             {!isPremium && (

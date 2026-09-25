@@ -179,9 +179,14 @@ export default function WelcomeGoodbyePage() {
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
         setServerPreviewUrl(url);
+        showToast('High-res canvas rendered successfully!', 'success');
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        showToast(errData.error || 'Failed to render canvas preview', 'error');
       }
     } catch (err) {
       console.warn('Preview render error:', err);
+      showToast('Error rendering canvas preview', 'error');
     } finally {
       setRenderingPreview(false);
     }
@@ -199,6 +204,16 @@ export default function WelcomeGoodbyePage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to save configuration');
+      if (data.settings) {
+        setSettings(prev => ({
+          ...prev,
+          ...data.settings,
+          welcomeCardConfig: {
+            ...prev.welcomeCardConfig,
+            ...(data.settings.welcomeCardConfig || {})
+          }
+        }));
+      }
       showToast('Welcome & Goodbye configuration saved successfully!', 'success');
     } catch (err) {
       showToast(err.message || 'Error saving settings', 'error');
@@ -210,6 +225,11 @@ export default function WelcomeGoodbyePage() {
   // Trigger test message in Discord
   const handleSendTest = async (typeToTest) => {
     if (!guildId) return;
+    const targetChannel = typeToTest === 'goodbye' ? settings.goodbyeChannelId : settings.welcomeChannelId;
+    if (!targetChannel) {
+      showToast(`Please select a ${typeToTest} channel in the dashboard first!`, 'error');
+      return;
+    }
     setTesting(true);
     try {
       const res = await fetch(`/api/guild/${guildId}/welcome-goodbye/test`, {
@@ -217,7 +237,8 @@ export default function WelcomeGoodbyePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: typeToTest,
-          channelId: typeToTest === 'goodbye' ? settings.goodbyeChannelId : settings.welcomeChannelId
+          channelId: targetChannel,
+          settings: settings
         })
       });
       const data = await res.json();
@@ -1204,14 +1225,22 @@ export default function WelcomeGoodbyePage() {
               <button
                 type="button"
                 onClick={() => handleSendTest('welcome')}
-                disabled={testing}
-                className="w-full flex items-center justify-between p-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white transition"
+                disabled={testing || !settings.welcomeChannelId}
+                className={`w-full flex items-center justify-between p-3 rounded-xl border transition ${
+                  !settings.welcomeChannelId 
+                    ? 'border-white/5 bg-white/[0.02] opacity-50 cursor-not-allowed' 
+                    : 'border-white/10 bg-white/5 hover:bg-white/10 text-white'
+                }`}
               >
                 <div className="flex items-center gap-3">
-                  <UserPlus size={16} className="text-emerald-400" />
+                  <UserPlus size={16} className={settings.welcomeChannelId ? 'text-emerald-400' : 'text-white/30'} />
                   <div className="text-left">
-                    <div className="text-xs font-bold">Test Welcome Channel Message</div>
-                    <div className="text-[11px] text-white/40">Sends welcome text / embed / card</div>
+                    <div className="text-xs font-bold text-white">Test Welcome Channel Message</div>
+                    <div className="text-[11px] text-white/40">
+                      {settings.welcomeChannelId 
+                        ? `Target: #${channels.find(c => c.id === settings.welcomeChannelId)?.name || 'configured-channel'}`
+                        : '⚠️ Please select a Welcome Channel in the section above'}
+                    </div>
                   </div>
                 </div>
                 <Send size={14} className="text-white/40" />
@@ -1220,14 +1249,22 @@ export default function WelcomeGoodbyePage() {
               <button
                 type="button"
                 onClick={() => handleSendTest('goodbye')}
-                disabled={testing}
-                className="w-full flex items-center justify-between p-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white transition"
+                disabled={testing || !settings.goodbyeChannelId}
+                className={`w-full flex items-center justify-between p-3 rounded-xl border transition ${
+                  !settings.goodbyeChannelId 
+                    ? 'border-white/5 bg-white/[0.02] opacity-50 cursor-not-allowed' 
+                    : 'border-white/10 bg-white/5 hover:bg-white/10 text-white'
+                }`}
               >
                 <div className="flex items-center gap-3">
-                  <UserMinus size={16} className="text-rose-400" />
+                  <UserMinus size={16} className={settings.goodbyeChannelId ? 'text-rose-400' : 'text-white/30'} />
                   <div className="text-left">
-                    <div className="text-xs font-bold">Test Goodbye Channel Message</div>
-                    <div className="text-[11px] text-white/40">Sends departure notice / embed / card</div>
+                    <div className="text-xs font-bold text-white">Test Goodbye Channel Message</div>
+                    <div className="text-[11px] text-white/40">
+                      {settings.goodbyeChannelId 
+                        ? `Target: #${channels.find(c => c.id === settings.goodbyeChannelId)?.name || 'configured-channel'}`
+                        : '⚠️ Please select a Goodbye Channel in the section above'}
+                    </div>
                   </div>
                 </div>
                 <Send size={14} className="text-white/40" />
