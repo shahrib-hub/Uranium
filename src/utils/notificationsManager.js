@@ -8,7 +8,7 @@ const DEFAULT_NOTIFICATIONS = [
   {
     id: 'notif-host-migration-14d',
     title: 'Hosting Migration & Temporary Degradation Notice',
-    message: 'Uranium has successfully migrated to a high-speed dedicated server host (noida.visihost.in). Over the next 14 days, you may experience occasional audio buffer pauses, temporary socket disconnects, or minor latency while external routing stabilizes. All server data, configs, and playlists are 100% preserved. Thank you for your patience!',
+    message: 'Uranium has successfully migrated to a new high-speed dedicated server host. Over the next 14 days, you may experience occasional audio buffer pauses, temporary socket disconnects, or minor latency while external routing stabilizes. All server data, configs, and playlists are 100% preserved. Thank you for your patience!',
     type: 'warning',
     badge: 'Host Migration',
     createdAt: new Date().toISOString(),

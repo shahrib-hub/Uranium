@@ -53,15 +53,15 @@ function ensureFile() {
         components: {
           discord_gateway: { name: 'Discord Gateway', status: 'operational', latency: 22, description: 'Real-time WebSocket connection to Discord' },
           music_engine: { name: 'Lossless Audio (Lavalink)', status: 'operational', description: '320kbps audio playback nodes and DSP processing' },
-          rest_api: { name: 'REST API & Web Backend', status: 'operational', description: 'VisiHost dedicated node & Vercel edge proxy' },
-          database: { name: 'Database & Storage', status: 'operational', description: 'MongoDB Atlas cluster & SQLite persistent storage' }
+          rest_api: { name: 'REST API & Web Backend', status: 'operational', description: 'High-speed API endpoints and edge services' },
+          database: { name: 'Database & Storage', status: 'operational', description: 'MongoDB Atlas cluster & persistent storage' }
         },
         alerts: [],
         notices: [
           {
             id: 'notice-infra-upgrade-2026',
-            title: 'Server Migration to VisiHost Node Active',
-            message: 'Uranium has moved to a dedicated server node (noida.visihost.in). Core operations remain fully active with enhanced computing limits.',
+            title: 'Infrastructure Upgrade Active',
+            message: 'Uranium has completed a core infrastructure upgrade. Operations remain fully active with enhanced computing performance.',
             poster: 'System Admin',
             type: 'announcement',
             severity: 'notice',

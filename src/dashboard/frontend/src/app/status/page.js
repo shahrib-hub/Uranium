@@ -20,7 +20,6 @@ import {
   CheckCircle2,
   ExternalLink,
   ChevronRight,
-  PlusCircle,
   Info
 } from 'lucide-react';
 
@@ -29,11 +28,6 @@ export default function StatusPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'alerts', 'notices'
-  const [showAdminModal, setShowAdminModal] = useState(false);
-  const [newNoticeTitle, setNewNoticeTitle] = useState('');
-  const [newNoticeMessage, setNewNoticeMessage] = useState('');
-  const [newNoticeSeverity, setNewNoticeSeverity] = useState('notice');
-  const [postingNotice, setPostingNotice] = useState(false);
 
   const fetchStatus = async () => {
     setRefreshing(true);
@@ -56,42 +50,6 @@ export default function StatusPage() {
     const interval = setInterval(fetchStatus, 15000); // 15s live refresh
     return () => clearInterval(interval);
   }, []);
-
-  const handlePostNotice = async (e) => {
-    e.preventDefault();
-    if (!newNoticeTitle || !newNoticeMessage) return;
-    setPostingNotice(true);
-    try {
-      const res = await fetch('/api/status/notice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: newNoticeTitle,
-          message: newNoticeMessage,
-          severity: newNoticeSeverity
-        })
-      });
-      if (res.ok) {
-        setNewNoticeTitle('');
-        setNewNoticeMessage('');
-        setShowAdminModal(false);
-        fetchStatus();
-      }
-    } catch {
-      // Error handling
-    } finally {
-      setPostingNotice(false);
-    }
-  };
-
-  const handleResolveAlerts = async () => {
-    try {
-      const res = await fetch('/api/status/resolve', { method: 'POST' });
-      if (res.ok) {
-        fetchStatus();
-      }
-    } catch {}
-  };
 
   const overall = statusData?.overallStatus || 'operational';
   const isOutage = overall === 'outage';
@@ -196,7 +154,7 @@ export default function StatusPage() {
                 </div>
                 <p className="text-xs sm:text-sm text-white/60 max-w-xl leading-relaxed">
                   {isOutage
-                    ? 'A critical infrastructure component is currently experiencing an outage. Autonomous SRE is mitigating.'
+                    ? 'A critical infrastructure component is currently experiencing an outage. Automated monitoring is actively tracking resolution.'
                     : isDegraded
                     ? 'One or more background services are experiencing elevated latency or intermittent connections.'
                     : 'All Discord shards, lossless audio streaming nodes, REST APIs, and database clusters are operating normally.'}
@@ -240,14 +198,15 @@ export default function StatusPage() {
 
           <div className="rounded-2xl border border-white/10 bg-[#12131f] p-4 sm:p-5 space-y-2">
             <span className="text-[11px] font-bold uppercase tracking-wider text-white/40 flex items-center gap-1.5">
-              <Server size={14} className="text-indigo-400" /> Host Node
+              <Server size={14} className="text-indigo-400" /> System Cluster
             </span>
             <div className="flex items-baseline gap-2">
-              <span className="text-lg sm:text-xl font-bold text-white font-mono truncate">
-                VisiHost Node
+              <span className="text-xl sm:text-2xl font-black text-emerald-400 font-mono truncate">
+                100%
               </span>
+              <span className="text-[11px] font-semibold text-emerald-400">Online</span>
             </div>
-            <p className="text-[10px] text-white/40 font-mono truncate">noida.visihost.in:25634</p>
+            <p className="text-[10px] text-white/40 truncate">All Shards & Services Active</p>
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-[#12131f] p-4 sm:p-5 space-y-2">
@@ -256,10 +215,10 @@ export default function StatusPage() {
             </span>
             <div className="flex items-baseline gap-2">
               <span className="text-base sm:text-lg font-bold text-purple-300 flex items-center gap-1.5">
-                <Sparkles size={15} /> Groq SRE Active
+                <Sparkles size={15} /> Active
               </span>
             </div>
-            <p className="text-[10px] text-white/40 truncate">Llama 3.1 8B Real-Time Error Guardian</p>
+            <p className="text-[10px] text-white/40 truncate">Real-Time Incident Detection</p>
           </div>
         </section>
 
@@ -296,10 +255,10 @@ export default function StatusPage() {
               {
                 id: 'rest_api',
                 name: 'REST API & Web Dashboard',
-                desc: 'Express API server on VisiHost + Vercel Edge reverse proxy',
+                desc: 'High-speed API endpoints and edge services',
                 icon: Globe,
                 status: statusData?.components?.rest_api?.status || 'operational',
-                meta: 'HTTP/2 Reverse Proxy'
+                meta: 'Operational'
               },
               {
                 id: 'database',
@@ -357,65 +316,44 @@ export default function StatusPage() {
         {/* 4. INCIDENT & ANNOUNCEMENT FEED */}
         <section className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h2 className="text-lg sm:text-xl font-bold text-white">Incidents & Maintenance Notices</h2>
-              <p className="text-xs text-white/50">
-                AI SRE incidents (kept 30 days) and administrative notices (kept up to 6 months)
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="flex p-1 rounded-xl bg-white/5 border border-white/10 text-xs font-semibold">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('all')}
-                  className={`px-3 py-1 rounded-lg transition ${
-                    activeTab === 'all' ? 'bg-rose-600 text-white font-bold' : 'text-white/60 hover:text-white'
-                  }`}
-                >
-                  All ({alerts.length + notices.length})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('alerts')}
-                  className={`px-3 py-1 rounded-lg transition ${
-                    activeTab === 'alerts' ? 'bg-rose-600 text-white font-bold' : 'text-white/60 hover:text-white'
-                  }`}
-                >
-                  Incidents ({alerts.length})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('notices')}
-                  className={`px-3 py-1 rounded-lg transition ${
-                    activeTab === 'notices' ? 'bg-rose-600 text-white font-bold' : 'text-white/60 hover:text-white'
-                  }`}
-                >
-                  Notices ({notices.length})
-                </button>
+              <div>
+                <h2 className="text-lg sm:text-xl font-bold text-white">Incidents & Maintenance Notices</h2>
+                <p className="text-xs text-white/50">
+                  Recent system incidents (kept 30 days) and platform notices (kept up to 6 months)
+                </p>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setShowAdminModal(true)}
-                className="h-8 px-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/70 hover:text-white flex items-center gap-1 transition"
-                title="Post Admin Notice"
-              >
-                <PlusCircle size={14} />
-                <span className="hidden sm:inline">Add Notice</span>
-              </button>
-
-              {(isOutage || isDegraded) && (
-                <button
-                  type="button"
-                  onClick={handleResolveAlerts}
-                  className="h-8 px-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition flex items-center gap-1"
-                >
-                  <CheckCircle2 size={13} />
-                  <span>Resolve All</span>
-                </button>
-              )}
-            </div>
+              <div className="flex items-center gap-2">
+                <div className="flex p-1 rounded-xl bg-white/5 border border-white/10 text-xs font-semibold">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('all')}
+                    className={`px-3 py-1 rounded-lg transition ${
+                      activeTab === 'all' ? 'bg-rose-600 text-white font-bold' : 'text-white/60 hover:text-white'
+                    }`}
+                  >
+                    All ({alerts.length + notices.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('alerts')}
+                    className={`px-3 py-1 rounded-lg transition ${
+                      activeTab === 'alerts' ? 'bg-rose-600 text-white font-bold' : 'text-white/60 hover:text-white'
+                    }`}
+                  >
+                    Incidents ({alerts.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('notices')}
+                    className={`px-3 py-1 rounded-lg transition ${
+                      activeTab === 'notices' ? 'bg-rose-600 text-white font-bold' : 'text-white/60 hover:text-white'
+                    }`}
+                  >
+                    Notices ({notices.length})
+                  </button>
+                </div>
+              </div>
           </div>
 
           {/* Feed List */}
@@ -494,79 +432,6 @@ export default function StatusPage() {
         </section>
       </main>
 
-      {/* Admin Notice Modal */}
-      {showAdminModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-[#131522] p-6 shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <h3 className="text-base font-bold text-white">Post Status Notice</h3>
-              <button
-                type="button"
-                onClick={() => setShowAdminModal(false)}
-                className="text-white/40 hover:text-white"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handlePostNotice} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-white/70">Notice Title</label>
-                <input
-                  type="text"
-                  required
-                  value={newNoticeTitle}
-                  onChange={(e) => setNewNoticeTitle(e.target.value)}
-                  placeholder="e.g. Scheduled Maintenance or Routing Update"
-                  className="w-full rounded-xl bg-black/40 border border-white/10 px-3.5 py-2.5 text-xs text-white placeholder-white/30 outline-none focus:border-rose-500/50"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-white/70">Severity Level</label>
-                <select
-                  value={newNoticeSeverity}
-                  onChange={(e) => setNewNoticeSeverity(e.target.value)}
-                  className="w-full rounded-xl bg-black/40 border border-white/10 px-3.5 py-2.5 text-xs text-white outline-none focus:border-rose-500/50"
-                >
-                  <option value="notice">Notice (Informational)</option>
-                  <option value="degraded">Degraded Performance</option>
-                  <option value="maintenance">Maintenance Window</option>
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-white/70">Message Description</label>
-                <textarea
-                  required
-                  rows={4}
-                  value={newNoticeMessage}
-                  onChange={(e) => setNewNoticeMessage(e.target.value)}
-                  placeholder="Describe the update, affected nodes, and estimated resolution..."
-                  className="w-full rounded-xl bg-black/40 border border-white/10 px-3.5 py-2.5 text-xs text-white placeholder-white/30 outline-none focus:border-rose-500/50"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAdminModal(false)}
-                  className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-white"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={postingNotice}
-                  className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-bold text-white transition disabled:opacity-50"
-                >
-                  {postingNotice ? 'Posting...' : 'Publish Notice'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
