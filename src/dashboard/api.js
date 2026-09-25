@@ -92,9 +92,9 @@ function createApiRouter(client) {
     res.json(req.session.user);
   });
 
-  // The dashboard is hosted on Vercel while Socket.IO runs on Wispbyte. Vercel
-  // rewrites do not proxy WebSocket upgrades, so authenticate the direct socket
-  // connection with a short-lived token instead of a cross-site session cookie.
+  // The dashboard is hosted on Vercel while the bot backend and Socket.IO run on
+  // the bot host (VisiHost). Authenticate socket connections with a short-lived signed
+  // token instead of relying on cross-site session cookies.
   router.get('/socket-token', (req, res) => {
     if (!req.session?.user) return res.status(401).json({ error: 'Not authenticated' });
     res.set('Cache-Control', 'no-store');

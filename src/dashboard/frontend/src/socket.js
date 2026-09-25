@@ -8,24 +8,28 @@ export const connectSocket = (guildId) => {
   const attempt = ++connectionAttempt;
   if (socket) socket.disconnect();
 
-  const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
-  if (!socketUrl) {
-    console.warn('[socket] NEXT_PUBLIC_SOCKET_URL is not configured; realtime updates are disabled.');
-    return null;
-  }
+  const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || '';
+  const isDirectUrl = Boolean(socketUrl && socketUrl.trim().length > 0);
 
-  // Vercel rewrites HTTP requests but cannot proxy WebSocket upgrades. Request
-  // a one-minute token through the same-origin API, then connect to Wispbyte
-  // directly over HTTPS.
+  // If a public HTTPS socket URL is provided (e.g. Cloudflare tunnel or custom domain),
+  // connect directly to it using WebSockets. Otherwise, fallback to polling via
+  // the same-origin Vercel rewrite (/socket.io).
   const connect = async () => {
     const response = await fetch('/api/socket-token', { cache: 'no-store' });
     if (!response.ok) throw new Error(`Socket authentication failed (${response.status})`);
     const { token } = await response.json();
     if (attempt !== connectionAttempt) return;
 
-    socket = io(socketUrl, {
+    const targetUrl = isDirectUrl ? socketUrl.trim() : '';
+    const transports = isDirectUrl ? ['websocket', 'polling'] : ['polling'];
+
+    socket = io(targetUrl, {
+      path: '/socket.io',
       auth: { token },
-      transports: ['websocket']
+      transports,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 2000,
+      timeout: 10000
     });
 
     socket.on('connect', () => {
@@ -61,6 +65,14 @@ export const connectSocket = (guildId) => {
           queueSize: data.size
         });
       }
+    });
+
+    socket.on('connect_error', (err) => {
+      console.warn('[socket] Realtime connection notice:', err?.message || 'Attempting reconnect');
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.log('[socket] Disconnected:', reason);
     });
   };
 

@@ -12,12 +12,16 @@ const { setupSocket } = require('./socket');
 const { DashboardBridge } = require('./bridge');
 
 function startDashboard(client) {
-  const PORT = parseInt(process.env.DASHBOARD_PORT) || 3000;
+  // Support DASHBOARD_PORT, Pterodactyl SERVER_PORT / PORT, or default to 25634 (VisiHost allocated port)
+  const PORT = parseInt(process.env.DASHBOARD_PORT || process.env.PORT || process.env.SERVER_PORT, 10) || 25634;
   const app = express();
   const server = http.createServer(app);
 
-  // Trust proxy for Vercel/Reverse Proxy (needed for secure cookies)
-  app.set('trust proxy', 1);
+  // Trust proxy for Vercel/Pterodactyl reverse proxy (needed for secure cookies & client IP)
+  app.set('trust proxy', true);
+
+  // Clean dashboard URL without trailing slash
+  const cleanDashboardUrl = (process.env.DASHBOARD_URL || 'https://uraniumbot.vercel.app').replace(/\/+$/, '');
 
   // Session middleware
   const sessionOptions = {
@@ -25,8 +29,8 @@ function startDashboard(client) {
     resave: false,
     saveUninitialized: false,
     cookie: {
-      // Secure if HTTPS or in production
-      secure: process.env.DASHBOARD_URL?.startsWith('https') || process.env.NODE_ENV === 'production',
+      // 'auto' detects HTTPS from trust proxy (x-forwarded-proto from Vercel)
+      secure: process.env.COOKIE_SECURE ? (process.env.COOKIE_SECURE === 'true') : (cleanDashboardUrl.startsWith('https') || process.env.NODE_ENV === 'production' ? 'auto' : false),
       httpOnly: true,
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
@@ -50,18 +54,25 @@ function startDashboard(client) {
   // Middleware
   // In production with Vercel Rewrites, the origin will be the Vercel URL
   const allowedOrigins = [
-    process.env.DASHBOARD_URL,
+    cleanDashboardUrl,
+    `${cleanDashboardUrl}/`,
+    'https://uraniumbot.vercel.app',
     'http://localhost:3000',
     'http://localhost:3001'
   ].filter(Boolean);
 
   app.use(cors({
     origin: (origin, callback) => {
-      // Allow if no origin (local tools) or if it's in our allowed list
-      if (!origin || allowedOrigins.includes(origin)) {
+      // Allow if no origin (local tools, server-to-server) or in allowed list/Vercel
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        origin.endsWith('.vercel.app') ||
+        origin.includes('visihost.in') ||
+        process.env.NODE_ENV !== 'production'
+      ) {
         callback(null, true);
       } else {
-        // Fallback to true but log warning (optional)
         callback(null, true);
       }
     },
@@ -122,9 +133,13 @@ function startDashboard(client) {
   // Socket.IO
   const io = new SocketServer(server, {
     cors: {
-      origin: allowedOrigins,
+      origin: (origin, callback) => callback(null, true),
       credentials: true
-    }
+    },
+    transports: ['polling', 'websocket'],
+    allowEIO3: true,
+    pingTimeout: 30000,
+    pingInterval: 25000
   });
 
   // Setup socket event handlers
@@ -138,7 +153,8 @@ function startDashboard(client) {
   // Start server
   const HOST = process.env.DASHBOARD_HOST || '0.0.0.0';
   server.listen(PORT, HOST, () => {
-    console.log(`🌐 Dashboard running at http://${HOST}:${PORT}`);
+    console.log(`🌐 Dashboard backend running at http://${HOST}:${PORT}`);
+    console.log(`📡 Vercel Proxy Destination configured to: http://noida.visihost.in:${PORT}`);
   });
 
   return { app, server, io, bridge };

@@ -1,43 +1,167 @@
-# Vercel dashboard + Wispbyte bot deployment
+# Vercel Dashboard + VisiHost Bot Deployment Guide
 
-The browser can use the Vercel rewrite for ordinary HTTP routes (`/api` and
-`/auth`), but it **cannot use that rewrite for Socket.IO WebSockets**. A Vercel
-rewrite is an HTTP proxy and does not pass the connection-upgrade required by a
-WebSocket. This was the source of the broken dashboard realtime connection.
+This guide details how **Uranium Bot** runs on **VisiHost** (`noida.visihost.in:25634`) and connects seamlessly to the **Vercel Web Dashboard** (`https://uraniumbot.vercel.app`).
 
-## Required configuration
+---
 
-1. Give the dashboard process on Wispbyte a public HTTPS hostname, for example
-   `https://bot-api.example.com`. Do not use an IP address in the browser: an
-   HTTPS Vercel page cannot open an insecure `ws://` connection.
-2. Configure the Wispbyte reverse proxy to forward WebSocket upgrades to the
-   dashboard port (`10857` in `vercel.json`). For nginx, the location needs
-   `proxy_http_version 1.1`, plus `Upgrade` and `Connection "upgrade"` headers.
-3. Set these Wispbyte environment variables and restart the bot:
+## 1. Architecture Overview
 
-   ```dotenv
-   DASHBOARD_PORT=10857
-   DASHBOARD_URL=https://uraniumbot.vercel.app
-   SESSION_SECRET=<a-long-random-secret>
+```
+ [User Browser]
+       │
+       ▼ (HTTPS)
+ [Vercel Dashboard: https://uraniumbot.vercel.app]
+       │
+       ├─ /api/*       ──(Server-side Proxy Rewrite)──► http://noida.visihost.in:25634/api/*
+       ├─ /auth/*      ──(Server-side Proxy Rewrite)──► http://noida.visihost.in:25634/auth/*
+       └─ /socket.io/* ──(Server-side Polling Proxy)──► http://noida.visihost.in:25634/socket.io/*
+                                                                  ▲
+                                                                  │
+                                                       [VisiHost Node Container]
+                                                       (Uranium Discord Bot Process)
+```
+
+1. **Static / Next.js Pages**: Served by Vercel edge CDN.
+2. **API & Auth (`/api/*`, `/auth/*`)**: Vercel acts as a reverse proxy, rewriting requests to `http://noida.visihost.in:25634`.
+3. **Realtime Socket.IO**:
+   - **Default (Zero Setup)**: The dashboard falls back to polling via `/socket.io/` proxied through Vercel, combined with the automatic 3-second REST player sync in `layout.js`.
+   - **Optimal Realtime (WebSocket)**: If you provide an HTTPS tunnel or subdomain (e.g. via Cloudflare Tunnel or reverse proxy), set `NEXT_PUBLIC_SOCKET_URL=https://your-tunnel-domain.com` in Vercel to get direct `wss://` streaming.
+
+---
+
+## 2. VisiHost Setup & Environment Variables
+
+In your **VisiHost Pterodactyl Panel**:
+
+### A. Startup Command
+Make sure the Startup configuration runs:
+```bash
+node src/index.js
+```
+or
+```bash
+npm start
+```
+Make sure Node.js version is **Node 20** or **Node 22**.
+
+### B. Environment Variables (`.env`)
+Create or edit your `.env` file in the root directory of your VisiHost server (or under the "Startup" tab):
+
+```dotenv
+# Discord Bot Credentials
+DISCORD_TOKEN=your_bot_token_here
+CLIENT_ID=your_discord_client_id_here
+DISCORD_CLIENT_SECRET=your_discord_client_secret_here
+
+# Dashboard Configuration
+DASHBOARD_PORT=25634
+DASHBOARD_HOST=0.0.0.0
+DASHBOARD_URL=https://uraniumbot.vercel.app
+SESSION_SECRET=create_a_long_random_secret_here
+
+# Database (MongoDB Atlas)
+USE_MONGODB=true
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/multibot?retryWrites=true&w=majority
+MONGODB_FORCE_IPV4=true
+MONGODB_TIMEOUT_MS=15000
+
+# Lavalink
+LAVALINK_HOST=your_lavalink_host
+LAVALINK_PORT=2333
+LAVALINK_PASSWORD=youshallnotpass
+LAVALINK_SECURE=false
+
+# Bot Owner & Server Settings
+BOT_OWNER_IDS=your_user_id
+DEV_GUILD_ID=your_test_guild_id
+```
+
+> **Note:** The bot automatically reads `DASHBOARD_PORT`, `PORT`, or `SERVER_PORT` (allocated by VisiHost). It defaults to `25634` if not specified.
+
+---
+
+## 3. MongoDB Atlas IP Whitelist (Important!)
+
+Because the host machine IP changed from Wispbyte to VisiHost (`201.7.16.8`):
+1. Go to [MongoDB Atlas](https://cloud.mongodb.com/).
+2. Navigate to **Security** → **Network Access**.
+3. Ensure **`0.0.0.0/0`** (Allow access from anywhere) is added to the IP Access List, OR add VisiHost's node IP **`201.7.16.8/32`**.
+4. Without this, MongoDB connection will time out on startup.
+
+---
+
+## 4. Transferring Existing Bot Data (`data/*.db`)
+
+Uranium Bot stores local server settings, moderation logs, reaction roles, and economy data in SQLite files under `data/`:
+* `data/afk_storage.db`
+* `data/antinuke.db`
+* `data/automod.db`
+* `data/autorole.db`
+* `data/economy.db`
+* `data/mod_storage.db`
+* `data/music.db`
+* `data/welcome.db`
+* `data/reaction_roles.db`
+
+**Migration Step:**
+1. Download the `data/` folder from your old Wispbyte server using SFTP or File Manager.
+2. Upload the `data/` folder into your VisiHost server files under the `data/` directory.
+
+---
+
+## 5. Discord Developer Portal OAuth2 Redirect URI
+
+1. Open the [Discord Developer Portal](https://discord.com/developers/applications).
+2. Select your Uranium Bot application.
+3. Go to **OAuth2** → **General**.
+4. In **Redirects**, ensure the following URL is present:
    ```
+   https://uraniumbot.vercel.app/auth/callback
+   ```
+5. Click **Save Changes**.
 
-   `DASHBOARD_URL` must be the public Vercel URL and must exactly match the
-   Discord Developer Portal OAuth2 redirect URI:
-   `https://uraniumbot.vercel.app/auth/callback`.
-4. In Vercel, set `NEXT_PUBLIC_SOCKET_URL=https://bot-api.example.com` and
-   redeploy. This value is intentionally public; it is only the socket origin.
-   Authentication uses a one-minute signed token obtained through `/api`.
-5. Keep the `/api` and `/auth` rewrite destinations pointed at the reachable
-   Wispbyte HTTP endpoint. If Wispbyte changes the allocated IP or port, update
-   both destinations and redeploy Vercel. Prefer a stable hostname over a raw
-   IP address.
+---
 
-## Verification
+## 6. Vercel Configuration & Deployment
 
-* Visit `https://uraniumbot.vercel.app/api/me`; it should return `401` JSON
-  before login, not a Vercel 404/502 page.
-* Complete Discord login and confirm the browser returns to `/servers`.
-* In browser DevTools, the Socket.IO request should connect to
-  `https://bot-api.example.com/socket.io/`, not to `uraniumbot.vercel.app`.
-* Ensure Wispbyte allows inbound HTTPS (443) and that its proxy forwards the
-  WebSocket upgrade headers.
+1. The project's `vercel.json` and `src/dashboard/frontend/vercel.json` are pre-configured to route to:
+   ```json
+   {
+     "$schema": "https://openapi.vercel.sh/vercel.json",
+     "rewrites": [
+       {
+         "source": "/auth/(.*)",
+         "destination": "http://noida.visihost.in:25634/auth/$1"
+       },
+       {
+         "source": "/api/(.*)",
+         "destination": "http://noida.visihost.in:25634/api/$1"
+       },
+       {
+         "source": "/socket.io/(.*)",
+         "destination": "http://noida.visihost.in:25634/socket.io/$1"
+       }
+     ]
+   }
+   ```
+2. Commit and push changes to GitHub (`master` branch).
+3. If Vercel auto-deploys from GitHub, wait for the build to finish.
+4. If setting up a direct HTTPS Socket.IO tunnel (optional):
+   - In Vercel Project Settings → **Environment Variables**, set:
+     `NEXT_PUBLIC_SOCKET_URL=https://your-tunnel-subdomain.com`
+   - Trigger a redeploy.
+
+---
+
+## 7. Verification Checklist
+
+- [ ] **Bot Online**: Start the bot in VisiHost panel. Check console logs for:
+  ```
+  🌐 Dashboard backend running at http://0.0.0.0:25634
+  📡 Vercel Proxy Destination configured to: http://noida.visihost.in:25634
+  ```
+- [ ] **API Reachability**: Open `https://uraniumbot.vercel.app/api/me` in your browser.
+  - Expected response: `{"authenticated":false}` (HTTP 401).
+  - If you see a Vercel 502/504 error, make sure the bot server on VisiHost is started and port `25634` is listening.
+- [ ] **Discord Login**: Go to `https://uraniumbot.vercel.app/`, click **Login with Discord**. Confirm it redirects to Discord and returns to `/servers`.
+- [ ] **Music & Settings**: Open a server dashboard. Change a setting or control music. All controls should update live.

@@ -3,11 +3,15 @@
   "rewrites": [
     {
       "source": "/auth/(.*)",
-      "destination": "https://uraniumbot.wisp.uno/auth/$1"
+      "destination": "http://noida.visihost.in:25634/auth/$1"
     },
     {
       "source": "/api/(.*)",
-      "destination": "https://uraniumbot.wisp.uno/api/$1"
+      "destination": "http://noida.visihost.in:25634/api/$1"
+    },
+    {
+      "source": "/socket.io/(.*)",
+      "destination": "http://noida.visihost.in:25634/socket.io/$1"
     }
   ]
 }

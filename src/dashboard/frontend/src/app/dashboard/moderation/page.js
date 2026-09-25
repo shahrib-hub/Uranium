@@ -335,7 +335,7 @@ export default function ModerationPage() {
       if (probeRes.status === 404) {
         setBackendOutdated(true);
         if (showToast) {
-          toast.error('Bot backend missing moderation routes (404). Please restart your Discord bot on Wispbyte.');
+          toast.error('Bot backend missing moderation routes (404). Please restart your Discord bot on your host (e.g. VisiHost).');
         }
         setSyncing(false);
         setLoading(false);
@@ -674,7 +674,7 @@ export default function ModerationPage() {
               <p className="font-bold text-sm text-white">Bot Backend Update Required</p>
               <p className="text-xs text-amber-200/80 mt-0.5 leading-relaxed">
                 The web dashboard frontend is up to date, but your Discord bot host is currently running an older build missing the moderation API routes (404).
-                Please run <code className="px-1.5 py-0.5 rounded bg-black/40 font-mono text-amber-300">git pull</code> and restart your bot on Wispbyte to enable live moderation control.
+                Please run <code className="px-1.5 py-0.5 rounded bg-black/40 font-mono text-amber-300">git pull</code> and restart your bot on your host (e.g. VisiHost) to enable live moderation control.
               </p>
             </div>
           </div>
