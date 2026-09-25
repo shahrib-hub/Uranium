@@ -37,6 +37,8 @@ const logger = createLogger({
   transports: [
     new transports.Console()
   ]
+});
+
 // Hook into logger error events for Uranium Watcher AI incident monitoring
 try {
   const { handleConsoleError } = require('./statusWatcher');
