@@ -2474,6 +2474,7 @@ function createApiRouter(client) {
         config: config || {
           guild_id: guildId,
           channel_id: '',
+          message_id: null,
           role_id: '',
           unverified_role_id: '',
           log_channel_id: '',
@@ -2525,8 +2526,11 @@ function createApiRouter(client) {
         return res.status(400).json({ error: 'Target verification channel not found or not a text channel.' });
       }
 
-      // Save settings first
-      await verificationUtils.saveVerificationConfig(guildId, body);
+      // If a previous verification embed exists, clean it up from Discord so embeds never duplicate or linger forever
+      const existingConfig = await verificationUtils.getVerificationConfig(guildId);
+      if (existingConfig && existingConfig.channel_id && existingConfig.message_id) {
+        await verificationUtils.deleteDiscordVerificationMessage(client, guild, existingConfig.channel_id, existingConfig.message_id);
+      }
 
       // Map button style
       let btnStyle = ButtonStyle.Success;
@@ -2568,15 +2572,72 @@ function createApiRouter(client) {
 
       const row = new ActionRowBuilder().addComponents(button);
 
-      await channel.send({ embeds: [embed], components: [row] });
+      const sentMsg = await channel.send({ embeds: [embed], components: [row] });
+
+      // Save settings with updated message_id and enabled = true
+      body.message_id = sentMsg.id;
+      body.enabled = true;
+      await verificationUtils.saveVerificationConfig(guildId, body);
 
       res.json({
         success: true,
-        message: `Verification gate published directly to #${channel.name}!`
+        message: `Verification gate published directly to #${channel.name}!`,
+        message_id: sentMsg.id
       });
     } catch (err) {
       console.error('[verification/publish error]:', err);
       res.status(500).json({ error: err.message || 'Failed to dispatch verification embed' });
+    }
+  });
+
+  router.post('/guild/:guildId/verification/unpublish', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
+    try {
+      const guild = req.guild;
+      const guildId = req.params.guildId;
+      const config = await verificationUtils.getVerificationConfig(guildId);
+
+      let deletedDiscordMessage = false;
+      if (config && config.channel_id && config.message_id) {
+        deletedDiscordMessage = await verificationUtils.deleteDiscordVerificationMessage(client, guild, config.channel_id, config.message_id);
+      }
+
+      if (config) {
+        config.message_id = null;
+        await verificationUtils.saveVerificationConfig(guildId, config);
+      }
+
+      res.json({
+        success: true,
+        message: deletedDiscordMessage
+          ? 'Verification gate deleted from Discord channel successfully.'
+          : 'Verification embed unpublished.'
+      });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  router.delete('/guild/:guildId/verification', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
+    try {
+      const guild = req.guild;
+      const guildId = req.params.guildId;
+      const config = await verificationUtils.getVerificationConfig(guildId);
+
+      let deletedDiscordMessage = false;
+      if (config && config.channel_id && config.message_id) {
+        deletedDiscordMessage = await verificationUtils.deleteDiscordVerificationMessage(client, guild, config.channel_id, config.message_id);
+      }
+
+      await verificationUtils.deleteVerificationConfig(guildId);
+
+      res.json({
+        success: true,
+        message: deletedDiscordMessage
+          ? 'Verification system removed and Discord embed deleted successfully.'
+          : 'Verification system settings reset successfully.'
+      });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
     }
   });
 

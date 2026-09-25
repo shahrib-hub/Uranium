@@ -17,8 +17,18 @@ module.exports = async (interaction) => {
   }
 
   const config = await getVerificationConfig(guildId);
-  if (!config) {
-    return interaction.reply({ content: '❌ Verification system is not configured.', flags: 64 });
+  if (!config || !config.enabled) {
+    return interaction.reply({
+      content: '❌ The verification system has been disabled or removed on this server.',
+      flags: 64
+    });
+  }
+
+  if (!config.role_id) {
+    return interaction.reply({
+      content: '❌ Verification role is not configured. Please contact an administrator.',
+      flags: 64
+    });
   }
 
   const member = await interaction.guild.members.fetch(userId).catch(() => null);

@@ -12,6 +12,7 @@ const {
   getVerificationConfig,
   saveVerificationConfig,
   deleteVerificationConfig,
+  deleteDiscordVerificationMessage,
   getVerifiedUser,
   markUserVerified,
   removeUserVerification,
@@ -115,13 +116,6 @@ module.exports = {
       collector.on('collect', async i => {
         try {
           if (i.customId === 'confirm_verify_setup') {
-            await saveVerificationConfig(guildId, {
-              channel_id: channelInput.id,
-              role_id: roleInput.id,
-              embed_message: embedMessage,
-              type
-            });
-
             const verifyEmbed = new EmbedBuilder()
               .setColor('Green')
               .setTitle('✅ Verify Yourself')
@@ -135,7 +129,22 @@ module.exports = {
                 .setEmoji({ id: '1443318664332837146' }) // ✅ Custom emoji
             );
 
-            await channelInput.send({ embeds: [verifyEmbed], components: [verifyButton] });
+            // Clean up any old message if existing
+            const existingConfig = await getVerificationConfig(guildId);
+            if (existingConfig && existingConfig.channel_id && existingConfig.message_id) {
+              await deleteDiscordVerificationMessage(interaction.client, interaction.guild, existingConfig.channel_id, existingConfig.message_id);
+            }
+
+            const sentMsg = await channelInput.send({ embeds: [verifyEmbed], components: [verifyButton] });
+
+            await saveVerificationConfig(guildId, {
+              channel_id: channelInput.id,
+              message_id: sentMsg.id,
+              role_id: roleInput.id,
+              embed_message: embedMessage,
+              type,
+              enabled: true
+            });
 
             await i.update({
               content: '✅ Verification system has been set up!',
@@ -198,8 +207,18 @@ module.exports = {
       const config = await getVerificationConfig(guildId);
       if (!config) return interaction.reply({ content: '❌ No verification system is currently active.', flags: 64 });
 
+      let deletedMsg = false;
+      if (config.channel_id && config.message_id) {
+        deletedMsg = await deleteDiscordVerificationMessage(interaction.client, interaction.guild, config.channel_id, config.message_id);
+      }
+
       await deleteVerificationConfig(guildId);
-      return interaction.reply({ content: '🧹 Verification system has been disabled.', flags: 64 });
+      return interaction.reply({
+        content: deletedMsg
+          ? '🧹 Verification system has been disabled and the verification message was deleted from Discord.'
+          : '🧹 Verification system has been disabled.',
+        flags: 64
+      });
     }
 
     // 📊 STATUS

@@ -11,14 +11,16 @@ db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS verification_configs (
     guild_id TEXT PRIMARY KEY,
     channel_id TEXT,
+    message_id TEXT,
     role_id TEXT,
     embed_message TEXT,
     type TEXT,
     data_json TEXT
   )`);
 
-  // Migrate older tables that lack data_json
+  // Migrate older tables that lack data_json or message_id
   db.run(`ALTER TABLE verification_configs ADD COLUMN data_json TEXT`, () => {});
+  db.run(`ALTER TABLE verification_configs ADD COLUMN message_id TEXT`, () => {});
 
   db.run(`CREATE TABLE IF NOT EXISTS verified_users (
     guild_id TEXT,
@@ -47,6 +49,7 @@ async function getVerificationConfig(guildId) {
       return {
         guild_id: doc.guildId,
         channel_id: doc.channelId,
+        message_id: doc.messageId || extra.message_id || null,
         role_id: doc.roleId,
         unverified_role_id: doc.unverifiedRoleId || extra.unverified_role_id || null,
         log_channel_id: doc.logChannelId || extra.log_channel_id || null,
@@ -76,6 +79,7 @@ async function getVerificationConfig(guildId) {
       resolve({
         guild_id: row.guild_id,
         channel_id: row.channel_id,
+        message_id: row.message_id || extra.message_id || null,
         role_id: row.role_id,
         unverified_role_id: extra.unverified_role_id || null,
         log_channel_id: extra.log_channel_id || null,
@@ -99,6 +103,7 @@ async function getVerificationConfig(guildId) {
 
 async function saveVerificationConfig(guildId, config) {
   const dataPayload = {
+    message_id: config.message_id !== undefined ? config.message_id : null,
     unverified_role_id: config.unverified_role_id || null,
     log_channel_id: config.log_channel_id || null,
     embed_title: config.embed_title || 'Verify Yourself',
@@ -122,6 +127,7 @@ async function saveVerificationConfig(guildId, config) {
       { guildId },
       {
         channelId: config.channel_id,
+        messageId: dataPayload.message_id,
         roleId: config.role_id,
         unverifiedRoleId: dataPayload.unverified_role_id,
         logChannelId: dataPayload.log_channel_id,
@@ -146,15 +152,16 @@ async function saveVerificationConfig(guildId, config) {
 
   return new Promise((resolve, reject) => {
     db.run(
-      `INSERT INTO verification_configs (guild_id, channel_id, role_id, embed_message, type, data_json)
-       VALUES (?, ?, ?, ?, ?, ?)
+      `INSERT INTO verification_configs (guild_id, channel_id, message_id, role_id, embed_message, type, data_json)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(guild_id) DO UPDATE SET
          channel_id=excluded.channel_id,
+         message_id=excluded.message_id,
          role_id=excluded.role_id,
          embed_message=excluded.embed_message,
          type=excluded.type,
          data_json=excluded.data_json`,
-      [guildId, config.channel_id, config.role_id, dataPayload.embed_message, dataPayload.type, jsonStr],
+      [guildId, config.channel_id, dataPayload.message_id, config.role_id, dataPayload.embed_message, dataPayload.type, jsonStr],
       err => err ? reject(err) : resolve()
     );
   });
@@ -305,10 +312,28 @@ async function getVerifiedUsersCount(guildId) {
   });
 }
 
+async function deleteDiscordVerificationMessage(client, guild, channelId, messageId) {
+  if (!guild || !channelId || !messageId) return false;
+  try {
+    const channel = guild.channels?.cache?.get(channelId) || await guild.channels?.fetch?.(channelId).catch(() => null);
+    if (channel && channel.isTextBased()) {
+      const msg = await channel.messages.fetch(messageId).catch(() => null);
+      if (msg) {
+        await msg.delete().catch(() => null);
+        return true;
+      }
+    }
+  } catch (err) {
+    console.warn('[deleteDiscordVerificationMessage warn]:', err.message);
+  }
+  return false;
+}
+
 module.exports = {
   getVerificationConfig,
   saveVerificationConfig,
   deleteVerificationConfig,
+  deleteDiscordVerificationMessage,
   markUserVerified,
   getVerifiedUser,
   removeUserVerification,

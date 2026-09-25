@@ -24,6 +24,10 @@ import {
   UserX,
   Mail,
   Sliders,
+  Trash2,
+  RotateCcw,
+  Power,
+  Radio,
   X
 } from 'lucide-react';
 import Toast from '@/components/Toast';
@@ -77,6 +81,9 @@ export default function VerificationDashboardPage() {
   const [simulatedOtp, setSimulatedOtp] = useState('');
   const [manualUserId, setManualUserId] = useState('');
   const [manualLoading, setManualLoading] = useState(false);
+  const [unpublishing, setUnpublishing] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
 
   const showToast = (message, type = 'info') => {
     setToast({ message, type });
@@ -147,10 +154,70 @@ export default function VerificationDashboardPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to publish verification gate');
       showToast(data.message || 'Verification message published to channel!', 'success');
+      if (data.message_id) {
+        setConfig(prev => ({ ...prev, message_id: data.message_id, enabled: true }));
+      }
     } catch (err) {
       showToast(err.message || 'Error publishing verification message', 'error');
     } finally {
       setPublishing(false);
+    }
+  };
+
+  const handleUnpublish = async () => {
+    if (!guildId) return;
+    setUnpublishing(true);
+    try {
+      const res = await fetch(`/api/guild/${guildId}/verification/unpublish`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to unpublish verification gate');
+      showToast(data.message || 'Verification embed deleted from Discord channel.', 'success');
+      setConfig(prev => ({ ...prev, message_id: null }));
+    } catch (err) {
+      showToast(err.message || 'Error deleting verification embed', 'error');
+    } finally {
+      setUnpublishing(false);
+    }
+  };
+
+  const handleReset = async () => {
+    if (!guildId) return;
+    setResetting(true);
+    try {
+      const res = await fetch(`/api/guild/${guildId}/verification`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to remove verification system');
+      showToast(data.message || 'Verification system removed and reset successfully!', 'success');
+      setShowResetModal(false);
+      setConfig({
+        guild_id: guildId,
+        channel_id: '',
+        message_id: null,
+        role_id: '',
+        unverified_role_id: '',
+        log_channel_id: '',
+        embed_title: 'Verify Yourself',
+        embed_message: 'Click the button below to verify yourself and gain access to the server.',
+        embed_color: '#10b981',
+        embed_image: '',
+        embed_footer: 'Uranium Security Verification',
+        type: 'button',
+        button_label: 'Verify',
+        button_style: 'Success',
+        button_emoji: '✅',
+        send_dm: false,
+        dm_message: 'You have been successfully verified in **{server}**!',
+        enabled: false
+      });
+    } catch (err) {
+      showToast(err.message || 'Error removing verification system', 'error');
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -231,7 +298,33 @@ export default function VerificationDashboardPage() {
           </div>
 
           {/* Action Bar */}
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Master Active Switch */}
+            <button
+              type="button"
+              onClick={() => setConfig(c => ({ ...c, enabled: !c.enabled }))}
+              className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl border text-xs font-bold transition active:scale-95 ${
+                config.enabled
+                  ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
+                  : 'border-white/10 bg-[#181a24] text-white/50 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Power size={14} className={config.enabled ? 'text-emerald-400' : 'text-white/40'} />
+              <span>{config.enabled ? 'System Active' : 'System Disabled'}</span>
+              <span className={`w-2 h-2 rounded-full ${config.enabled ? 'bg-emerald-400 shadow-[0_0_8px_#10b981]' : 'bg-white/30'}`} />
+            </button>
+
+            {/* Reset & Remove Gate Button */}
+            <button
+              type="button"
+              onClick={() => setShowResetModal(true)}
+              className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold text-xs transition active:scale-95"
+              title="Reset verification settings and delete the embed message from Discord"
+            >
+              <RotateCcw size={14} />
+              <span className="hidden sm:inline">Reset & Remove</span>
+            </button>
+
             <button
               type="button"
               onClick={handlePublish}
@@ -239,7 +332,7 @@ export default function VerificationDashboardPage() {
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold text-xs transition shadow-lg shadow-emerald-600/25 disabled:opacity-40 disabled:pointer-events-none"
             >
               <Send size={14} className={publishing ? 'animate-spin' : ''} />
-              <span>{publishing ? 'Publishing...' : 'Publish to Discord'}</span>
+              <span>{publishing ? 'Publishing...' : config.message_id ? 'Update in Discord' : 'Publish to Discord'}</span>
             </button>
 
             <button
@@ -255,7 +348,68 @@ export default function VerificationDashboardPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 space-y-6">
+        {/* Disabled Warning Banner */}
+        {!config.enabled && (
+          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-200 flex items-start gap-3 shadow-lg">
+            <AlertCircle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <h4 className="text-xs font-bold text-amber-300 uppercase tracking-wide">Verification System Disabled</h4>
+              <p className="text-xs text-amber-200/80 mt-1 leading-relaxed">
+                The verification gate is currently switched OFF. Any Discord members clicking on existing verification embeds will be immediately blocked and will not receive any roles until you re-enable the system.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Live Discord Embed Status Banner */}
+        <div className="rounded-2xl border border-white/10 bg-[#13151f] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md">
+          <div className="flex items-center gap-3">
+            <div className={`h-9 w-9 rounded-xl border flex items-center justify-center ${
+              config.message_id
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                : 'bg-white/5 border-white/10 text-white/40'
+            }`}>
+              <Radio size={17} className={config.message_id ? 'animate-pulse' : ''} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-white">Discord Embed Deployment</span>
+                {config.message_id ? (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    Live on Server
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/10 text-white/50 border border-white/10">
+                    Not Published
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-white/50 mt-0.5">
+                {config.message_id ? (
+                  <>
+                    Stationed in <strong className="text-white">#{selectedChannel?.name || config.channel_id}</strong> &bull; Message ID: <code className="font-mono text-emerald-400 text-[10px]">{config.message_id}</code>
+                  </>
+                ) : (
+                  'No live verification message in Discord. Click "Publish to Discord" to deploy the interactive embed.'
+                )}
+              </p>
+            </div>
+          </div>
+
+          {config.message_id && (
+            <button
+              type="button"
+              onClick={handleUnpublish}
+              disabled={unpublishing}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 active:scale-95 text-red-400 font-bold text-xs transition disabled:opacity-40"
+            >
+              <Trash2 size={13} className={unpublishing ? 'animate-spin' : ''} />
+              <span>{unpublishing ? 'Deleting...' : 'Delete Embed from Discord'}</span>
+            </button>
+          )}
+        </div>
+
         {/* Main 2-Column Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Column: Form Controls (7 Cols) */}
@@ -656,6 +810,36 @@ export default function VerificationDashboardPage() {
                 </div>
               </div>
             </div>
+
+            {/* Section 7: Danger Zone: Reset & Remove Verification Gate */}
+            <div className="rounded-2xl border border-red-500/20 bg-[#181116] p-5 md:p-6 shadow-md space-y-4">
+              <div className="flex items-center justify-between border-b border-red-500/10 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-7 w-7 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400">
+                    <Trash2 size={15} />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-bold text-red-400">Danger Zone: Remove Verification Gate</h2>
+                    <p className="text-[11px] text-red-300/60">Permanently delete the Discord gate embed and reset all server verification settings</p>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-xs text-white/60 leading-relaxed">
+                Removing the verification system will delete the active verification embed message directly from your Discord channel, clear all configured roles and custom messages, and disable verification. Existing member roles will not be deleted.
+              </p>
+
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowResetModal(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-red-500/40 bg-red-600/20 hover:bg-red-600/30 active:scale-95 text-red-300 font-bold text-xs transition"
+                >
+                  <Trash2 size={14} />
+                  <span>Reset & Delete Verification Gate</span>
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Right Column: Live Interactive Discord Preview (5 Cols) */}
@@ -844,6 +1028,49 @@ export default function VerificationDashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Reset Confirmation Modal */}
+      {showResetModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="w-full max-w-md rounded-2xl border border-red-500/30 bg-[#141620] p-6 shadow-2xl space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-red-500/15 border border-red-500/30 flex items-center justify-center text-red-400 shrink-0">
+                <AlertCircle size={22} />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-white">Remove Verification System?</h3>
+                <p className="text-xs text-white/50 mt-0.5">This action cannot be undone.</p>
+              </div>
+            </div>
+
+            <div className="space-y-2 text-xs text-white/70 bg-red-500/5 border border-red-500/10 rounded-xl p-3.5">
+              <p>• The verification embed in Discord will be <strong>permanently deleted</strong> so users can no longer interact with it.</p>
+              <p>• All verification configuration settings (roles, embed copy, OTP setup) will be reset to defaults.</p>
+              <p>• Previously verified members will keep their current roles.</p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                disabled={resetting}
+                onClick={() => setShowResetModal(false)}
+                className="px-4 py-2.5 rounded-xl border border-white/10 bg-[#1a1d2b] hover:bg-[#202436] text-white/80 font-bold text-xs transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={resetting}
+                onClick={handleReset}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 active:scale-95 text-white font-bold text-xs transition shadow-lg shadow-red-600/30 disabled:opacity-50"
+              >
+                {resetting && <RefreshCw size={14} className="animate-spin" />}
+                <span>{resetting ? 'Deleting...' : 'Yes, Delete & Reset'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

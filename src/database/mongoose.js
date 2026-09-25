@@ -459,6 +459,7 @@ const RRCounterSchema = new mongoose.Schema({
 const VerificationConfigSchema = new mongoose.Schema({
   guildId: { type: String, required: true, unique: true },
   channelId: { type: String, default: null },
+  messageId: { type: String, default: null },
   roleId: { type: String, default: null },
   unverifiedRoleId: { type: String, default: null },
   logChannelId: { type: String, default: null },
