@@ -15,6 +15,9 @@ module.exports = {
       const settings = await welcomeStorage.getSettings(guildId);
       if (!settings || (!settings.enabled && !settings.active)) return;
 
+      const pluginStorage = require('../utils/pluginStorage');
+      if (pluginStorage && !(await pluginStorage.isPluginEnabled(guildId, 'welcome'))) return;
+
       const memberCount = guild.memberCount || 1;
       const avatarUrl = member.user.displayAvatarURL({ extension: 'png', size: 512 });
 

@@ -33,6 +33,29 @@ module.exports = {
         const command = interaction.client.commands.get(interaction.commandName);
         if (!command) return;
 
+        // 🛡️ Check if command belongs to a disabled plugin in this server
+        if (interaction.guildId) {
+          try {
+            const pluginStorage = require('../utils/pluginStorage');
+            const pluginId = pluginStorage.getPluginForCommand(interaction.commandName);
+            if (pluginId) {
+              const isEnabled = await pluginStorage.isPluginEnabled(interaction.guildId, pluginId);
+              if (!isEnabled) {
+                const pluginInfo = pluginStorage.getPluginInfo(pluginId);
+                const { EmbedBuilder } = require('discord.js');
+                const disabledEmbed = new EmbedBuilder()
+                  .setColor(0xED4245)
+                  .setTitle('⛔ Module Disabled')
+                  .setDescription(`The **${pluginInfo?.name || pluginId}** system is currently **turned OFF** for this server.\n\nAn administrator can enable it anytime from the **Web Dashboard**.`)
+                  .setFooter({ text: 'Uranium • Module Barred' });
+                return interaction.reply({ embeds: [disabledEmbed], flags: 64 });
+              }
+            }
+          } catch (e) {
+            console.warn('[interactionCreate] plugin check warning:', e.message);
+          }
+        }
+
         try {
           await command.execute(interaction);
         } catch (err) {

@@ -100,18 +100,18 @@ export default function BotPersonalizerPage() {
       // Build a delta payload containing only modified fields to avoid re-triggering Discord avatar rate limits
       const payload = {};
 
-      if (nickname.trim() !== initialData.nickname) {
+      if (nickname.trim() !== (initialData.nickname || '').trim()) {
         payload.nickname = nickname.trim();
       }
 
       if (isPremium) {
-        if (avatarUrl.trim() !== initialData.avatarUrl) {
+        if (avatarUrl.trim() !== (initialData.avatarUrl || '').trim()) {
           payload.avatarUrl = avatarUrl.trim();
         }
-        if (bannerUrl.trim() !== initialData.bannerUrl) {
+        if (bannerUrl.trim() !== (initialData.bannerUrl || '').trim()) {
           payload.bannerUrl = bannerUrl.trim();
         }
-        if (bio.trim() !== initialData.bio) {
+        if (bio.trim() !== (initialData.bio || '').trim()) {
           payload.bio = bio.trim();
         }
       }
@@ -183,10 +183,10 @@ export default function BotPersonalizerPage() {
   };
 
   const isModified =
-    nickname !== initialData.nickname ||
-    (isPremium && avatarUrl !== initialData.avatarUrl) ||
-    (isPremium && bannerUrl !== initialData.bannerUrl) ||
-    (isPremium && bio !== initialData.bio);
+    nickname.trim() !== (initialData.nickname || '').trim() ||
+    (isPremium && avatarUrl.trim() !== (initialData.avatarUrl || '').trim()) ||
+    (isPremium && bannerUrl.trim() !== (initialData.bannerUrl || '').trim()) ||
+    (isPremium && bio.trim() !== (initialData.bio || '').trim());
 
   const effectiveAvatar =
     !avatarError && avatarUrl.trim() ? avatarUrl.trim() : botUser.defaultAvatarUrl;

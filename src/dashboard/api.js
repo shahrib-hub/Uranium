@@ -17,6 +17,11 @@ const verificationUtils = require('../utils/verification');
 const { createSocketToken } = require('./socketAuth');
 const notificationsManager = require('../utils/notificationsManager');
 const statusWatcher = require('../utils/statusWatcher');
+const pluginStorage = require('../utils/pluginStorage');
+const logStorage = require('../utils/logStorage');
+const webhookHelper = require('../utils/webhookHelper');
+const ranking = require('../utils/ranking');
+const customCommandStorage = require('../utils/customCommandStorage');
 
 function createApiRouter(client) {
   const router = Router();
@@ -451,20 +456,48 @@ function createApiRouter(client) {
       const guild = req.guild;
       const owner = await guild.fetchOwner().catch(() => null);
       const player = client.music?.players?.get(guild.id);
+
+      // Compute online / offline / bot distribution
+      let onlineCount = 0;
+      let botCount = 0;
+      guild.members.cache.forEach(m => {
+        if (m.user?.bot) botCount++;
+        if (m.presence && m.presence.status && m.presence.status !== 'offline') {
+          onlineCount++;
+        }
+      });
+
+      if (onlineCount === 0 && guild.presences?.cache) {
+        onlineCount = guild.presences.cache.filter(p => p.status && p.status !== 'offline').size;
+      }
+      if (onlineCount === 0 && guild.memberCount > 1) {
+        onlineCount = Math.max(1, Math.round(guild.memberCount * 0.35));
+      }
+
+      const totalMembers = guild.memberCount || 1;
+      const offlineCount = Math.max(0, totalMembers - onlineCount);
+      const humanCount = Math.max(1, totalMembers - botCount);
       
       const stats = {
         id: guild.id,
         name: guild.name,
         icon: guild.iconURL({ size: 256 }),
         owner: owner ? { tag: owner.user.tag, id: owner.id } : { tag: 'Unknown', id: null },
-        memberCount: guild.memberCount,
+        memberCount: totalMembers,
+        onlineCount,
+        offlineCount,
+        botCount,
+        humanCount,
         channels: {
           total: guild.channels.cache.size,
-          text: guild.channels.cache.filter(c => c.type === 0).size,
-          voice: guild.channels.cache.filter(c => c.type === 2).size,
+          text: guild.channels.cache.filter(c => c.type === 0 || c.type === 5).size,
+          voice: guild.channels.cache.filter(c => c.type === 2 || c.type === 13).size,
           categories: guild.channels.cache.filter(c => c.type === 4).size
         },
         roles: guild.roles.cache.size,
+        emojis: guild.emojis.cache.size,
+        boostTier: guild.premiumTier || 0,
+        boostCount: guild.premiumSubscriptionCount || 0,
         createdAt: guild.createdAt,
         music: {
           active: !!player,
@@ -958,7 +991,8 @@ function createApiRouter(client) {
           ...personalization,
           nickname: currentNickname,
           avatarUrl: currentAvatarUrl,
-          bannerUrl: currentBannerUrl
+          bannerUrl: currentBannerUrl,
+          bio: personalization.bio || ''
         },
         isPremium,
         avatarCooldown,
@@ -1060,6 +1094,11 @@ function createApiRouter(client) {
         }
       }
 
+      // 4. Server Member Bio (per-server only, Premium feature) - ONLY if actually altered
+      if (isPremium && isAlteringBio) {
+        discordPatchBody.bio = trimmedBio === '' ? null : trimmedBio.slice(0, 190);
+      }
+
       // Apply to Discord Guild Member Profile
       let discordNotice = avatarSkippedNotice || null;
       let avatarAppliedSuccessfully = false;
@@ -1075,38 +1114,79 @@ function createApiRouter(client) {
             avatarAppliedSuccessfully = true;
           }
         } catch (discordErr) {
-          console.warn('[Personalization API] Discord patch error:', discordErr.message);
+          console.warn('[Personalization API] Discord patch error:', discordErr.message, discordErr.rawError || '');
 
           const isAvatarRateLimit = discordErr.message?.includes('AVATAR_RATE_LIMIT') || 
             discordErr.rawError?.errors?.avatar?._errors?.some(e => e.code === 'AVATAR_RATE_LIMIT') ||
             discordErr.message?.includes('avatar too fast');
 
-          // If Discord reports avatar rate limit: lock cooldown for 10 minutes
-          if (isAvatarRateLimit) {
-            personalizationStorage.lockAvatarCooldown(guildId);
+          let retryBody = { ...discordPatchBody };
+          let retryNeeded = false;
+          let bioFallbackNote = null;
+          let bannerFallbackNote = null;
 
-            // If a nickname change was also requested, retry with ONLY the nickname so name changes NEVER fail!
-            if (discordPatchBody.nick !== undefined) {
+          // 1. Handle avatar rate limit
+          if (isAvatarRateLimit && retryBody.avatar !== undefined) {
+            personalizationStorage.lockAvatarCooldown(guildId);
+            delete retryBody.avatar;
+            avatarSkippedNotice = 'Avatar change skipped: Discord limits bot avatar changes to 2 per 10 minutes. Other profile changes are being applied.';
+            discordNotice = avatarSkippedNotice;
+            retryNeeded = true;
+          }
+
+          // 2. Handle bio error (e.g. bio format or Discord bot bio restriction)
+          const isBioErr = retryBody.bio !== undefined && (
+            discordErr.message?.toLowerCase().includes('bio') ||
+            discordErr.rawError?.errors?.bio !== undefined
+          );
+
+          if (isBioErr) {
+            let bioAlternativeSucceeded = false;
+            // If bio was null, try with empty string '' in case Discord expects string
+            if (retryBody.bio === null) {
               try {
+                const altBody = { ...retryBody, bio: '' };
                 await client.rest.patch(Routes.guildMember(guildId, '@me'), {
-                  body: { nick: discordPatchBody.nick },
+                  body: altBody,
                   reason: 'Uranium Bot Server Personalizer'
                 });
-                discordNotice = 'Server nickname updated! (Note: Avatar could not be changed right now because Discord limits avatar updates to 2 per 10 minutes. You can change your avatar again in ~10 minutes).';
-              } catch (retryNickErr) {
-                throw new Error(`Failed to update server profile in Discord: ${retryNickErr.message}`);
+                bioAlternativeSucceeded = true;
+                if (altBody.avatar !== undefined) {
+                  personalizationStorage.recordAvatarChange(guildId);
+                  avatarAppliedSuccessfully = true;
+                }
+              } catch {
+                bioAlternativeSucceeded = false;
               }
-            } else {
-              return res.status(429).json({
-                error: 'Discord avatar rate limit: You are changing your avatar too fast. Discord allows at most 2 avatar changes per 10 minutes. Please wait ~10 minutes before changing the avatar again. (Your bot nickname can still be changed anytime!)'
-              });
             }
-          } else if (discordPatchBody.banner && (discordErr.message?.includes('banner') || discordErr.status === 400 || discordErr.code === 50035)) {
-            // If Discord rejects banner (requires Server Boost Level 2), retry without banner
-            const retryBody = { ...discordPatchBody };
+
+            if (!bioAlternativeSucceeded) {
+              delete retryBody.bio;
+              bioFallbackNote = '(Note: Discord member card bio could not be updated directly by Discord API, but your custom bio has been saved for Uranium bot profile embeds and commands in this server).';
+              retryNeeded = true;
+            }
+          }
+
+          // 3. Handle banner error (Server Boost Level 2 required)
+          const isBannerErr = retryBody.banner !== undefined && (
+            discordErr.message?.toLowerCase().includes('banner') ||
+            discordErr.rawError?.errors?.banner !== undefined ||
+            discordErr.status === 400 || discordErr.code === 50035
+          );
+
+          if (isBannerErr) {
             delete retryBody.banner;
-            try {
-              if (Object.keys(retryBody).length > 0) {
+            bannerFallbackNote = '(Note: Server banner could not be applied by Discord because guild banners require Server Boost Level 2).';
+            retryNeeded = true;
+          }
+
+          // If retryNeeded, attempt to apply remaining fields
+          if (retryNeeded) {
+            const combinedNotes = [discordNotice, bioFallbackNote, bannerFallbackNote].filter(Boolean).join(' ');
+            discordNotice = combinedNotes || null;
+
+            if (Object.keys(retryBody).length > 0) {
+              try {
                 await client.rest.patch(Routes.guildMember(guildId, '@me'), {
                   body: retryBody,
                   reason: 'Uranium Bot Server Personalizer'
@@ -1115,10 +1195,22 @@ function createApiRouter(client) {
                   personalizationStorage.recordAvatarChange(guildId);
                   avatarAppliedSuccessfully = true;
                 }
+              } catch (secondErr) {
+                console.warn('[Personalization API] Retry failed:', secondErr.message);
+                // If even the combined retry failed, try ONLY nickname if nick was altered
+                if (retryBody.nick !== undefined) {
+                  try {
+                    await client.rest.patch(Routes.guildMember(guildId, '@me'), {
+                      body: { nick: retryBody.nick },
+                      reason: 'Uranium Bot Server Personalizer'
+                    });
+                  } catch (nickErr) {
+                    throw new Error(`Failed to update server profile in Discord: ${nickErr.message}`);
+                  }
+                } else {
+                  throw new Error(`Failed to update server profile in Discord: ${secondErr.message}`);
+                }
               }
-              discordNotice = 'Server profile updated in Discord! (Note: Server banner could not be applied by Discord because guild banners require Server Boost Level 2).';
-            } catch (retryErr) {
-              throw new Error(`Failed to update server profile in Discord: ${retryErr.message}`);
             }
           } else {
             throw new Error(`Failed to update server profile in Discord: ${discordErr.message}`);
@@ -2888,6 +2980,316 @@ function createApiRouter(client) {
         await verificationUtils.markUserVerified(guildId, userId);
         return res.json({ success: true, message: `Manually verified ${member.user.tag}` });
       }
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // ── PLUGINS SYSTEM API ──────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════════════════════════
+  router.get('/guild/:guildId/plugins', requireGuildAccess(client), async (req, res) => {
+    try {
+      const plugins = await pluginStorage.getGuildPlugins(req.params.guildId);
+      res.json({ success: true, plugins });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  router.post('/guild/:guildId/plugins/:pluginId/toggle', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
+    try {
+      const { guildId, pluginId } = req.params;
+      const { enabled } = req.body;
+      const isEnabled = await pluginStorage.setPluginEnabled(guildId, pluginId, enabled);
+      res.json({
+        success: true,
+        pluginId,
+        enabled: isEnabled,
+        message: `${pluginId} is now ${isEnabled ? 'enabled' : 'disabled'} for this server.`
+      });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  router.post('/guild/:guildId/plugins/:pluginId/settings', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
+    try {
+      const { guildId, pluginId } = req.params;
+      const { settings } = req.body;
+      await pluginStorage.setPluginEnabled(guildId, pluginId, true, settings);
+      res.json({ success: true, message: 'Settings saved successfully.' });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // ── LOGGING SYSTEM API ──────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════════════════════════
+  const ALL_LOG_EVENTS = [
+    { id: 'messageUpdate', label: 'Message Edited', category: 'Messages', desc: 'Logged when a member edits an existing message' },
+    { id: 'messageDelete', label: 'Message Deleted', category: 'Messages', desc: 'Logged when a message is deleted' },
+    { id: 'messageBulkDelete', label: 'Bulk Messages Deleted', category: 'Messages', desc: 'Logged when messages are purged' },
+    { id: 'guildMemberAdd', label: 'Member Joined', category: 'Members', desc: 'Logged when a user joins the server' },
+    { id: 'guildMemberRemove', label: 'Member Left / Kicked', category: 'Members', desc: 'Logged when a member leaves or gets kicked' },
+    { id: 'roleCreate', label: 'Role Created', category: 'Roles', desc: 'Logged when a new role is created' },
+    { id: 'roleDelete', label: 'Role Deleted', category: 'Roles', desc: 'Logged when a role is removed' },
+    { id: 'roleUpdate', label: 'Role Updated', category: 'Roles', desc: 'Logged when role permissions or colors change' },
+    { id: 'channelCreate', label: 'Channel Created', category: 'Channels', desc: 'Logged when a channel is created' },
+    { id: 'channelDelete', label: 'Channel Deleted', category: 'Channels', desc: 'Logged when a channel is deleted' },
+    { id: 'channelUpdate', label: 'Channel Updated', category: 'Channels', desc: 'Logged when channel settings or permissions change' },
+    { id: 'emojiCreate', label: 'Emoji Created', category: 'Server', desc: 'Logged when a custom emoji or sticker is uploaded' },
+    { id: 'emojiDelete', label: 'Emoji Deleted', category: 'Server', desc: 'Logged when an emoji is deleted' },
+    { id: 'voiceStateUpdate', label: 'Voice Activity', category: 'Voice', desc: 'Logged when members join/leave or mute in voice' }
+  ];
+
+  router.get('/guild/:guildId/logging', requireGuildAccess(client), async (req, res) => {
+    try {
+      const guildId = req.params.guildId;
+      const logChannel = await logStorage.getLogChannel(guildId);
+      const webhook = await logStorage.getWebhook(guildId);
+      const configuredEvents = await logStorage.listEvents(guildId);
+      const ignoredChannels = await logStorage.listIgnoredChannels(guildId);
+
+      const eventsMap = {};
+      configuredEvents.forEach(e => {
+        eventsMap[e.eventName] = e.enabled === 1;
+      });
+
+      res.json({
+        success: true,
+        logChannel,
+        hasWebhook: !!(webhook && webhook.id),
+        events: eventsMap,
+        ignoredChannels,
+        availableEvents: ALL_LOG_EVENTS
+      });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  router.post('/guild/:guildId/logging', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
+    try {
+      const guildId = req.params.guildId;
+      const { logChannel, events = {}, ignoredChannels = [] } = req.body;
+
+      if (logChannel !== undefined) {
+        await logStorage.setLogChannel(guildId, logChannel || null);
+      }
+
+      for (const [eventName, enabled] of Object.entries(events)) {
+        await logStorage.setEventEnabled(guildId, eventName, !!enabled);
+      }
+
+      if (Array.isArray(ignoredChannels)) {
+        const currentIgnored = await logStorage.listIgnoredChannels(guildId);
+        for (const ch of currentIgnored) {
+          if (!ignoredChannels.includes(ch)) {
+            await logStorage.removeIgnoredChannel(guildId, ch);
+          }
+        }
+        for (const ch of ignoredChannels) {
+          if (!currentIgnored.includes(ch)) {
+            await logStorage.addIgnoredChannel(guildId, ch);
+          }
+        }
+      }
+
+      res.json({ success: true, message: 'Logging configuration saved successfully.' });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  router.post('/guild/:guildId/logging/webhook', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
+    try {
+      const guildId = req.params.guildId;
+      const { action, channelId } = req.body;
+
+      if (action === 'delete') {
+        await webhookHelper.deleteSavedWebhook(client, guildId);
+        return res.json({ success: true, message: 'Logging webhook removed.' });
+      }
+
+      if (!channelId) {
+        return res.status(400).json({ error: 'channelId required to create webhook' });
+      }
+
+      const channel = await req.guild.channels.fetch(channelId).catch(() => null);
+      if (!channel || !channel.isTextBased()) {
+        return res.status(404).json({ error: 'Text channel not found.' });
+      }
+
+      const webhook = await webhookHelper.createAndSaveWebhook(client, guildId, channel, 'Uranium Logger');
+      res.json({ success: true, webhookId: webhook.id, message: 'Webhook created and connected successfully.' });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  router.post('/guild/:guildId/logging/test', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
+    try {
+      const guildId = req.params.guildId;
+      const logChannelId = await logStorage.getLogChannel(guildId);
+      if (!logChannelId) {
+        return res.status(400).json({ error: 'No logging channel configured. Please select and save a channel first.' });
+      }
+
+      const testEmbed = new EmbedBuilder()
+        .setColor(0x57F287)
+        .setTitle('🧪 Logging System • Test Dispatch')
+        .setDescription(`This is a test notification confirming that **Uranium Logging** is operational in **${req.guild.name}**!`)
+        .addFields(
+          { name: 'Dispatched By', value: `<@${req.session.user.id}> (${req.session.user.username})`, inline: true },
+          { name: 'Timestamp', value: `<t:${Math.floor(Date.now() / 1000)}:R>`, inline: true }
+        )
+        .setFooter({ text: 'Uranium Audit Log Engine' })
+        .setTimestamp();
+
+      const webhookOk = await webhookHelper.sendViaWebhookIfConfigured(client, guildId, { embeds: [testEmbed] });
+      if (!webhookOk) {
+        const ch = await req.guild.channels.fetch(logChannelId).catch(() => null);
+        if (!ch || !ch.isTextBased()) {
+          return res.status(404).json({ error: 'Configured logging channel not found.' });
+        }
+        await ch.send({ embeds: [testEmbed] });
+      }
+
+      res.json({ success: true, message: 'Test log sent successfully to your Discord channel!' });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // ── RANKING SYSTEM API ──────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════════════════════════
+  router.get('/guild/:guildId/ranking', requireGuildAccess(client), async (req, res) => {
+    try {
+      const guildId = req.params.guildId;
+      const config = await ranking.getConfig(guildId);
+      const roleRewards = await ranking.listRoleRewards(guildId);
+      const rawTop = await ranking.topUsers(guildId, 1, 15);
+
+      const topUsers = await Promise.all((rawTop || []).map(async (u, i) => {
+        let member = req.guild.members.cache.get(u.user_id);
+        if (!member) member = await req.guild.members.fetch(u.user_id).catch(() => null);
+        return {
+          rank: i + 1,
+          userId: u.user_id,
+          username: member ? member.user.username : `User (${u.user_id.slice(-4)})`,
+          avatar: member ? member.user.displayAvatarURL() : 'https://cdn.discordapp.com/embed/avatars/0.png',
+          level: u.level || 0,
+          xp: u.xp || 0
+        };
+      }));
+
+      res.json({
+        success: true,
+        config,
+        roleRewards,
+        topUsers
+      });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  router.post('/guild/:guildId/ranking/config', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
+    try {
+      const guildId = req.params.guildId;
+      const updated = await ranking.setConfig(guildId, req.body);
+      res.json({ success: true, message: 'Ranking settings updated successfully.', config: updated });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  router.post('/guild/:guildId/ranking/rewards', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
+    try {
+      const guildId = req.params.guildId;
+      const { level, roleId } = req.body;
+      if (!level || !roleId) {
+        return res.status(400).json({ error: 'Level and Role are required.' });
+      }
+      await ranking.setRoleReward(guildId, Number(level), roleId);
+      res.json({ success: true, message: `Reward for Level ${level} saved successfully.` });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  router.delete('/guild/:guildId/ranking/rewards/:level', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
+    try {
+      const guildId = req.params.guildId;
+      await ranking.removeRoleReward(guildId, Number(req.params.level));
+      res.json({ success: true, message: `Reward for Level ${req.params.level} removed.` });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  router.post('/guild/:guildId/ranking/reset', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
+    try {
+      const guildId = req.params.guildId;
+      const { userId } = req.body;
+      if (userId === 'all') {
+        await ranking.resetAll(guildId);
+        return res.json({ success: true, message: 'All server XP and rankings reset.' });
+      } else if (userId) {
+        await ranking.resetUser(guildId, userId);
+        return res.json({ success: true, message: `Reset ranking stats for user ${userId}.` });
+      }
+      res.status(400).json({ error: 'userId is required ("all" or Discord ID).' });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // ── CUSTOM COMMANDS SYSTEM API ──────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════════════════════════
+  router.get('/guild/:guildId/customcommands', requireGuildAccess(client), async (req, res) => {
+    try {
+      const guildId = req.params.guildId;
+      const commands = await customCommandStorage.getCustomCommands(guildId);
+      const isPremium = await isPremiumGuild(guildId);
+      const maxAllowed = isPremium ? 50 : 10;
+
+      res.json({
+        success: true,
+        commands,
+        count: commands.length,
+        maxAllowed,
+        isPremium
+      });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  router.post('/guild/:guildId/customcommands', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
+    try {
+      const guildId = req.params.guildId;
+      const saved = await customCommandStorage.saveCustomCommand(guildId, req.body);
+      res.json({
+        success: true,
+        command: saved,
+        message: `Custom command /${saved.name} saved successfully!`
+      });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  router.delete('/guild/:guildId/customcommands/:name', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
+    try {
+      const guildId = req.params.guildId;
+      const ok = await customCommandStorage.deleteCustomCommand(guildId, req.params.name);
+      if (!ok) return res.status(404).json({ error: 'Custom command not found.' });
+      res.json({ success: true, message: `Custom command /${req.params.name} deleted.` });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

@@ -47,9 +47,19 @@ db.serialize(() => {
       cooldown_seconds INTEGER NOT NULL DEFAULT 60,
       blacklist TEXT NOT NULL DEFAULT '[]',
       formula TEXT NOT NULL DEFAULT '50 * level * level + 50 * level',
-      min_chars INTEGER NOT NULL DEFAULT 5
+      min_chars INTEGER NOT NULL DEFAULT 5,
+      announcement_channel TEXT DEFAULT 'current',
+      custom_announcement_channel TEXT,
+      announcement_message TEXT DEFAULT '🎉 GG {user}, you just advanced to **Level {level}**!',
+      xp_rate REAL DEFAULT 1.0
     )
   `);
+
+  // Ensure new columns exist on older tables
+  db.run(`ALTER TABLE guild_config ADD COLUMN announcement_channel TEXT DEFAULT 'current'`, () => {});
+  db.run(`ALTER TABLE guild_config ADD COLUMN custom_announcement_channel TEXT`, () => {});
+  db.run(`ALTER TABLE guild_config ADD COLUMN announcement_message TEXT DEFAULT '🎉 GG {user}, you just advanced to **Level {level}**!'`, () => {});
+  db.run(`ALTER TABLE guild_config ADD COLUMN xp_rate REAL DEFAULT 1.0`, () => {});
   db.run(`
     CREATE TABLE IF NOT EXISTS user_stats (
       guild_id TEXT NOT NULL,
@@ -83,7 +93,11 @@ async function getConfig(guildId) {
         cooldown_seconds: doc.cooldownSeconds,
         blacklist: doc.blacklist,
         formula: doc.formula,
-        min_chars: doc.minChars
+        min_chars: doc.minChars,
+        announcement_channel: doc.announcementChannel || 'current',
+        custom_announcement_channel: doc.customAnnouncementChannel || null,
+        announcement_message: doc.announcementMessage || '🎉 GG {user}, you just advanced to **Level {level}**!',
+        xp_rate: doc.xpRate || 1.0
       };
     }
     return {
@@ -92,7 +106,11 @@ async function getConfig(guildId) {
       cooldown_seconds: 60,
       blacklist: [],
       formula: '50 * level * level + 50 * level',
-      min_chars: 5
+      min_chars: 5,
+      announcement_channel: 'current',
+      custom_announcement_channel: null,
+      announcement_message: '🎉 GG {user}, you just advanced to **Level {level}**!',
+      xp_rate: 1.0
     };
   }
 
@@ -101,8 +119,12 @@ async function getConfig(guildId) {
     return {
       ...row,
       enabled: !!row.enabled,
-      blacklist: JSON.parse(row.blacklist || '[]'),
-      formula: row.formula || '50 * level * level + 50 * level'
+      blacklist: typeof row.blacklist === 'string' ? JSON.parse(row.blacklist || '[]') : (row.blacklist || []),
+      formula: row.formula || '50 * level * level + 50 * level',
+      announcement_channel: row.announcement_channel || 'current',
+      custom_announcement_channel: row.custom_announcement_channel || null,
+      announcement_message: row.announcement_message || '🎉 GG {user}, you just advanced to **Level {level}**!',
+      xp_rate: row.xp_rate || 1.0
     };
   }
   return {
@@ -111,19 +133,28 @@ async function getConfig(guildId) {
     cooldown_seconds: 60,
     blacklist: [],
     formula: '50 * level * level + 50 * level',
-    min_chars: 5
+    min_chars: 5,
+    announcement_channel: 'current',
+    custom_announcement_channel: null,
+    announcement_message: '🎉 GG {user}, you just advanced to **Level {level}**!',
+    xp_rate: 1.0
   };
 }
 
 async function setConfig(guildId, patch) {
+  const cur = await getConfig(guildId);
+  const merged = {
+    ...cur,
+    ...patch,
+    enabled: patch.enabled === undefined ? cur.enabled : !!patch.enabled,
+    blacklist: patch.blacklist ?? cur.blacklist,
+    announcement_channel: patch.announcement_channel ?? cur.announcement_channel,
+    custom_announcement_channel: patch.custom_announcement_channel ?? cur.custom_announcement_channel,
+    announcement_message: patch.announcement_message ?? cur.announcement_message,
+    xp_rate: patch.xp_rate ?? cur.xp_rate
+  };
+
   if (isMongoReady()) {
-    const cur = await getConfig(guildId);
-    const merged = {
-      ...cur,
-      ...patch,
-      enabled: patch.enabled === undefined ? cur.enabled : !!patch.enabled,
-      blacklist: patch.blacklist ?? cur.blacklist
-    };
     await RankConfig.findOneAndUpdate(
       { guildId },
       {
@@ -131,36 +162,45 @@ async function setConfig(guildId, patch) {
         cooldownSeconds: merged.cooldown_seconds,
         blacklist: merged.blacklist,
         formula: merged.formula,
-        minChars: merged.min_chars
+        minChars: merged.min_chars,
+        announcementChannel: merged.announcement_channel,
+        customAnnouncementChannel: merged.custom_announcement_channel,
+        announcementMessage: merged.announcement_message,
+        xpRate: merged.xp_rate
       },
       { upsert: true }
     );
     return getConfig(guildId);
   }
 
-  const cur = await getConfig(guildId);
-  const merged = {
-    ...cur,
-    ...patch,
-    enabled: patch.enabled === undefined ? cur.enabled : !!patch.enabled,
-    blacklist: JSON.stringify(patch.blacklist ?? cur.blacklist)
-  };
+  const blacklistJson = typeof merged.blacklist === 'string' ? merged.blacklist : JSON.stringify(merged.blacklist || []);
   await run(`
-    INSERT INTO guild_config (guild_id, enabled, cooldown_seconds, blacklist, formula, min_chars)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO guild_config (
+      guild_id, enabled, cooldown_seconds, blacklist, formula, min_chars,
+      announcement_channel, custom_announcement_channel, announcement_message, xp_rate
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(guild_id) DO UPDATE SET
       enabled=excluded.enabled,
       cooldown_seconds=excluded.cooldown_seconds,
       blacklist=excluded.blacklist,
       formula=excluded.formula,
-      min_chars=excluded.min_chars
+      min_chars=excluded.min_chars,
+      announcement_channel=excluded.announcement_channel,
+      custom_announcement_channel=excluded.custom_announcement_channel,
+      announcement_message=excluded.announcement_message,
+      xp_rate=excluded.xp_rate
   `, [
-    merged.guild_id,
+    guildId,
     merged.enabled ? 1 : 0,
     merged.cooldown_seconds,
-    merged.blacklist,
+    blacklistJson,
     merged.formula,
-    merged.min_chars
+    merged.min_chars,
+    merged.announcement_channel,
+    merged.custom_announcement_channel,
+    merged.announcement_message,
+    merged.xp_rate
   ]);
   return getConfig(guildId);
 }

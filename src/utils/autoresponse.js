@@ -53,13 +53,24 @@ async function getAutoResponse(guildId, trigger) {
   return new Promise((resolve, reject) => {
     db.get(`SELECT * FROM autoresponses WHERE guild_id = ? AND trigger = ?`, [guildId, trigger], (err, row) => {
       if (err) reject(err);
-      else resolve(row);
+      else resolve(row || null);
     });
   });
 }
 
+// Helper to clear message event cache when triggers change
+function clearHandlerCache(guildId) {
+  try {
+    const handler = require('../events/autoresponseHandler');
+    if (handler && typeof handler.invalidateCache === 'function') {
+      handler.invalidateCache(guildId);
+    }
+  } catch {}
+}
+
 // ✅ Add a new trigger
 async function addAutoResponse(guildId, trigger, response, embed) {
+  clearHandlerCache(guildId);
   if (useMongoDB) {
     await Autoresponse.findOneAndUpdate(
       { guildId, trigger },
@@ -80,6 +91,7 @@ async function addAutoResponse(guildId, trigger, response, embed) {
 
 // ✅ Remove a trigger
 async function removeAutoResponse(guildId, trigger) {
+  clearHandlerCache(guildId);
   if (useMongoDB) {
     await Autoresponse.findOneAndDelete({ guildId, trigger });
     return;

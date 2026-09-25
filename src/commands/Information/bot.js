@@ -200,13 +200,31 @@ module.exports = {
       const cmdCount = (client.commands && typeof client.commands.size === 'number') ? client.commands.size : 'N/A';
       const uptimePretty = formatDuration(client.uptime ?? (Date.now() - START_TIME));
 
+      let pers = null;
+      try {
+        const personalizationStorage = require('../../utils/personalizationStorage');
+        if (interaction.guildId) {
+          pers = await personalizationStorage.getPersonalization(interaction.guildId);
+        }
+      } catch {
+        // ignore
+      }
+
+      const botName = pers?.nickname || client.user?.username || 'Uranium';
+      const botAvatarUrl = pers?.avatarUrl || botAvatar;
+      const serverBio = pers?.bio?.trim();
+
+      const descLines = [];
+      if (serverBio) {
+        descLines.push(`> 💬 *"${serverBio}"*\n`);
+      }
+      descLines.push(`${botName} is your all-in-one Discord assistant — packed with moderation tools, fun commands, utilities, and real-time features.`);
+      descLines.push('');
+      descLines.push('Use `/help` to see a full command list, or click the buttons below for invites and support.');
+
       const embed = new EmbedBuilder()
-        .setTitle('🤖 Multi-Bot Overview')
-        .setDescription([
-          'Multi-Bot is your all-in-one Discord assistant — packed with moderation tools, fun commands, utilities, and real-time features.',
-          '',
-          'Use `/help` to see a full command list, or click the buttons below for invites and support.'
-        ].join('\n'))
+        .setTitle(`🤖 ${botName} — Overview`)
+        .setDescription(descLines.join('\n'))
         .addFields(
           { name: 'Prefix', value: '`/` (slash commands)', inline: true },
           { name: 'Commands', value: `${cmdCount}`, inline: true },
@@ -215,8 +233,12 @@ module.exports = {
           { name: 'Developer', value: 'SHM', inline: true }
         )
         .setColor(0x0099FF)
-        .setThumbnail(botAvatar)
+        .setThumbnail(botAvatarUrl)
         .setFooter({ text: developerCredit });
+
+      if (pers?.bannerUrl) {
+        embed.setImage(pers.bannerUrl);
+      }
 
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()

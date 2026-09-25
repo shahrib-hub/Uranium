@@ -1117,6 +1117,36 @@
         "isPremium": false
       },
       {
+        "name": "/customcommand create",
+        "description": "create a new custom command",
+        "isPremium": false
+      },
+      {
+        "name": "/customcommand edit",
+        "description": "edit custom command response or visibility",
+        "isPremium": false
+      },
+      {
+        "name": "/customcommand delete",
+        "description": "delete an existing custom command",
+        "isPremium": false
+      },
+      {
+        "name": "/customcommand list",
+        "description": "list all custom commands and quota",
+        "isPremium": false
+      },
+      {
+        "name": "/customcommand info",
+        "description": "view deep command permissions & triggers",
+        "isPremium": false
+      },
+      {
+        "name": "/customcommand run",
+        "description": "run a custom command by trigger name",
+        "isPremium": false
+      },
+      {
         "name": "/autorole add",
         "description": "add autorole",
         "isPremium": false

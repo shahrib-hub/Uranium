@@ -63,6 +63,11 @@ module.exports = {
 
     async function shouldHandle(guildId, eventName, channelId = null) {
       try {
+        const pluginStorage = require('../utils/pluginStorage');
+        if (pluginStorage && !(await pluginStorage.isPluginEnabled(guildId, 'logging'))) {
+          return false;
+        }
+
         const enabled = await logStorage.isEventEnabled(guildId, eventName);
         if (!enabled) return false;
 

@@ -16,6 +16,9 @@ module.exports = {
       if (!settings || (!settings.enabled && !settings.active)) return;
       if ((!settings.goodbyeEnabled && !settings.sendGoodbyeMessage) || !settings.goodbyeChannelId) return;
 
+      const pluginStorage = require('../utils/pluginStorage');
+      if (pluginStorage && !(await pluginStorage.isPluginEnabled(guildId, 'welcome'))) return;
+
       let channel = guild.channels.cache.get(String(settings.goodbyeChannelId));
       if (!channel) {
         channel = await guild.channels.fetch(String(settings.goodbyeChannelId)).catch(() => null);

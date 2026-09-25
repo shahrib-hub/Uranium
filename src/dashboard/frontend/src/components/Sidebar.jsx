@@ -22,7 +22,10 @@ import {
   Server,
   Palette,
   UserPlus,
-  ShieldCheck
+  ShieldCheck,
+  Trophy,
+  FileText,
+  Terminal
 } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useStore } from '@/store';
@@ -35,6 +38,8 @@ export default function Sidebar() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [serverSearch, setServerSearch] = useState('');
   const [essentialsOpen, setEssentialsOpen] = useState(true);
+  const [serverManagementOpen, setServerManagementOpen] = useState(true);
+  const [utilitiesOpen, setUtilitiesOpen] = useState(true);
   const [premiumOpen, setPremiumOpen] = useState(true);
 
   const guildId = params.get('guild');
@@ -249,12 +254,101 @@ export default function Sidebar() {
               <div className="space-y-0.5 pt-0.5">
                 {[
                   { href: '/dashboard/welcome', label: 'Welcome & Goodbye', icon: UserPlus },
-                  { href: '/dashboard/verification', label: 'Server Verification', icon: ShieldCheck },
-                  { href: '/dashboard/moderation', label: 'Moderator & AutoMod', icon: ShieldAlert },
+                  { href: '/dashboard/ranking', label: 'Levels & Ranking', icon: Trophy },
                   { href: '/dashboard/rr', label: 'Reaction Roles', icon: Users },
+                  { href: '/dashboard/giveaways', label: 'Giveaways', icon: Gift }
+                ].map(({ href, label, icon: Icon }) => {
+                  const active = pathname === href;
+                  return (
+                    <Link
+                      key={href}
+                      href={withGuild(href)}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-semibold transition ${
+                        active
+                          ? 'bg-[#222432] text-white'
+                          : 'text-[#949ba4] hover:text-white hover:bg-[#1a1b24]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon size={16} className={active ? 'text-rose-400' : ''} />
+                        <span>{label}</span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* SERVER MANAGEMENT Group */}
+          <div className="space-y-1">
+            <button
+              type="button"
+              onClick={() => setServerManagementOpen(!serverManagementOpen)}
+              className="flex w-full items-center justify-between px-3 py-1.5 text-[11px] font-black uppercase tracking-wider text-white/40 hover:text-white/70 transition"
+            >
+              <span>Server Management</span>
+              <ChevronDown
+                size={12}
+                className={`transition-transform duration-150 ${
+                  serverManagementOpen ? 'rotate-0' : '-rotate-90'
+                }`}
+              />
+            </button>
+
+            {serverManagementOpen && (
+              <div className="space-y-0.5 pt-0.5">
+                {[
+                  { href: '/dashboard/customcommands', label: 'Custom Commands', icon: Terminal },
+                  { href: '/dashboard/logging', label: 'Server Logging', icon: FileText },
+                  { href: '/dashboard/moderation', label: 'Moderator & AutoMod', icon: ShieldAlert },
+                  { href: '/dashboard/verification', label: 'Server Verification', icon: ShieldCheck }
+                ].map(({ href, label, icon: Icon }) => {
+                  const active = pathname === href;
+                  return (
+                    <Link
+                      key={href}
+                      href={withGuild(href)}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-semibold transition ${
+                        active
+                          ? 'bg-[#222432] text-white'
+                          : 'text-[#949ba4] hover:text-white hover:bg-[#1a1b24]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon size={16} className={active ? 'text-rose-400' : ''} />
+                        <span>{label}</span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* UTILITIES & AUDIO Group */}
+          <div className="space-y-1">
+            <button
+              type="button"
+              onClick={() => setUtilitiesOpen(!utilitiesOpen)}
+              className="flex w-full items-center justify-between px-3 py-1.5 text-[11px] font-black uppercase tracking-wider text-white/40 hover:text-white/70 transition"
+            >
+              <span>Utilities & Media</span>
+              <ChevronDown
+                size={12}
+                className={`transition-transform duration-150 ${
+                  utilitiesOpen ? 'rotate-0' : '-rotate-90'
+                }`}
+              />
+            </button>
+
+            {utilitiesOpen && (
+              <div className="space-y-0.5 pt-0.5">
+                {[
                   { href: '/dashboard/music', label: 'Music & Audio', icon: Music2 },
-                  { href: '/dashboard/giveaways', label: 'Giveaways', icon: Gift },
-                  { href: '/dashboard/settings', label: 'Bot Settings', icon: Settings }
+                  { href: '/dashboard/settings', label: 'Server Settings', icon: Settings }
                 ].map(({ href, label, icon: Icon }) => {
                   const active = pathname === href;
                   return (
