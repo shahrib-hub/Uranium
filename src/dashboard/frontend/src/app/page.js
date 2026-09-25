@@ -813,6 +813,12 @@ export default function HomePage() {
             <div className="space-y-3">
               <p className="text-xs font-bold uppercase tracking-wider text-white">Resources</p>
               <ul className="space-y-2 text-xs text-white/60">
+                <li>
+                  <Link href="/status" className="hover:text-white transition flex items-center gap-1.5 text-emerald-400 font-semibold">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>Real-time Status</span>
+                  </Link>
+                </li>
                 <li><Link href="/docs" className="hover:text-white transition">Documentation</Link></li>
                 <li><Link href="/commands" className="hover:text-white transition">Commands Reference</Link></li>
                 <li><a href="#music" className="hover:text-white transition">Audio Filters</a></li>

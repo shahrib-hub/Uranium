@@ -14,6 +14,8 @@ const playlistStorage = require('../utils/playlistStorage');
 const { isPremiumGuild, isPremiumUser, redeemCode, listPremiumGuilds } = require('../utils/premium');
 const verificationUtils = require('../utils/verification');
 const { createSocketToken } = require('./socketAuth');
+const notificationsManager = require('../utils/notificationsManager');
+const statusWatcher = require('../utils/statusWatcher');
 
 function createApiRouter(client) {
   const router = Router();
@@ -128,8 +130,7 @@ function createApiRouter(client) {
 
       const isPremiumCmd = (cmdName) => {
         const lower = cmdName.toLowerCase();
-        // Fully premium-based commands only
-        if (lower.startsWith('/backup')) return true;
+        // Fully premium-based commands only (/backup is free)
         if (lower.startsWith('/ytverify')) return true;
         if (lower.startsWith('/ai') && !lower.includes('help')) return true;
         return false;
@@ -512,6 +513,99 @@ function createApiRouter(client) {
     const mins = Math.floor((ms % (60 * 60 * 1000)) / (60 * 1000));
     return `${days}d ${hours}h ${mins}m`;
   }
+
+  // ---------- NOTIFICATIONS API (Header Notification Panel) ----------
+  router.get('/notifications', (req, res) => {
+    try {
+      const items = notificationsManager.getNotifications();
+      res.json(items);
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to fetch notifications' });
+    }
+  });
+
+  router.post('/notifications', (req, res) => {
+    try {
+      const { title, message, type, badge, durationDays, link, linkText } = req.body;
+      if (!title || !message) {
+        return res.status(400).json({ error: 'Title and message are required' });
+      }
+      const item = notificationsManager.addNotification({
+        title,
+        message,
+        type: type || 'info',
+        badge: badge || 'Notice',
+        durationDays: durationDays ? parseInt(durationDays) : 14,
+        link,
+        linkText
+      });
+      res.json({ success: true, notification: item });
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to create notification' });
+    }
+  });
+
+  router.delete('/notifications/:id', (req, res) => {
+    try {
+      const deleted = notificationsManager.deleteNotification(req.params.id);
+      res.json({ success: deleted });
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to delete notification' });
+    }
+  });
+
+  // ---------- REAL-TIME STATUS & ALERTS API (Uranium Watcher) ----------
+  router.get('/status', (req, res) => {
+    try {
+      statusWatcher.updateTelemetry(client);
+      const data = statusWatcher.getStatusData();
+      const uptimeMs = client.uptime || 0;
+      const ping = typeof client.ws?.ping === 'number' && client.ws.ping >= 0 ? Math.round(client.ws.ping) : 0;
+
+      res.json({
+        overallStatus: data.overallStatus || 'operational',
+        lastUpdated: data.lastUpdated,
+        components: data.components,
+        alerts: data.alerts || [],     // automatically pruned to < 30 days
+        notices: data.notices || [],   // automatically pruned to < 6 months
+        uptime: formatUptime(uptimeMs),
+        uptimeSeconds: Math.floor(uptimeMs / 1000),
+        servers: client.guilds.cache.size,
+        ping
+      });
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to load status telemetry' });
+    }
+  });
+
+  router.post('/status/notice', (req, res) => {
+    try {
+      const { title, message, severity, poster } = req.body;
+      if (!title || !message) {
+        return res.status(400).json({ error: 'Title and message required' });
+      }
+      const notice = statusWatcher.addManualNotice({
+        title,
+        message,
+        severity: severity || 'notice',
+        poster: poster || req.session?.user?.username || 'System Admin',
+        type: 'manual'
+      });
+      res.json({ success: true, notice });
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to create status notice' });
+    }
+  });
+
+  router.post('/status/resolve', (req, res) => {
+    try {
+      const poster = req.session?.user?.username || 'System Admin';
+      const updated = statusWatcher.resolveAllAlerts(poster);
+      res.json({ success: true, status: updated });
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to resolve incidents' });
+    }
+  });
 
   // ---------- REACTION ROLES API ----------
   

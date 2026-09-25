@@ -129,8 +129,10 @@
 
 .lucent-page {
   width: 100%;
+  max-width: 100%;
   min-height: 100%;
-  padding: clamp(1.25rem, 2.5vw, 2.5rem);
+  padding: clamp(0.75rem, 2.5vw, 2.5rem);
+  box-sizing: border-box;
 }
 
 .lucent-kicker {

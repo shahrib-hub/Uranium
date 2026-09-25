@@ -276,7 +276,7 @@ export default function WelcomeGoodbyePage() {
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       {/* Top Header */}
-      <div className="border-b border-white/5 bg-[#12141d]/80 backdrop-blur-md sticky top-0 z-30 px-6 py-5">
+      <div className="border-b border-white/5 bg-[#12141d]/80 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-6 py-4 sm:py-5">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-3">

@@ -233,17 +233,17 @@ export default function GiveawaysPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
           <button
             onClick={() => fetchGiveaways(true)}
             disabled={refreshing}
-            className="p-4 rounded-2xl bg-white/5 border border-white/10 text-white/60 hover:text-white hover:border-white/20 transition-all active:scale-95 disabled:opacity-50"
+            className="p-3.5 sm:p-4 rounded-2xl bg-white/5 border border-white/10 text-white/60 hover:text-white hover:border-white/20 transition-all active:scale-95 disabled:opacity-50"
           >
             <RefreshCw size={18} className={refreshing ? 'animate-spin text-red-500' : ''} />
           </button>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-red-500 text-black font-black uppercase tracking-wider text-xs shadow-lg shadow-red-500/20 hover:scale-105 active:scale-95 transition-all"
+            className="flex items-center justify-center gap-2.5 px-5 py-3 sm:px-6 sm:py-3.5 rounded-2xl bg-red-500 text-black font-black uppercase tracking-wider text-xs shadow-lg shadow-red-500/20 hover:scale-105 active:scale-95 transition-all flex-1 sm:flex-none"
           >
             <Plus size={16} />
             Launch Giveaway

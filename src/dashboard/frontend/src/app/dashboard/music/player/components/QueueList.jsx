@@ -73,7 +73,7 @@ export default function QueueList({
       {queueLength > 0 ? (
         <div className="rounded-xl border border-[#161724] bg-[#0c0d14] overflow-hidden">
           {/* Table Header */}
-          <div className="grid grid-cols-[36px_1fr_80px_40px] sm:grid-cols-[40px_1fr_120px_80px_60px] px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-[#585e75] border-b border-[#161724] select-none">
+          <div className="grid grid-cols-[32px_1fr_55px] sm:grid-cols-[40px_1fr_120px_80px_60px] px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-[#585e75] border-b border-[#161724] select-none">
             <span className="text-center">#</span>
             <span>Title</span>
             <span className="hidden sm:block">Source</span>
@@ -86,7 +86,7 @@ export default function QueueList({
             {queue.map((t, idx) => (
               <div
                 key={idx}
-                className="grid grid-cols-[36px_1fr_80px_40px] sm:grid-cols-[40px_1fr_120px_80px_60px] items-center px-3 py-2 text-xs hover:bg-white/[0.03] transition group"
+                className="grid grid-cols-[32px_1fr_55px] sm:grid-cols-[40px_1fr_120px_80px_60px] items-center px-3 py-2 text-xs hover:bg-white/[0.03] transition group"
               >
                 {/* Index / Grip Affordance */}
                 <div className="text-center flex items-center justify-center text-[#585e75] group-hover:text-[#9ca3af]">

@@ -75,9 +75,9 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="p-6 sm:p-10 max-w-7xl mx-auto space-y-8">
+    <div className="p-3.5 sm:p-8 md:p-10 max-w-7xl mx-auto space-y-6 sm:space-y-8">
       {/* Page Title & Subtitle */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5 sm:gap-6">
         <div>
           <div className="flex items-center gap-4 mb-2">
             <div className="h-px w-12 bg-red-500" />
@@ -85,7 +85,7 @@ export default function DashboardPage() {
               Command Center
             </span>
           </div>
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tighter uppercase italic text-white">
+          <h1 className="text-2xl sm:text-5xl lg:text-6xl font-black tracking-tighter uppercase italic text-white break-words">
             {guild?.name ? (
               <>
                 {guild.name.split(' ').slice(0, -1).join(' ')}{' '}
@@ -112,7 +112,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Minimalist Tabs (MEE6 style with active underline indicator) */}
-      <div className="flex items-center gap-6 border-b border-[#232534] text-sm font-bold">
+      <div className="flex items-center gap-4 sm:gap-6 border-b border-[#232534] text-xs sm:text-sm font-bold overflow-x-auto no-scrollbar">
         {[
           { id: 'overview', label: 'Overview' },
           { id: 'plugins', label: 'Enabled Modules' },
@@ -122,7 +122,7 @@ export default function DashboardPage() {
             key={tab.id}
             type="button"
             onClick={() => setActiveTab(tab.id)}
-            className={`pb-3.5 transition relative cursor-pointer text-sm ${
+            className={`pb-3.5 transition relative cursor-pointer text-xs sm:text-sm whitespace-nowrap ${
               activeTab === tab.id
                 ? 'text-white font-black'
                 : 'text-white/40 hover:text-white/70'

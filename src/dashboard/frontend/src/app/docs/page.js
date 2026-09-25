@@ -767,6 +767,7 @@ export default function DocsPage() {
   const [selectedSection, setSelectedSection] = useState('intro');
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedId, setCopiedId] = useState(null);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   // Flatten items for easy searching
   const allItems = useMemo(() => {
@@ -803,48 +804,142 @@ export default function DocsPage() {
     setTimeout(() => setCopiedId(null), 2500);
   };
 
+  const selectTopic = (id) => {
+    setSelectedSection(id);
+    setMobileNavOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
-    <div className="min-h-screen bg-[#0d0f17] text-white selection:bg-rose-500/30 selection:text-white">
+    <div className="min-h-screen bg-[#0d0f17] text-white selection:bg-rose-500/30 selection:text-white max-w-full overflow-x-hidden">
       {/* Top Navbar */}
       <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0d0f17]/90 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2.5 group">
-              <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-rose-500 to-red-600 text-white shadow-md shadow-rose-500/20 group-hover:scale-105 transition">
-                <Zap size={17} fill="currentColor" />
+        <div className="mx-auto flex h-14 sm:h-16 max-w-7xl items-center justify-between px-3 sm:px-6">
+          <div className="flex items-center gap-3 sm:gap-6">
+            <Link href="/" className="flex items-center gap-2 group">
+              <span className="grid h-8 w-8 sm:h-9 sm:w-9 place-items-center rounded-xl bg-gradient-to-br from-rose-500 to-red-600 text-white shadow-md shadow-rose-500/20 group-hover:scale-105 transition">
+                <Zap size={16} fill="currentColor" />
               </span>
-              <span className="text-base font-extrabold text-white tracking-tight flex items-center">
-                Uranium <span className="text-xs font-bold text-rose-400 tracking-wide ml-1.5">/ Docs</span>
+              <span className="text-sm sm:text-base font-extrabold text-white tracking-tight flex items-center">
+                Uranium <span className="text-xs font-bold text-rose-400 tracking-wide ml-1.5 hidden xs:inline">/ Docs</span>
               </span>
             </Link>
 
             <div className="hidden md:flex items-center gap-5 text-xs font-semibold text-white/60">
               <Link href="/" className="hover:text-white transition">Home</Link>
               <Link href="/commands" className="hover:text-white transition">Commands</Link>
+              <Link href="/status" className="hover:text-white transition flex items-center gap-1 text-emerald-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>Status</span>
+              </Link>
               <Link href="/servers" className="hover:text-white transition">Dashboard</Link>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <a
               href="https://discord.com/oauth2/authorize?client_id=932136827605905489&permissions=8&scope=bot%20applications.commands"
               target="_blank"
               rel="noopener noreferrer"
-              className="h-9 px-4 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 text-xs font-bold text-white flex items-center gap-2 hover:brightness-110 transition shadow-md shadow-rose-500/20"
+              className="h-8 sm:h-9 px-3 sm:px-4 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 text-xs font-bold text-white flex items-center gap-1.5 hover:brightness-110 transition shadow-md shadow-rose-500/20"
             >
-              <span>Add to Discord</span>
-              <ExternalLink size={13} />
+              <span className="hidden xs:inline">Add to </span>Discord
+              <ExternalLink size={12} />
             </a>
           </div>
         </div>
       </header>
 
       {/* Docs Body Layout */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
+      <div className="mx-auto max-w-7xl px-3 sm:px-6 py-6 sm:py-8">
+        {/* Mobile Docs Navigation Trigger Button */}
+        <div className="lg:hidden mb-4">
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen(true)}
+            className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-[#141624] border border-white/10 text-xs font-bold text-white shadow-lg active:scale-98 transition"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <BookOpen size={16} className="text-rose-400 shrink-0" />
+              <span className="truncate">Topic: <span className="text-rose-300 font-semibold">{currentItem.title}</span></span>
+            </div>
+            <span className="px-2 py-0.5 rounded-lg bg-rose-500/20 text-rose-300 text-[10px] uppercase font-bold shrink-0 ml-2">
+              Browse Topics
+            </span>
+          </button>
+        </div>
+
+        {/* Mobile Drawer */}
+        {mobileNavOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden flex">
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setMobileNavOpen(false)} />
+            <div className="relative w-4/5 max-w-xs h-full bg-[#11121d] border-r border-white/10 p-4 overflow-y-auto space-y-5 z-10">
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <span className="font-bold text-sm text-white flex items-center gap-2">
+                  <BookOpen size={16} className="text-rose-400" />
+                  Documentation
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setMobileNavOpen(false)}
+                  className="p-1 rounded-lg text-white/50 hover:text-white"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Search Box in drawer */}
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search docs..."
+                  className="w-full pl-9 pr-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-medium text-white placeholder-white/30 outline-none"
+                />
+              </div>
+
+              {/* Navigation List in drawer */}
+              <nav className="space-y-5">
+                {filteredSections.map((cat) => {
+                  const Icon = cat.icon;
+                  return (
+                    <div key={cat.id} className="space-y-1.5">
+                      <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-rose-400/90 ml-1">
+                        <Icon size={13} />
+                        <span>{cat.category}</span>
+                      </div>
+                      <div className="space-y-1">
+                        {cat.items.map((item) => (
+                          <button
+                            key={item.id}
+                            onClick={() => selectTopic(item.id)}
+                            className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold transition flex items-center justify-between ${
+                              selectedSection === item.id
+                                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                                : 'text-white/60 hover:text-white hover:bg-white/5 border border-transparent'
+                            }`}
+                          >
+                            <span className="truncate">{item.title}</span>
+                            {selectedSection === item.id && (
+                              <ChevronRight size={13} className="text-rose-400 shrink-0" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </nav>
+            </div>
+          </div>
+        )}
+
         <div className="grid lg:grid-cols-[280px_1fr] gap-8 items-start">
           
-          {/* Left Sidebar Navigation */}
-          <aside className="sticky top-24 space-y-6">
+          {/* Desktop Left Sidebar Navigation */}
+          <aside className="hidden lg:block sticky top-24 space-y-6">
             {/* Search Box */}
             <div className="relative">
               <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />
@@ -910,28 +1005,28 @@ export default function DocsPage() {
           </aside>
 
           {/* Main Article Content */}
-          <main className="rounded-3xl border border-white/10 bg-[#12141f] p-6 sm:p-10 shadow-2xl space-y-6 min-h-[75vh]">
+          <main className="rounded-2xl sm:rounded-3xl border border-white/10 bg-[#12141f] p-4 sm:p-7 lg:p-10 shadow-2xl space-y-6 min-h-[75vh] w-full max-w-full overflow-hidden">
             {/* Breadcrumb */}
-            <div className="flex items-center gap-2 text-xs font-medium text-white/40">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-white/40">
               <Link href="/docs" className="hover:text-white transition">Docs</Link>
               <span>/</span>
               <span className="text-rose-400 font-semibold">{currentItem.category}</span>
               <span>/</span>
-              <span className="text-white/80">{currentItem.title}</span>
+              <span className="text-white/80 truncate max-w-[180px] sm:max-w-none">{currentItem.title}</span>
             </div>
 
             {/* Header */}
-            <div className="space-y-2 border-b border-white/10 pb-6">
-              <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
+            <div className="space-y-2 border-b border-white/10 pb-5 sm:pb-6">
+              <h1 className="text-xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
                 {currentItem.title}
               </h1>
-              <p className="text-sm text-white/60 leading-relaxed max-w-2xl">
+              <p className="text-xs sm:text-sm text-white/60 leading-relaxed max-w-2xl">
                 {currentItem.description}
               </p>
             </div>
 
             {/* Article Markdown Body with Full Bold, Link, List, Table Support */}
-            <div className="text-sm leading-relaxed text-white/80">
+            <div className="text-xs sm:text-sm leading-relaxed text-white/80 max-w-full overflow-hidden">
               <MarkdownViewer
                 content={currentItem.content}
                 onSelectSection={setSelectedSection}
@@ -941,10 +1036,10 @@ export default function DocsPage() {
             </div>
 
             {/* Bottom Footer Navigation */}
-            <div className="pt-8 border-t border-white/10 flex items-center justify-between gap-4">
+            <div className="pt-6 sm:pt-8 border-t border-white/10 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <Link
                 href="/commands"
-                className="py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-white flex items-center gap-2 transition"
+                className="py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-white flex items-center justify-center gap-2 transition text-center"
               >
                 <Terminal size={14} className="text-rose-400" />
                 <span>View All Slash Commands</span>
@@ -953,7 +1048,7 @@ export default function DocsPage() {
                 href="https://discord.com/oauth2/authorize?client_id=932136827605905489&permissions=8&scope=bot%20applications.commands"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 text-xs font-bold uppercase tracking-wider text-white shadow-md shadow-rose-500/20 hover:brightness-110 transition flex items-center gap-2"
+                className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 text-xs font-bold uppercase tracking-wider text-white shadow-md shadow-rose-500/20 hover:brightness-110 transition flex items-center justify-center gap-2 text-center"
               >
                 <span>Invite Uranium</span>
                 <ArrowRight size={14} />

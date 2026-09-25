@@ -13,6 +13,7 @@ import BottomPlayerBar from './components/BottomPlayerBar';
 import ExploreFeedView from './components/ExploreFeedView';
 import PlaylistModal from './components/PlaylistModal';
 import PlaylistDrawer from './components/PlaylistDrawer';
+import { ListMusic, Compass, Sparkles, FolderPlus } from 'lucide-react';
 
 export default function FullMusicPlayerPage() {
   const searchParams = useSearchParams();
@@ -379,56 +380,113 @@ export default function FullMusicPlayerPage() {
         />
 
         {/* Center Stage Content */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 pb-28 space-y-6">
-          {/* TAB 1: QUEUE & LIVE CONTROLS */}
-          {activeTab === 'queue' && (
-            <div className="space-y-6 max-w-5xl mx-auto">
-              {/* Active Hero Deck or Empty Standby State */}
-              {player.current ? (
-                <NowPlayingHero
-                  player={player}
-                  doAction={doAction}
-                  playlists={playlists}
-                  addCurrentToPlaylist={addCurrentToPlaylist}
-                  formatTime={formatTime}
-                  seekPos={seekPos}
-                />
-              ) : (
-                <EmptyPlayerDeck
-                  player={player}
-                  setActiveTab={setActiveTab}
-                  recommendedTracks={recommendedTracks}
-                  popularTracks={feedData.popularToday}
-                  playTrack={playTrack}
-                />
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          {/* Mobile Tab Switcher */}
+          <div className="md:hidden flex items-center gap-1.5 px-3 py-2 border-b border-[#161722] bg-[#0b0c12]/95 backdrop-blur-md overflow-x-auto shrink-0 no-scrollbar">
+            <button
+              type="button"
+              onClick={() => setActiveTab('queue')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                activeTab === 'queue'
+                  ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                  : 'text-[#8b92a8] hover:text-white bg-white/5 border border-transparent'
+              }`}
+            >
+              <ListMusic size={14} />
+              <span>Queue</span>
+              {player.queue?.length > 0 && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 font-bold">
+                  {player.queue.length}
+                </span>
               )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('explore')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                activeTab === 'explore'
+                  ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                  : 'text-[#8b92a8] hover:text-white bg-white/5 border border-transparent'
+              }`}
+            >
+              <Compass size={14} />
+              <span>Explore</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('feed')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                activeTab === 'feed'
+                  ? 'bg-violet-500/15 text-violet-400 border border-violet-500/30'
+                  : 'text-[#8b92a8] hover:text-white bg-white/5 border border-transparent'
+              }`}
+            >
+              <Sparkles size={14} />
+              <span>For You</span>
+            </button>
+            {playlists.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setSelectedPlaylist(playlists[0])}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap text-[#8b92a8] hover:text-white bg-white/5 border border-transparent"
+              >
+                <FolderPlus size={14} />
+                <span>Playlists ({playlists.length})</span>
+              </button>
+            )}
+          </div>
 
-              {/* Queue List Table */}
-              <QueueList
-                queue={player.queue}
-                currentTrack={player.current}
-                doAction={doAction}
-                formatTime={formatTime}
-                playTrack={playTrack}
-                setActiveTab={setActiveTab}
-              />
-            </div>
-          )}
+          <main className="flex-1 overflow-y-auto p-3 sm:p-6 pb-28 space-y-6">
+            {/* TAB 1: QUEUE & LIVE CONTROLS */}
+            {activeTab === 'queue' && (
+              <div className="space-y-6 max-w-5xl mx-auto">
+                {/* Active Hero Deck or Empty Standby State */}
+                {player.current ? (
+                  <NowPlayingHero
+                    player={player}
+                    doAction={doAction}
+                    playlists={playlists}
+                    addCurrentToPlaylist={addCurrentToPlaylist}
+                    formatTime={formatTime}
+                    seekPos={seekPos}
+                  />
+                ) : (
+                  <EmptyPlayerDeck
+                    player={player}
+                    setActiveTab={setActiveTab}
+                    recommendedTracks={recommendedTracks}
+                    popularTracks={feedData.popularToday}
+                    playTrack={playTrack}
+                  />
+                )}
 
-          {/* TAB 2: EXPLORE & TRENDS / TAB 3: SMART FOR-YOU */}
-          {(activeTab === 'explore' || activeTab === 'feed') && (
-            <div className="max-w-6xl mx-auto">
-              <ExploreFeedView
-                feedData={feedData}
-                selectedGenre={selectedGenre}
-                setSelectedGenre={setSelectedGenre}
-                recommendedTracks={recommendedTracks}
-                playTrack={playTrack}
-                activeTab={activeTab}
-              />
-            </div>
-          )}
-        </main>
+                {/* Queue List Table */}
+                <QueueList
+                  queue={player.queue}
+                  currentTrack={player.current}
+                  doAction={doAction}
+                  formatTime={formatTime}
+                  playTrack={playTrack}
+                  setActiveTab={setActiveTab}
+                />
+              </div>
+            )}
+
+            {/* TAB 2: EXPLORE & TRENDS / TAB 3: SMART FOR-YOU */}
+            {(activeTab === 'explore' || activeTab === 'feed') && (
+              <div className="max-w-6xl mx-auto">
+                <ExploreFeedView
+                  feedData={feedData}
+                  selectedGenre={selectedGenre}
+                  setSelectedGenre={setSelectedGenre}
+                  recommendedTracks={recommendedTracks}
+                  playTrack={playTrack}
+                  activeTab={activeTab}
+                />
+              </div>
+            )}
+          </main>
+        </div>
       </div>
 
       {/* ── PERSISTENT INTEGRATED BOTTOM PLAYER BAR ──────────────────────────── */}

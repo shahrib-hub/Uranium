@@ -46,26 +46,36 @@ export default function ServersPage() {
 
   return (
     <div className="min-h-screen bg-[#0e0f15] text-[#f3f4f6]">
-      {/* MEE6 Minimalist Top Bar */}
-      <header className="fixed inset-x-0 top-0 z-50 h-14 bg-[#111218] border-b border-[#1e202c] px-4 sm:px-8 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5 group">
+      {/* Top Bar */}
+      <header className="fixed inset-x-0 top-0 z-50 h-14 bg-[#111218] border-b border-[#1e202c] px-3 sm:px-8 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2 sm:gap-2.5 group">
           <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-tr from-rose-600 to-red-500 text-white shadow-md shadow-rose-600/20 group-hover:scale-105 transition">
             <Zap size={16} fill="currentColor" />
           </span>
-          <span className="text-base font-black text-white tracking-tight">
+          <span className="text-sm sm:text-base font-black text-white tracking-tight">
             Uranium
           </span>
         </Link>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Link
+            href="/status"
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-semibold text-white/70 hover:text-white transition"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span>Status</span>
+          </Link>
+
           <a
             href="https://discord.gg/26ThFyckFX"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-[#252014] hover:bg-[#322a19] border border-[#52411e] text-xs font-bold text-amber-300 transition-all shadow-sm active:scale-95"
+            className="inline-flex items-center gap-1.5 h-8 px-2 sm:px-3 rounded-lg bg-[#252014] hover:bg-[#322a19] border border-[#52411e] text-[11px] sm:text-xs font-bold text-amber-300 transition-all shadow-sm active:scale-95"
           >
-            <span>Upgrade to Premium</span>
-            <Crown size={13} className="fill-amber-400 text-amber-400" />
+            <Crown size={13} className="fill-amber-400 text-amber-400 shrink-0" />
+            <span className="hidden xs:inline">
+              <span className="hidden sm:inline">Upgrade to </span>Premium
+            </span>
           </a>
 
           {user?.avatarUrl ? (
@@ -175,11 +185,11 @@ function ServerCard({ guild, onOpen }) {
   const invite = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&permissions=8&scope=bot%20applications.commands&guild_id=${guild.id}`;
 
   return (
-    <article className="group rounded-2xl border border-[#222432] hover:border-[#323547] bg-[#14151e] p-5 flex flex-col justify-between space-y-5 transition-all duration-200">
-      <div className="space-y-4">
+    <article className="group rounded-2xl border border-[#222432] hover:border-[#323547] bg-[#14151e] p-4 sm:p-5 flex flex-col justify-between space-y-4 sm:space-y-5 transition-all duration-200">
+      <div className="space-y-3 sm:space-y-4">
         {/* Top: Icon + Status */}
         <div className="flex items-start justify-between gap-3">
-          <span className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-rose-500/10 text-lg font-black text-rose-300 border border-white/5">
+          <span className="grid h-12 w-12 sm:h-14 sm:w-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-rose-500/10 text-base sm:text-lg font-black text-rose-300 border border-white/5">
             {icon ? (
               <img src={icon} className="h-full w-full object-cover" alt="" />
             ) : (

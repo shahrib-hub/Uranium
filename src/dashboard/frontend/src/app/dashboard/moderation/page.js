@@ -636,12 +636,12 @@ export default function ModerationPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
           {/* Prominent Sync Button */}
           <button
             onClick={() => syncAll(true)}
             disabled={syncing}
-            className="lucent-button h-11 px-4 rounded-2xl text-xs font-bold gap-2 text-rose-100 hover:border-rose-400/40 disabled:opacity-50 transition shadow-lg shadow-rose-500/10"
+            className="lucent-button h-11 px-4 rounded-2xl text-xs font-bold gap-2 text-rose-100 hover:border-rose-400/40 disabled:opacity-50 transition shadow-lg shadow-rose-500/10 flex-1 sm:flex-none justify-center"
             aria-label="Sync with Discord"
           >
             <RefreshCw size={15} className={syncing ? 'animate-spin text-rose-400' : 'text-rose-300'} />
@@ -655,7 +655,7 @@ export default function ModerationPage() {
               setActionModalType('warn');
               setActionModalOpen(true);
             }}
-            className="lucent-button lucent-button-primary h-11 px-5 rounded-2xl text-xs font-bold gap-2 text-white shadow-xl shadow-rose-500/20"
+            className="lucent-button lucent-button-primary h-11 px-5 rounded-2xl text-xs font-bold gap-2 text-white shadow-xl shadow-rose-500/20 flex-1 sm:flex-none justify-center"
           >
             <Plus size={16} />
             <span>New Mod Action</span>

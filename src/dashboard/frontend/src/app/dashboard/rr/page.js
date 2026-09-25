@@ -339,8 +339,8 @@ export default function ReactionRolesPage() {
   }
 
   return (
-    <div className="p-6 lg:p-12 space-y-8 md:space-y-12 max-w-[1800px] mx-auto animate-in fade-in duration-500">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <div className="p-3.5 sm:p-6 lg:p-12 space-y-6 sm:space-y-8 md:space-y-12 max-w-[1800px] mx-auto animate-in fade-in duration-500 overflow-x-hidden">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-5 sm:gap-6">
         <div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -353,7 +353,7 @@ export default function ReactionRolesPage() {
           <motion.h1 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="text-4xl sm:text-6xl font-black tracking-tighter uppercase italic"
+            className="text-3xl sm:text-6xl font-black tracking-tighter uppercase italic break-words"
           >
             Reaction <span className="text-red-500">Roles</span>
           </motion.h1>
@@ -362,21 +362,21 @@ export default function ReactionRolesPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-4">
           <button 
             onClick={fetchSetups}
             disabled={refreshing}
-            className="p-4 rounded-2xl bg-white/5 border border-white/10 text-white/60 hover:text-white hover:border-white/20 transition-all active:scale-95 disabled:opacity-50"
+            className="p-3 sm:p-4 rounded-2xl bg-white/5 border border-white/10 text-white/60 hover:text-white hover:border-white/20 transition-all active:scale-95 disabled:opacity-50"
           >
-            <RefreshCcw size={20} className={refreshing ? 'animate-spin text-red-500' : ''} />
+            <RefreshCcw size={18} className={refreshing ? 'animate-spin text-red-500' : ''} />
           </button>
           
           <button 
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-red-500 text-black font-black uppercase tracking-wider text-xs shadow-lg shadow-red-500/20 hover:scale-105 active:scale-95 transition-all"
+            className="flex items-center justify-center gap-2.5 px-5 py-3 sm:px-8 sm:py-4 rounded-2xl bg-red-500 text-black font-black uppercase tracking-wider text-xs shadow-lg shadow-red-500/20 hover:scale-105 active:scale-95 transition-all flex-1 sm:flex-none"
           >
-            <Plus size={18} />
-            Initialize Setup
+            <Plus size={16} />
+            <span>Initialize Setup</span>
           </button>
         </div>
       </header>

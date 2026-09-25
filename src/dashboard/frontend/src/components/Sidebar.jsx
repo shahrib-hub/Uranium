@@ -378,6 +378,11 @@ export default function Sidebar() {
             <Link href="/privacy" className="hover:text-white/60 transition">Privacy</Link>
             <span>•</span>
             <Link href="/docs" className="hover:text-white/60 transition">Docs</Link>
+            <span>•</span>
+            <Link href="/status" className="text-emerald-400/80 hover:text-emerald-300 transition flex items-center gap-1 font-semibold">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Status</span>
+            </Link>
           </div>
         </div>
       </aside>

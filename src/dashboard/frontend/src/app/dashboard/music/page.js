@@ -31,10 +31,10 @@ export default function MusicPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
           <Link
             href={`/dashboard/music/player${guildId ? `?guild=${guildId}` : ''}`}
-            className="flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-red-500 hover:bg-red-600 active:scale-95 text-white font-black uppercase tracking-wider text-xs shadow-lg shadow-red-500/20 transition-all"
+            className="flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-red-500 hover:bg-red-600 active:scale-95 text-white font-black uppercase tracking-wider text-xs shadow-lg shadow-red-500/20 transition-all w-full sm:w-auto"
           >
             <Headphones size={16} />
             <span>Open Web Player</span>
@@ -60,7 +60,7 @@ export default function MusicPage() {
 
         <Link
           href={`/dashboard/music/player${guildId ? `?guild=${guildId}` : ''}`}
-          className="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-bold text-xs transition shadow-lg shadow-rose-600/25"
+          className="w-full sm:w-auto shrink-0 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-bold text-xs transition shadow-lg shadow-rose-600/25"
         >
           <span>Open Full Web Player</span>
           <ExternalLink size={13} />

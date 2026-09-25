@@ -37,6 +37,19 @@ const logger = createLogger({
   transports: [
     new transports.Console()
   ]
-});
+// Hook into logger error events for Uranium Watcher AI incident monitoring
+try {
+  const { handleConsoleError } = require('./statusWatcher');
+  logger.on('data', (log) => {
+    if (log.level === 'error') {
+      const msg = typeof log.message === 'string' ? log.message : (log.stack || JSON.stringify(log));
+      setImmediate(() => {
+        handleConsoleError(msg, { timestamp: log.timestamp }).catch(() => null);
+      });
+    }
+  });
+} catch (e) {
+  // Silent fallback
+}
 
 module.exports = logger;

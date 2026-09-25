@@ -27,12 +27,12 @@ export default function PlayerHeader({
   activeTab
 }) {
   return (
-    <header className="h-16 shrink-0 border-b border-[#181a24] bg-[#0c0d13]/95 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between gap-4 z-30 sticky top-0">
+    <header className="h-14 sm:h-16 shrink-0 border-b border-[#181a24] bg-[#0c0d13]/95 backdrop-blur-md px-2.5 sm:px-6 flex items-center justify-between gap-2 sm:gap-4 z-30 sticky top-0 max-w-full overflow-hidden">
       {/* Left: Navigation & Branding */}
-      <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+      <div className="flex items-center gap-1.5 sm:gap-4 shrink-0">
         <Link
           href={`/dashboard/music${guildId ? `?guild=${guildId}` : ''}`}
-          className="flex items-center gap-2 text-xs font-semibold text-[#8b91a7] hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-white/[0.06] transition-all group"
+          className="flex items-center gap-1.5 text-xs font-semibold text-[#8b91a7] hover:text-white px-2 py-1.5 rounded-lg hover:bg-white/[0.06] transition-all group shrink-0"
           title="Return to Dashboard Overview"
         >
           <ArrowLeft size={15} className="group-hover:-translate-x-0.5 transition-transform text-[#8b91a7] group-hover:text-white" />
@@ -42,13 +42,13 @@ export default function PlayerHeader({
         <div className="h-4 w-px bg-white/10 hidden sm:block" />
 
         {/* Audio Engine Branding */}
-        <div className="flex items-center gap-2.5">
-          <div className="h-7 w-7 rounded-lg bg-rose-500/10 border border-rose-500/20 grid place-items-center text-rose-400">
-            <Headphones size={15} />
+        <div className="flex items-center gap-2">
+          <div className="h-6 w-6 sm:h-7 sm:w-7 rounded-lg bg-rose-500/10 border border-rose-500/20 grid place-items-center text-rose-400 shrink-0">
+            <Headphones size={13} />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-[#f3f4f8] tracking-tight">
+          <div className="hidden xs:block">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] sm:text-xs font-bold text-[#f3f4f8] tracking-tight">
                 Uranium <span className="text-rose-400 font-semibold">Audio</span>
               </span>
               <span className="hidden md:inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-rose-500/10 text-rose-300 border border-rose-500/20">
