@@ -12,12 +12,6 @@ const {
 const fs = require('fs');
 const path = require('path');
 
-// Runtime data is deliberately not version-controlled. Create both legacy storage
-// locations before feature modules open their SQLite or JSON stores.
-for (const dataDir of [path.join(__dirname, '..', 'data'), path.join(__dirname, 'data')]) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
-
 // Initialize translations via prototype patching
 require('./utils/patchDiscordjs');
 

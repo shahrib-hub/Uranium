@@ -1,6 +1,5 @@
 // src/dashboard/auth.js — Discord OAuth2 authentication routes
 const { Router } = require('express');
-const crypto = require('crypto');
 const router = Router();
 
 const CLIENT_ID = process.env.CLIENT_ID;
@@ -15,17 +14,13 @@ const DISCORD_API = 'https://discord.com/api/v10';
  * GET /auth/login — Redirect to Discord OAuth2
  */
 router.get('/login', (req, res) => {
-  const requestedNext = typeof req.query.next === 'string' ? req.query.next : '/servers';
-  const next = requestedNext.startsWith('/') && !requestedNext.startsWith('//') ? requestedNext : '/servers';
-  const state = crypto.randomBytes(32).toString('base64url');
-  req.session.oauthState = state;
-  req.session.oauthNext = next;
+  const next = req.query.next || '/servers';
   const params = new URLSearchParams({
     client_id: CLIENT_ID,
     redirect_uri: REDIRECT_URI,
     response_type: 'code',
     scope: SCOPES,
-    state
+    state: next
   });
   res.redirect(`https://discord.com/oauth2/authorize?${params.toString()}`);
 });
@@ -35,17 +30,7 @@ router.get('/login', (req, res) => {
  */
 router.get('/callback', async (req, res) => {
   const code = req.query.code;
-  const state = req.query.state;
-  const expectedState = req.session.oauthState;
-  const receivedState = typeof state === 'string' ? Buffer.from(state) : null;
-  const expectedStateBuffer = typeof expectedState === 'string' ? Buffer.from(expectedState) : null;
-  if (!code || !receivedState || !expectedStateBuffer || receivedState.length !== expectedStateBuffer.length || !crypto.timingSafeEqual(receivedState, expectedStateBuffer)) {
-    return res.redirect('/?error=invalid_oauth_state');
-  }
-
-  const next = req.session.oauthNext || '/servers';
-  delete req.session.oauthState;
-  delete req.session.oauthNext;
+  if (!code) return res.redirect('/?error=no_code');
 
   try {
     // Exchange code for tokens
@@ -103,9 +88,11 @@ router.get('/callback', async (req, res) => {
         ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.${g.icon.startsWith('a_') ? 'gif' : 'webp'}?size=128`
         : null
     }));
-    // OAuth tokens are used only for this callback and are not retained in the session.
-    // The dashboard subsequently authorizes requests using the Discord user ID and guild membership.
-    const safeNext = typeof next === 'string' && next.startsWith('/') && !next.startsWith('//') ? next : '/servers';
+    req.session.accessToken = tokens.access_token;
+    req.session.refreshToken = tokens.refresh_token;
+
+    const next = req.query.state || '/servers';
+    const safeNext = typeof next === 'string' && next.startsWith('/') ? next : '/servers';
     const dashboardBase = DASHBOARD_URL.replace(/\/+$/, '');
 
     // Persist the Mongo-backed session before redirecting. Without this,

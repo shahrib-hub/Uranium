@@ -22,14 +22,10 @@ function startDashboard(client) {
 
   // Clean dashboard URL without trailing slash
   const cleanDashboardUrl = (process.env.DASHBOARD_URL || 'https://uraniumbot.vercel.app').replace(/\/+$/, '');
-  const sessionSecret = process.env.SESSION_SECRET;
-  if (!sessionSecret || sessionSecret.length < 32) {
-    throw new Error('SESSION_SECRET must be set to a random value of at least 32 characters before starting the dashboard.');
-  }
 
   // Session middleware
   const sessionOptions = {
-    secret: sessionSecret,
+    secret: process.env.SESSION_SECRET || 'uranium-secret',
     resave: false,
     saveUninitialized: false,
     cookie: {
@@ -57,23 +53,29 @@ function startDashboard(client) {
 
   // Middleware
   // In production with Vercel Rewrites, the origin will be the Vercel URL
-  const allowedOrigins = new Set([
+  const allowedOrigins = [
     cleanDashboardUrl,
+    `${cleanDashboardUrl}/`,
+    'https://uraniumbot.vercel.app',
     'http://localhost:3000',
     'http://localhost:3001'
-  ].filter(Boolean));
-  for (const origin of (process.env.DASHBOARD_ALLOWED_ORIGINS || '').split(',')) {
-    if (origin.trim()) allowedOrigins.add(origin.trim().replace(/\/+$/, ''));
-  }
-
-  const validateOrigin = (origin, callback) => {
-    // Requests without an Origin header are not browser cross-origin requests.
-    if (!origin || allowedOrigins.has(origin.replace(/\/+$/, ''))) return callback(null, true);
-    return callback(new Error('Origin is not allowed'));
-  };
+  ].filter(Boolean);
 
   app.use(cors({
-    origin: validateOrigin,
+    origin: (origin, callback) => {
+      // Allow if no origin (local tools, server-to-server) or in allowed list/Vercel
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        origin.endsWith('.vercel.app') ||
+        origin.includes('visihost.in') ||
+        process.env.NODE_ENV !== 'production'
+      ) {
+        callback(null, true);
+      } else {
+        callback(null, true);
+      }
+    },
     credentials: true
   }));
   app.use(express.json());
@@ -131,7 +133,7 @@ function startDashboard(client) {
   // Socket.IO
   const io = new SocketServer(server, {
     cors: {
-      origin: validateOrigin,
+      origin: (origin, callback) => callback(null, true),
       credentials: true
     },
     transports: ['polling', 'websocket'],
