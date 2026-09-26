@@ -189,11 +189,12 @@ module.exports = {
 
       const selectRow = new ActionRowBuilder().addComponents(select);
 
+      const cleanDash = (process.env.DASHBOARD_URL || 'https://uraniumbot.vercel.app').replace(/\/+$/, '');
       const buttons = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setLabel('Dashboard')
           .setStyle(ButtonStyle.Link)
-          .setURL('https://uraniumbot.vercel.app/')
+          .setURL(`${cleanDash}/`)
           .setEmoji('🚀'),
         new ButtonBuilder()
           .setLabel('Invite')
@@ -201,9 +202,19 @@ module.exports = {
           .setURL(helpData.bot?.invite_url || 'https://discord.com')
           .setEmoji('📨'),
         new ButtonBuilder()
+          .setLabel('Privacy')
+          .setStyle(ButtonStyle.Link)
+          .setURL(`${cleanDash}/privacy`)
+          .setEmoji('📜'),
+        new ButtonBuilder()
+          .setLabel('Terms')
+          .setStyle(ButtonStyle.Link)
+          .setURL(`${cleanDash}/tos`)
+          .setEmoji('⚖️'),
+        new ButtonBuilder()
           .setLabel('Support')
           .setStyle(ButtonStyle.Link)
-          .setURL(helpData.bot?.support_url || 'https://discord.com')
+          .setURL(helpData.bot?.support_url || 'https://discord.gg/26ThFyckFX')
           .setEmoji('🛠️')
       );
 

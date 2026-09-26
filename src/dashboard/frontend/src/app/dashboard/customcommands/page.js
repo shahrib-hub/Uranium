@@ -73,9 +73,8 @@ export default function CustomCommandsPage() {
 
       if (chRes.ok) {
         const cData = await chRes.json();
-        const textChs = Array.isArray(cData)
-          ? cData.filter((c) => c.type === 0 || c.type === 5 || c.isText)
-          : cData.channels || [];
+        const list = Array.isArray(cData) ? cData : (cData.channels || cData.text || []);
+        const textChs = list.filter((c) => c.type === 0 || c.type === 5 || c.isText || !c.isVoice);
         setChannels(textChs);
       }
 
@@ -105,6 +104,7 @@ export default function CustomCommandsPage() {
 
     setEditingCommand({
       name: '',
+      prefix: '!',
       description: '',
       message: 'Hello world from Uranium!',
       ephemeral: false,
@@ -153,6 +153,7 @@ export default function CustomCommandsPage() {
     setEditingCommand({
       name: cmd.name,
       originalName: cmd.name,
+      prefix: data.prefix || '!',
       description: cmd.description || '',
       message: data.message || '',
       ephemeral: !!data.ephemeral,
@@ -183,6 +184,7 @@ export default function CustomCommandsPage() {
   const handleSaveCommand = async () => {
     if (!editingCommand) return;
     const name = editingCommand.name.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+    const prefix = (editingCommand.prefix || '!').trim() || '!';
 
     if (!name) {
       return toast.warning('Command name is required (alphanumeric, no spaces)');
@@ -203,6 +205,7 @@ export default function CustomCommandsPage() {
 
       const payload = {
         name,
+        prefix,
         description: editingCommand.description,
         message: editingCommand.message,
         ephemeral: editingCommand.ephemeral,
@@ -239,7 +242,7 @@ export default function CustomCommandsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to save custom command');
 
-      toast.success(data.message || `Custom command /${name} saved successfully!`);
+      toast.success(data.message || `Custom command "${prefix}${name}" saved successfully!`);
       setEditingCommand(null);
       loadCommands();
     } catch (err) {
@@ -250,7 +253,7 @@ export default function CustomCommandsPage() {
   };
 
   const handleDeleteCommand = async (name) => {
-    if (!confirm(`Delete custom command /${name}? This cannot be undone.`)) return;
+    if (!confirm(`Delete custom command "${name}"? This cannot be undone.`)) return;
 
     try {
       const res = await fetch(`/api/guild/${guildId}/customcommands/${name}`, {
@@ -259,8 +262,10 @@ export default function CustomCommandsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to delete command');
 
-      toast.success(data.message || `Deleted /${name}`);
-      if (editingCommand?.name === name) setEditingCommand(null);
+      toast.success(data.message || `Deleted custom command "${name}"`);
+      if (editingCommand?.originalName === name || editingCommand?.name === name) {
+        setEditingCommand(null);
+      }
       loadCommands();
     } catch (err) {
       toast.error(err.message || 'Error deleting command');
@@ -293,6 +298,7 @@ export default function CustomCommandsPage() {
   const filtered = commands.filter(
     (c) =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
+      ((c.data?.prefix || '!') + c.name).toLowerCase().includes(search.toLowerCase()) ||
       (c.description && c.description.toLowerCase().includes(search.toLowerCase()))
   );
 
@@ -311,18 +317,44 @@ export default function CustomCommandsPage() {
   if (editingCommand) {
     return (
       <div className="space-y-6 max-w-5xl mx-auto pb-20">
-        {/* Editor Top Bar matching MEE6 attachment: < name, Delete, Discard, Save & Close */}
-        <div className="flex items-center justify-between border-b border-[#1e202c] pb-5">
-          <div className="flex items-center gap-3">
+        {/* Editor Top Bar: Back, Prefix Input, Command Name Input, Live Preview, Delete, Discard, Save */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#1e202c] pb-5 gap-4">
+          <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
             <button
               type="button"
               onClick={() => setEditingCommand(null)}
-              className="h-9 w-9 rounded-xl bg-[#161722] hover:bg-[#202230] border border-[#262838] grid place-items-center text-white/70 hover:text-white transition"
+              className="h-10 w-10 rounded-xl bg-[#161722] hover:bg-[#202230] border border-[#262838] grid place-items-center text-white/70 hover:text-white transition shrink-0"
+              title="Back to commands list"
             >
               <ChevronLeft size={18} />
             </button>
-            <div className="flex items-center gap-2">
-              <span className="text-white/40 font-mono text-lg">/</span>
+
+            {/* Custom Prefix Field */}
+            <div className="flex items-center bg-[#12131c] border border-[#272a3d] focus-within:border-rose-500 rounded-xl px-3 py-1.5 transition shadow-inner">
+              <span className="text-[10px] uppercase font-black text-rose-400 tracking-wider mr-2 select-none">
+                Prefix
+              </span>
+              <input
+                type="text"
+                maxLength={6}
+                value={editingCommand.prefix ?? '!'}
+                onChange={(e) =>
+                  setEditingCommand((prev) => ({
+                    ...prev,
+                    prefix: e.target.value.replace(/\s+/g, '')
+                  }))
+                }
+                placeholder="!"
+                title="Custom command prefix (e.g. !, ?, ., $, -)"
+                className="w-10 sm:w-12 text-lg sm:text-xl font-mono font-black text-rose-400 bg-transparent outline-none text-center"
+              />
+            </div>
+
+            {/* Command Name Field */}
+            <div className="flex items-center bg-[#12131c] border border-[#272a3d] focus-within:border-rose-500 rounded-xl px-3.5 py-1.5 transition flex-1 min-w-[180px] sm:min-w-[240px] shadow-inner">
+              <span className="text-[10px] uppercase font-bold text-white/40 tracking-wider mr-2.5 select-none">
+                Command
+              </span>
               <input
                 type="text"
                 value={editingCommand.name}
@@ -333,12 +365,21 @@ export default function CustomCommandsPage() {
                   }))
                 }
                 placeholder="command_name"
-                className="text-xl sm:text-2xl font-black text-white bg-transparent outline-none border-b border-dashed border-white/20 focus:border-rose-500 transition px-1 py-0.5"
+                className="text-lg sm:text-xl font-black text-white bg-transparent outline-none w-full"
               />
             </div>
+
+            {/* Live Trigger Badge */}
+            {editingCommand.name && (
+              <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs font-mono font-bold">
+                <span className="text-white/40 text-[10px] uppercase font-sans">Trigger:</span>
+                <span className="text-rose-400 font-black">{editingCommand.prefix || '!'}</span>
+                <span className="text-white">{editingCommand.name}</span>
+              </div>
+            )}
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 self-end sm:self-auto">
             {editingCommand.originalName && (
               <button
                 type="button"
@@ -904,7 +945,10 @@ export default function CustomCommandsPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-sm text-white">/{cmd.name}</span>
+                    <span className="font-mono font-bold text-sm text-white flex items-center">
+                      <span className="text-rose-400 font-black mr-0.5">{cmd.data?.prefix || '!'}</span>
+                      <span>{cmd.name}</span>
+                    </span>
                     {cmd.data?.ephemeral && (
                       <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/20">
                         Private

@@ -240,19 +240,28 @@ module.exports = {
         embed.setImage(pers.bannerUrl);
       }
 
+      const cleanDash = (process.env.DASHBOARD_URL || 'https://uraniumbot.vercel.app').replace(/\/+$/, '');
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setLabel('Invite Me')
           .setStyle(ButtonStyle.Link)
           .setURL(`https://discord.com/oauth2/authorize?client_id=${client.user.id}&permissions=8&scope=bot%20applications.commands`),
         new ButtonBuilder()
-          .setLabel('Support Server')
+          .setLabel('Dashboard')
           .setStyle(ButtonStyle.Link)
-          .setURL(process.env.SUPPORT_SERVER_URL || 'https://discord.gg/26ThFyckFX'),
+          .setURL(`${cleanDash}/`),
         new ButtonBuilder()
-          .setLabel('Docs / Help')
+          .setLabel('Privacy')
           .setStyle(ButtonStyle.Link)
-          .setURL(process.env.DOCS_URL || 'https://discord.gg/26ThFyckFX')
+          .setURL(`${cleanDash}/privacy`),
+        new ButtonBuilder()
+          .setLabel('Terms')
+          .setStyle(ButtonStyle.Link)
+          .setURL(`${cleanDash}/tos`),
+        new ButtonBuilder()
+          .setLabel('Support')
+          .setStyle(ButtonStyle.Link)
+          .setURL(process.env.SUPPORT_SERVER_URL || 'https://discord.gg/26ThFyckFX')
       );
 
       return interaction.reply({ embeds: [embed], components: [row] });

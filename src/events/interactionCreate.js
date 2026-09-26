@@ -48,7 +48,12 @@ module.exports = {
                   .setTitle('⛔ Module Disabled')
                   .setDescription(`The **${pluginInfo?.name || pluginId}** system is currently **turned OFF** for this server.\n\nAn administrator can enable it anytime from the **Web Dashboard**.`)
                   .setFooter({ text: 'Uranium • Module Barred' });
-                return interaction.reply({ embeds: [disabledEmbed], flags: 64 });
+
+                if (interaction.replied || interaction.deferred) {
+                  return interaction.followUp({ embeds: [disabledEmbed], flags: 64 });
+                } else {
+                  return interaction.reply({ embeds: [disabledEmbed], flags: 64 });
+                }
               }
             }
           } catch (e) {
@@ -127,6 +132,12 @@ module.exports = {
 
 
         if (sid?.startsWith('music_filter_select:')) {
+          if (interaction.guildId) {
+            const pluginStorage = require('../utils/pluginStorage');
+            if (!(await pluginStorage.isPluginEnabled(interaction.guildId, 'music'))) {
+              return interaction.reply({ content: '⛔ Music module is currently turned OFF for this server.', flags: 64 });
+            }
+          }
           await safeExecute(async () => {
             const handler = require('../buttons/music_controls.js');
             await handler(interaction);
@@ -134,6 +145,12 @@ module.exports = {
         }
 
         if (sid?.startsWith('rr_select:')) {
+          if (interaction.guildId) {
+            const pluginStorage = require('../utils/pluginStorage');
+            if (!(await pluginStorage.isPluginEnabled(interaction.guildId, 'rr'))) {
+              return interaction.reply({ content: '⛔ Reaction Roles module is currently turned OFF for this server.', flags: 64 });
+            }
+          }
           await safeExecute(async () => {
             const handler = require('../buttons/rr_dropdown.js');
             await handler(interaction);
@@ -183,6 +200,12 @@ module.exports = {
 
         // Ticket system buttons
         if (id === 'ticket_create' || id?.startsWith('ticket_')) {
+          if (interaction.guildId) {
+            const pluginStorage = require('../utils/pluginStorage');
+            if (!(await pluginStorage.isPluginEnabled(interaction.guildId, 'tickets'))) {
+              return interaction.reply({ content: '⛔ Ticket system is currently turned OFF for this server.', flags: 64 });
+            }
+          }
           await safeExecute(async () => {
             const handler = require('../buttons/ticketButtons.js');
             await handler(interaction);
@@ -192,6 +215,12 @@ module.exports = {
 
         // AI regenerate
         if (id?.startsWith('ai_regen_')) {
+          if (interaction.guildId) {
+            const pluginStorage = require('../utils/pluginStorage');
+            if (!(await pluginStorage.isPluginEnabled(interaction.guildId, 'ai'))) {
+              return interaction.reply({ content: '⛔ AI system is currently turned OFF for this server.', flags: 64 });
+            }
+          }
           await safeExecute(async () => {
             const handler = require('../buttons/ai_regenerate.js');
             await handler(interaction);
@@ -201,6 +230,12 @@ module.exports = {
 
         // Reaction Roles
         if (id?.startsWith('rr_btn:')) {
+          if (interaction.guildId) {
+            const pluginStorage = require('../utils/pluginStorage');
+            if (!(await pluginStorage.isPluginEnabled(interaction.guildId, 'rr'))) {
+              return interaction.reply({ content: '⛔ Reaction Roles module is currently turned OFF for this server.', flags: 64 });
+            }
+          }
           await safeExecute(async () => {
             const handler = require('../buttons/rr_button.js');
             await handler(interaction);
@@ -228,6 +263,12 @@ module.exports = {
           id?.startsWith('giveaway_cancel_') ||
           id?.startsWith('giveaway_enter_')
         ) {
+          if (interaction.guildId) {
+            const pluginStorage = require('../utils/pluginStorage');
+            if (!(await pluginStorage.isPluginEnabled(interaction.guildId, 'giveaways'))) {
+              return interaction.reply({ content: '⛔ Giveaways system is currently turned OFF for this server.', flags: 64 });
+            }
+          }
           await safeExecute(async () => {
             const handler = require('../buttons/giveawayButtons.js');
             await handler(interaction);
@@ -235,7 +276,14 @@ module.exports = {
           return;
         }
 
-
+        // Privacy & Data Deletion Buttons
+        if (id?.startsWith('privacy_delete_')) {
+          await safeExecute(async () => {
+            const handler = require('../buttons/privacyButtons.js');
+            await handler(interaction);
+          });
+          return;
+        }
 
         // Music controls (legacy per-track message)
         if (id?.startsWith('music_ctrl:')) {

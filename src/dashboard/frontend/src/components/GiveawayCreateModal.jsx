@@ -113,7 +113,8 @@ export default function GiveawayCreateModal({
 
       if (chRes.ok) {
         const data = await chRes.json();
-        const textChannels = (data.text || []).map((ch) => ({
+        const list = Array.isArray(data) ? data : (data.text || data.channels || []);
+        const textChannels = list.map((ch) => ({
           value: ch.id,
           label: `#${ch.name}`
         }));

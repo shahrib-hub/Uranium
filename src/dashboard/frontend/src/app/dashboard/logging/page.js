@@ -17,7 +17,9 @@ import {
   Layers,
   Sparkles,
   Check,
-  X
+  X,
+  Plus,
+  Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -39,6 +41,8 @@ export default function LoggingDashboardPage() {
   const [events, setEvents] = useState({});
   const [availableEvents, setAvailableEvents] = useState([]);
   const [ignoredChannels, setIgnoredChannels] = useState([]);
+  const [selectedIgnoredChannel, setSelectedIgnoredChannel] = useState('');
+  const [channelFilter, setChannelFilter] = useState('');
 
   // Active category filter tab
   const [activeTab, setActiveTab] = useState('all');
@@ -58,10 +62,8 @@ export default function LoggingDashboardPage() {
 
       if (chRes.ok) {
         const chData = await chRes.json();
-        // filter text-based channels
-        const textChs = Array.isArray(chData)
-          ? chData.filter((c) => c.type === 0 || c.type === 5 || c.isText)
-          : chData.channels || [];
+        const list = Array.isArray(chData) ? chData : (chData.channels || chData.text || []);
+        const textChs = list.filter((c) => c.type === 0 || c.type === 5 || c.isText || !c.isVoice);
         setChannels(textChs);
       }
 
@@ -101,6 +103,19 @@ export default function LoggingDashboardPage() {
     setIgnoredChannels((prev) =>
       prev.includes(chId) ? prev.filter((id) => id !== chId) : [...prev, chId]
     );
+  };
+
+  const handleAddIgnoredChannel = (e) => {
+    e?.preventDefault();
+    if (!selectedIgnoredChannel) return toast.warning('Please select a channel first');
+    if (ignoredChannels.includes(selectedIgnoredChannel)) return toast.info('Channel is already ignored');
+    setIgnoredChannels((prev) => [...prev, selectedIgnoredChannel]);
+    setSelectedIgnoredChannel('');
+    toast.success('Channel added to ignored list');
+  };
+
+  const handleRemoveIgnoredChannel = (chId) => {
+    setIgnoredChannels((prev) => prev.filter((id) => id !== chId));
   };
 
   const handleSave = async () => {
@@ -392,41 +407,147 @@ export default function LoggingDashboardPage() {
             </div>
           </div>
 
-          {/* Card 3: Ignored Channels */}
-          <div className="rounded-2xl border border-[#1e202c] bg-[#14151e] p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <EyeOff size={18} className="text-amber-400" />
-                <h2 className="text-sm font-bold text-white">Ignored Channels</h2>
+          {/* Card 3: Ignored / Blacklisted Channels */}
+          <div className="rounded-2xl border border-[#1e202c] bg-[#14151e] p-6 space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/5 pb-4">
+              <div className="flex items-center gap-2.5">
+                <EyeOff size={20} className="text-amber-400" />
+                <div>
+                  <h2 className="text-sm font-bold text-white">Ignored / Blacklisted Channels</h2>
+                  <p className="text-xs text-white/50">
+                    Events originating from these selected channels will never trigger audit log entries (useful for staff chat or bot spam channels).
+                  </p>
+                </div>
               </div>
-              <span className="text-xs text-white/40">
-                {ignoredChannels.length} channel{ignoredChannels.length === 1 ? '' : 's'} ignored
-              </span>
-            </div>
-            <p className="text-xs text-white/50">
-              Events originating from these selected channels will never trigger audit log entries (useful for staff chat or bot spam channels).
-            </p>
-
-            <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-1">
-              {channels.map((c) => {
-                const isIgnored = ignoredChannels.includes(c.id);
-                return (
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                  {ignoredChannels.length} ignored
+                </span>
+                {ignoredChannels.length > 0 && (
                   <button
-                    key={c.id}
                     type="button"
-                    onClick={() => handleToggleIgnoredChannel(c.id)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-mono transition flex items-center gap-1.5 ${
-                      isIgnored
-                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                        : 'bg-[#101118] text-white/50 border border-[#262838] hover:text-white'
-                    }`}
+                    onClick={() => setIgnoredChannels([])}
+                    className="text-xs text-white/40 hover:text-amber-400 transition"
                   >
-                    <span>#{c.name}</span>
-                    {isIgnored ? <X size={12} /> : <Check size={12} className="opacity-40" />}
+                    Clear All
                   </button>
-                );
-              })}
+                )}
+              </div>
             </div>
+
+            {/* Dedicated Option to Add Ignored Channel */}
+            <div className="rounded-xl border border-white/5 bg-[#101118] p-4 space-y-3">
+              <label className="text-xs font-bold text-white/80 uppercase tracking-wider flex items-center gap-1.5">
+                <Plus size={13} className="text-amber-400" />
+                <span>Add Channel to Ignored List</span>
+              </label>
+
+              <div className="flex flex-col sm:flex-row gap-2.5">
+                <select
+                  value={selectedIgnoredChannel}
+                  onChange={(e) => setSelectedIgnoredChannel(e.target.value)}
+                  className="flex-1 h-10 px-3 rounded-xl border border-[#262838] bg-[#14151e] text-xs text-white outline-none focus:border-amber-500/50 transition cursor-pointer"
+                >
+                  <option value="">Select a channel to ignore...</option>
+                  {channels
+                    .filter((c) => !ignoredChannels.includes(c.id))
+                    .map((c) => (
+                      <option key={c.id} value={c.id}>
+                        #{c.name}
+                      </option>
+                    ))}
+                </select>
+
+                <button
+                  type="button"
+                  onClick={handleAddIgnoredChannel}
+                  disabled={!selectedIgnoredChannel}
+                  className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-40 disabled:hover:bg-amber-600 text-xs font-bold text-white transition flex items-center justify-center gap-1.5 shrink-0 shadow-lg shadow-amber-600/20"
+                >
+                  <Plus size={14} />
+                  <span>Add to Ignored</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Currently Ignored Channels Chips */}
+            <div className="space-y-2">
+              <span className="text-[10px] font-black uppercase tracking-[1px] text-white/40 block">
+                Currently Ignored Channels
+              </span>
+
+              {ignoredChannels.length === 0 ? (
+                <div className="p-4 rounded-xl border border-dashed border-white/10 text-center">
+                  <p className="text-xs text-white/40">
+                    No channels ignored. All server channel events are currently monitored and logged.
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-1">
+                  {ignoredChannels.map((chId) => {
+                    const ch = channels.find((c) => c.id === chId);
+                    return (
+                      <div
+                        key={chId}
+                        className="px-3 py-1.5 rounded-xl text-xs font-mono bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-2 group transition"
+                      >
+                        <span className="text-amber-400 font-bold">#</span>
+                        <span>{ch ? ch.name : chId}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveIgnoredChannel(chId)}
+                          className="text-white/40 hover:text-white ml-1 transition"
+                          title="Remove from ignored list"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Quick Browse / Toggle from All Server Channels */}
+            {channels.length > 0 && (
+              <div className="space-y-2 pt-2 border-t border-white/5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+                    Quick Toggle Channels ({channels.length} available)
+                  </span>
+                  <input
+                    type="text"
+                    value={channelFilter}
+                    onChange={(e) => setChannelFilter(e.target.value)}
+                    placeholder="Filter channels..."
+                    className="w-36 h-7 px-2.5 text-[11px] rounded-lg border border-white/10 bg-[#101118] text-white placeholder:text-white/30 outline-none focus:border-amber-500/50 transition"
+                  />
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
+                  {channels
+                    .filter((c) => !channelFilter || c.name.toLowerCase().includes(channelFilter.toLowerCase()))
+                    .map((c) => {
+                      const isIgnored = ignoredChannels.includes(c.id);
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => handleToggleIgnoredChannel(c.id)}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-mono transition flex items-center gap-1.5 ${
+                            isIgnored
+                              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                              : 'bg-[#101118] text-white/50 border border-[#262838] hover:text-white hover:border-white/20'
+                          }`}
+                        >
+                          <span>#{c.name}</span>
+                          {isIgnored && <span className="text-[9px] font-bold text-amber-400">🚫</span>}
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

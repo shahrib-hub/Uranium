@@ -19,7 +19,8 @@ import {
   ChevronRight,
   Flame,
   Zap,
-  Hash
+  Hash,
+  X
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -43,6 +44,8 @@ export default function RankingDashboardPage() {
   );
   const [xpRate, setXpRate] = useState(1.0);
   const [blacklist, setBlacklist] = useState([]);
+  const [selectedBlacklistChannel, setSelectedBlacklistChannel] = useState('');
+  const [channelFilter, setChannelFilter] = useState('');
 
   // Role rewards
   const [roleRewards, setRoleRewards] = useState([]);
@@ -68,7 +71,8 @@ export default function RankingDashboardPage() {
 
       if (chRes.ok) {
         const cData = await chRes.json();
-        setChannels(Array.isArray(cData) ? cData : cData.channels || []);
+        const list = Array.isArray(cData) ? cData : (cData.channels || cData.text || []);
+        setChannels(list);
       }
 
       if (rolesRes.ok) {
@@ -201,6 +205,19 @@ export default function RankingDashboardPage() {
     setBlacklist((prev) =>
       prev.includes(chId) ? prev.filter((id) => id !== chId) : [...prev, chId]
     );
+  };
+
+  const handleAddChannelToBlacklist = (e) => {
+    e?.preventDefault();
+    if (!selectedBlacklistChannel) return toast.warning('Please select a channel first');
+    if (blacklist.includes(selectedBlacklistChannel)) return toast.info('Channel is already blacklisted');
+    setBlacklist((prev) => [...prev, selectedBlacklistChannel]);
+    setSelectedBlacklistChannel('');
+    toast.success('Channel added to blacklist');
+  };
+
+  const handleRemoveChannelFromBlacklist = (chId) => {
+    setBlacklist((prev) => prev.filter((id) => id !== chId));
   };
 
   if (loading) {
@@ -488,40 +505,146 @@ export default function RankingDashboardPage() {
           </div>
 
           {/* Section 4: Channel Blacklist */}
-          <div className="rounded-2xl border border-[#1e202c] bg-[#14151e] p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ShieldAlert size={18} className="text-amber-400" />
-                <h2 className="text-sm font-bold text-white">No-XP Blacklisted Channels</h2>
+          <div className="rounded-2xl border border-[#1e202c] bg-[#14151e] p-6 space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/5 pb-4">
+              <div className="flex items-center gap-2.5">
+                <ShieldAlert size={20} className="text-amber-400" />
+                <div>
+                  <h2 className="text-sm font-bold text-white">No-XP Blacklisted Channels</h2>
+                  <p className="text-xs text-white/50">
+                    Messages sent in these channels will never award any XP or trigger level-up progress.
+                  </p>
+                </div>
               </div>
-              <span className="text-xs text-white/40">
-                {blacklist.length} channel{blacklist.length === 1 ? '' : 's'} blacklisted
-              </span>
-            </div>
-            <p className="text-xs text-white/50">
-              Messages sent in these channels will not award any XP to members.
-            </p>
-
-            <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
-              {channels.map((c) => {
-                const isBlacklisted = blacklist.includes(c.id);
-                return (
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-500/10 text-rose-300 border border-rose-500/20">
+                  {blacklist.length} blacklisted
+                </span>
+                {blacklist.length > 0 && (
                   <button
-                    key={c.id}
                     type="button"
-                    onClick={() => handleToggleBlacklist(c.id)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-mono transition flex items-center gap-1.5 ${
-                      isBlacklisted
-                        ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-                        : 'bg-[#101118] text-white/50 border border-[#262838] hover:text-white'
-                    }`}
+                    onClick={() => setBlacklist([])}
+                    className="text-xs text-white/40 hover:text-rose-400 transition"
                   >
-                    <span>#{c.name}</span>
-                    {isBlacklisted && <span className="text-[10px] font-bold">🚫</span>}
+                    Clear All
                   </button>
-                );
-              })}
+                )}
+              </div>
             </div>
+
+            {/* Dedicated Option to Add Blacklisted Channel */}
+            <div className="rounded-xl border border-white/5 bg-[#101118] p-4 space-y-3">
+              <label className="text-xs font-bold text-white/80 uppercase tracking-wider flex items-center gap-1.5">
+                <Plus size={13} className="text-rose-400" />
+                <span>Add Channel to Blacklist</span>
+              </label>
+
+              <div className="flex flex-col sm:flex-row gap-2.5">
+                <select
+                  value={selectedBlacklistChannel}
+                  onChange={(e) => setSelectedBlacklistChannel(e.target.value)}
+                  className="flex-1 h-10 px-3 rounded-xl border border-[#262838] bg-[#14151e] text-xs text-white outline-none focus:border-rose-500/50 transition cursor-pointer"
+                >
+                  <option value="">Select a channel to blacklist...</option>
+                  {channels
+                    .filter((c) => !blacklist.includes(c.id))
+                    .map((c) => (
+                      <option key={c.id} value={c.id}>
+                        #{c.name}
+                      </option>
+                    ))}
+                </select>
+
+                <button
+                  type="button"
+                  onClick={handleAddChannelToBlacklist}
+                  disabled={!selectedBlacklistChannel}
+                  className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-40 disabled:hover:bg-rose-600 text-xs font-bold text-white transition flex items-center justify-center gap-1.5 shrink-0 shadow-lg shadow-rose-600/20"
+                >
+                  <Plus size={14} />
+                  <span>Add to Blacklist</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Currently Blacklisted Channels Chips */}
+            <div className="space-y-2">
+              <span className="text-[10px] font-black uppercase tracking-[1px] text-white/40 block">
+                Currently Blacklisted Channels
+              </span>
+
+              {blacklist.length === 0 ? (
+                <div className="p-4 rounded-xl border border-dashed border-white/10 text-center">
+                  <p className="text-xs text-white/40">
+                    No channels blacklisted. Members will earn chat XP across all server channels.
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-1">
+                  {blacklist.map((chId) => {
+                    const ch = channels.find((c) => c.id === chId);
+                    return (
+                      <div
+                        key={chId}
+                        className="px-3 py-1.5 rounded-xl text-xs font-mono bg-rose-500/15 text-rose-300 border border-rose-500/30 flex items-center gap-2 group transition"
+                      >
+                        <span className="text-rose-400 font-bold">#</span>
+                        <span>{ch ? ch.name : chId}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveChannelFromBlacklist(chId)}
+                          className="text-white/40 hover:text-white ml-1 transition"
+                          title="Remove from blacklist"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Quick Browse / Toggle from All Server Channels */}
+            {channels.length > 0 && (
+              <div className="space-y-2 pt-2 border-t border-white/5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+                    Quick Toggle Channels ({channels.length} available)
+                  </span>
+                  <input
+                    type="text"
+                    value={channelFilter}
+                    onChange={(e) => setChannelFilter(e.target.value)}
+                    placeholder="Filter channels..."
+                    className="w-36 h-7 px-2.5 text-[11px] rounded-lg border border-white/10 bg-[#101118] text-white placeholder:text-white/30 outline-none focus:border-rose-500/50 transition"
+                  />
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
+                  {channels
+                    .filter((c) => !channelFilter || c.name.toLowerCase().includes(channelFilter.toLowerCase()))
+                    .map((c) => {
+                      const isBlacklisted = blacklist.includes(c.id);
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => handleToggleBlacklist(c.id)}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-mono transition flex items-center gap-1.5 ${
+                            isBlacklisted
+                              ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                              : 'bg-[#101118] text-white/50 border border-[#262838] hover:text-white hover:border-white/20'
+                          }`}
+                        >
+                          <span>#{c.name}</span>
+                          {isBlacklisted && <span className="text-[9px] font-bold text-rose-400">🚫</span>}
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

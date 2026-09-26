@@ -76,7 +76,10 @@ async function getCustomCommands(guildId) {
         guild_id: d.guildId,
         name: d.name,
         description: d.description,
-        data: d.data,
+        data: {
+          prefix: '!',
+          ...(d.data || {})
+        },
         uses: d.uses || 0,
         created_at: d.createdAt?.getTime?.() || Date.now(),
         updated_at: d.updatedAt?.getTime?.() || Date.now()
@@ -93,12 +96,15 @@ async function getCustomCommands(guildId) {
       [guildId],
       (err, rows) => {
         if (err) return reject(err);
-        const parsed = (rows || []).map(r => ({
-          ...r,
-          data: (() => {
-            try { return JSON.parse(r.data); } catch { return {}; }
-          })()
-        }));
+        const parsed = (rows || []).map(r => {
+          let data = {};
+          try { data = JSON.parse(r.data); } catch { data = {}; }
+          if (!data.prefix) data.prefix = '!';
+          return {
+            ...r,
+            data
+          };
+        });
         resolve(parsed);
       }
     );
@@ -122,7 +128,10 @@ async function getCustomCommand(guildId, name) {
           guild_id: doc.guildId,
           name: doc.name,
           description: doc.description,
-          data: doc.data,
+          data: {
+            prefix: '!',
+            ...(doc.data || {})
+          },
           uses: doc.uses || 0,
           created_at: doc.createdAt?.getTime?.() || Date.now(),
           updated_at: doc.updatedAt?.getTime?.() || Date.now()
@@ -140,11 +149,12 @@ async function getCustomCommand(guildId, name) {
       (err, row) => {
         if (err) return reject(err);
         if (!row) return resolve(null);
+        let data = {};
+        try { data = JSON.parse(row.data); } catch { data = {}; }
+        if (!data.prefix) data.prefix = '!';
         resolve({
           ...row,
-          data: (() => {
-            try { return JSON.parse(row.data); } catch { return {}; }
-          })()
+          data
         });
       }
     );
@@ -200,7 +210,10 @@ async function saveCustomCommand(guildId, commandData) {
     seconds: 0
   };
 
+  const prefix = (commandData.prefix !== undefined ? commandData.prefix : (existing?.data?.prefix || '!')).toString().trim();
+
   const fullData = {
+    prefix: prefix || '!',
     actions,
     permissions,
     cooldown,

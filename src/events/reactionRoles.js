@@ -61,6 +61,9 @@ async function handleReaction(addOrRemove, reaction, user) {
   if (!msg?.guild) return;
 
   try {
+    const pluginStorage = require('../utils/pluginStorage');
+    if (pluginStorage && !(await pluginStorage.isPluginEnabled(msg.guild.id, 'rr'))) return;
+
     const setup = await rrStorage.getSetupByMessage(msg.guild.id, msg.id);
     if (!setup || setup.mode !== 'reactions') return;
 

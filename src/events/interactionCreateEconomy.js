@@ -78,6 +78,18 @@ module.exports = {
       const id = interaction.customId;
       if (!id.startsWith('eco:')) return;
 
+      if (interaction.guildId) {
+        try {
+          const pluginStorage = require('../utils/pluginStorage');
+          if (pluginStorage && !(await pluginStorage.isPluginEnabled(interaction.guildId, 'economy'))) {
+            return interaction.reply({
+              content: '⛔ The Economy system is currently **turned OFF** for this server by an administrator.',
+              flags: 64
+            });
+          }
+        } catch {}
+      }
+
       try {
         if (id === 'eco:noop') return interaction.deferUpdate().catch(() => {});
 

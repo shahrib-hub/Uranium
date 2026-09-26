@@ -381,23 +381,79 @@ function createApiRouter(client) {
     }
   });
 
-  router.get('/guild/:guildId/voice-channels', requireGuildAccess(client), (req, res) => {
-    res.json(req.guild.channels.cache.filter(c => c.type === 2).map(c => ({ id: c.id, name: c.name, userCount: c.members.size })));
+  router.get('/guild/:guildId/voice-channels', requireGuildAccess(client), async (req, res) => {
+    try {
+      await req.guild.channels.fetch().catch(() => null);
+      const voiceChannels = req.guild.channels.cache
+        .filter(c => c.type === 2 || c.type === 13 || c.isVoiceBased?.())
+        .map(c => ({ id: c.id, name: c.name, userCount: c.members?.size || 0, type: c.type }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      res.json(voiceChannels);
+    } catch (err) {
+      res.json([]);
+    }
   });
 
-  // Text channels only for channel selector
-  router.get('/guild/:guildId/channels', requireGuildAccess(client), (req, res) => {
-    const channels = {
-      text: []
-    };
+  // Channels for channel selectors, modals, and customization panels
+  router.get('/guild/:guildId/channels', requireGuildAccess(client), async (req, res) => {
+    try {
+      const guild = req.guild;
+      await guild.channels.fetch().catch(() => null);
 
-    for (const [id, channel] of req.guild.channels.cache) {
-      if (channel.type === 0) {
-        channels.text.push({ id: channel.id, name: channel.name, categoryId: channel.parentId });
+      const text = [];
+      const voice = [];
+      const category = [];
+      const all = [];
+
+      for (const [id, channel] of guild.channels.cache) {
+        if (!channel) continue;
+
+        const isText = (typeof channel.isTextBased === 'function' ? channel.isTextBased() : (channel.type === 0 || channel.type === 5)) && !channel.isThread?.() && !channel.isVoiceBased?.();
+        const isVoice = (typeof channel.isVoiceBased === 'function' ? channel.isVoiceBased() : (channel.type === 2 || channel.type === 13));
+        const isCategory = channel.type === 4;
+
+        const item = {
+          id: channel.id,
+          name: channel.name,
+          type: channel.type,
+          categoryId: channel.parentId || null,
+          position: channel.rawPosition ?? channel.position ?? 0,
+          isText: !!isText,
+          isVoice: !!isVoice,
+          isCategory: !!isCategory
+        };
+
+        all.push(item);
+
+        if (isText) {
+          text.push(item);
+        } else if (isVoice) {
+          voice.push({
+            ...item,
+            userCount: channel.members?.size || 0
+          });
+        } else if (isCategory) {
+          category.push(item);
+        }
       }
-    }
 
-    res.json(channels);
+      text.sort((a, b) => a.position - b.position || a.name.localeCompare(b.name));
+      voice.sort((a, b) => a.position - b.position || a.name.localeCompare(b.name));
+      category.sort((a, b) => a.position - b.position || a.name.localeCompare(b.name));
+      all.sort((a, b) => a.position - b.position || a.name.localeCompare(b.name));
+
+      res.json({
+        success: true,
+        text,
+        channels: text,
+        voice,
+        category,
+        all
+      });
+    } catch (err) {
+      console.error('[API /guild/:guildId/channels error]:', err);
+      res.status(500).json({ error: 'Failed to fetch server channels', text: [], channels: [], voice: [], category: [] });
+    }
   });
 
   // Server roles for role selector
@@ -454,6 +510,10 @@ function createApiRouter(client) {
   router.get('/guild/:guildId/info', requireGuildAccess(client), async (req, res) => {
     try {
       const guild = req.guild;
+      await Promise.all([
+        guild.channels.fetch().catch(() => null),
+        guild.roles.fetch().catch(() => null)
+      ]);
       const owner = await guild.fetchOwner().catch(() => null);
       const player = client.music?.players?.get(guild.id);
 
@@ -2752,15 +2812,20 @@ function createApiRouter(client) {
       const guild = req.guild;
       const guildId = req.params.guildId;
 
+      await Promise.all([
+        guild.channels.fetch().catch(() => null),
+        guild.roles.fetch().catch(() => null)
+      ]);
+
       const [config, verifiedCount] = await Promise.all([
         verificationUtils.getVerificationConfig(guildId),
         verificationUtils.getVerifiedUsersCount(guildId)
       ]);
 
       const channels = guild.channels.cache
-        .filter(c => c.isTextBased() && !c.isThread() && !c.isVoiceBased())
-        .map(c => ({ id: c.id, name: c.name, type: c.type }))
-        .sort((a, b) => a.name.localeCompare(b.name));
+        .filter(c => (c.isTextBased?.() || c.type === 0 || c.type === 5) && !c.isThread?.() && !c.isVoiceBased?.())
+        .map(c => ({ id: c.id, name: c.name, type: c.type, position: c.rawPosition ?? c.position ?? 0 }))
+        .sort((a, b) => a.position - b.position || a.name.localeCompare(b.name));
 
       const botMember = guild.members.me;
       const roles = guild.roles.cache
@@ -3274,10 +3339,11 @@ function createApiRouter(client) {
     try {
       const guildId = req.params.guildId;
       const saved = await customCommandStorage.saveCustomCommand(guildId, req.body);
+      const pfx = saved.data?.prefix || req.body?.prefix || '!';
       res.json({
         success: true,
         command: saved,
-        message: `Custom command /${saved.name} saved successfully!`
+        message: `Custom command "${pfx}${saved.name}" saved successfully!`
       });
     } catch (err) {
       res.status(400).json({ error: err.message });
@@ -3289,8 +3355,55 @@ function createApiRouter(client) {
       const guildId = req.params.guildId;
       const ok = await customCommandStorage.deleteCustomCommand(guildId, req.params.name);
       if (!ok) return res.status(404).json({ error: 'Custom command not found.' });
-      res.json({ success: true, message: `Custom command /${req.params.name} deleted.` });
+      res.json({ success: true, message: `Custom command "${req.params.name}" deleted.` });
     } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // ── PLUGINS SYSTEM API ──────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════════════════════════
+  router.get('/guild/:guildId/plugins', requireGuildAccess(client), async (req, res) => {
+    try {
+      const guildId = req.params.guildId;
+      const plugins = await pluginStorage.getGuildPlugins(guildId);
+      res.json({ success: true, plugins });
+    } catch (err) {
+      console.error('[Plugins API] Error getting plugins:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  router.post('/guild/:guildId/plugins/:pluginId/toggle', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
+    try {
+      const { guildId, pluginId } = req.params;
+      const { enabled, settings } = req.body;
+
+      const isEnabled = await pluginStorage.setPluginEnabled(guildId, pluginId, enabled, settings);
+      res.json({
+        success: true,
+        guildId,
+        pluginId,
+        enabled: isEnabled,
+        message: isEnabled ? `Enabled ${pluginId} system` : `Disabled ${pluginId} system`
+      });
+    } catch (err) {
+      console.error('[Plugins API] Error toggling plugin:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  router.post('/guild/:guildId/plugins/:pluginId/settings', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
+    try {
+      const { guildId, pluginId } = req.params;
+      const { settings } = req.body;
+
+      const current = await pluginStorage.isPluginEnabled(guildId, pluginId);
+      await pluginStorage.setPluginEnabled(guildId, pluginId, current, settings);
+      res.json({ success: true, guildId, pluginId, settings });
+    } catch (err) {
+      console.error('[Plugins API] Error updating plugin settings:', err);
       res.status(500).json({ error: err.message });
     }
   });

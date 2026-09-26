@@ -1,6 +1,7 @@
 // src/events/messageCreateCustomCommands.js
 const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const {
+  getCustomCommands,
   getCustomCommand,
   incrementUses,
   checkExecutionAllowed
@@ -22,16 +23,25 @@ module.exports = {
       }
 
       const raw = message.content.trim();
+      if (!raw) return;
 
-      // Support prefixes: '!', '?', or direct slash trigger e.g. '!ip' or '?ip' or '/ip'
-      let potentialName = null;
-      if (raw.startsWith('!') || raw.startsWith('?') || raw.startsWith('.')) {
-        potentialName = raw.slice(1).split(/\s+/)[0]?.toLowerCase();
-      }
+      const commands = await getCustomCommands(guildId);
+      if (!commands || commands.length === 0) return;
 
-      if (!potentialName) return;
+      // Match dynamic prefix + command name (e.g. '!rules', '?help', '$donate')
+      const lowerRaw = raw.toLowerCase();
+      const cmd = commands.find(c => {
+        const prefix = (c.data?.prefix || '!').toLowerCase();
+        const cmdName = c.name.toLowerCase();
+        const fullTrigger = prefix + cmdName;
 
-      const cmd = await getCustomCommand(guildId, potentialName);
+        if (lowerRaw.startsWith(fullTrigger)) {
+          const rest = lowerRaw.slice(fullTrigger.length);
+          return rest.length === 0 || /^\s/.test(rest);
+        }
+        return false;
+      });
+
       if (!cmd) return;
 
       const botMember = message.guild.members.me || await message.guild.members.fetchMe().catch(() => null);
@@ -94,7 +104,7 @@ module.exports = {
         embed.setTimestamp();
       }
 
-      await incrementUses(guildId, potentialName);
+      await incrementUses(guildId, cmd.name);
 
       if (cmd.data?.hideUsage) {
         message.delete().catch(() => {});

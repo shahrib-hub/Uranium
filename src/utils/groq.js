@@ -40,8 +40,9 @@ async function callGroq(prompt, style = 'default', model = 'llama-3.1-8b-instant
           {
             role: 'system',
             content:
-              'You are a helpful assistant integrated into a Discord bot called MULTi-Bot. ' +
-              'Answer concisely and format output suitable for Discord messages.'
+              'You are a helpful and safe AI assistant integrated into a Discord bot called Uranium Bot. ' +
+              'Answer concisely and format output suitable for Discord messages. ' +
+              'Always adhere strictly to Discord Community Guidelines and Developer Policy: never generate harmful, abusive, harassing, sexually explicit, hateful, self-harming, or malicious content.'
           },
           {
             role: 'user',

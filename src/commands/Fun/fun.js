@@ -7,7 +7,7 @@ const {
   ButtonStyle
 } = require('discord.js');
 
-const GIPHY_TOKEN = process.env.GIPHY_TOKEN || 'fVOXbfcBdwPBcdbkW8fXWpovxitLDb4K';
+const GIPHY_TOKEN = process.env.GIPHY_TOKEN || '';
 const FOOTER = 'MULTi-Bot | SHM';
 
 // animu endpoints (base)
@@ -46,21 +46,20 @@ const ROASTS_SELF = [
   "You took one for the team and the team filed a complaint."
 ];
 
-// hack stages: target vs self
+// fun simulation stages: target vs self
 const HACK_STAGES_TARGET = (targetTag, targetUser) => [
-  `Initializing hack on ${targetTag}...`,
-  'Connecting to target node (latency: 42ms)...',
-  'Bypassing firewall... [███░░░] 35%',
-  'Extracting credentials... [██████░] 70%',
-  `Password discovered: \`${targetUser}_super_secret\``,
-  'Uploading proof... DONE.'
+  `Initializing fun simulation on ${targetTag}...`,
+  'Calibrating humor sensors... [███░░░] 35%',
+  'Calculating epic gamer score... [██████░] 70%',
+  'Synthesizing virtual confetti... [████████] 100%',
+  'Simulation complete! Good vibes delivered.'
 ];
 const HACK_STAGES_SELF = (invTag) => [
-  `Running a self-diagnostic on ${invTag}...`,
-  'Checking emotional firewall... [██░░░░] 20%',
-  'Patching life.exe... [████░░] 60%',
-  'Optimizing cringe settings... [███████] 90%',
-  'Self-hack complete. You are now slightly improved.'
+  `Running self-optimization diagnostic on ${invTag}...`,
+  'Checking mood levels... [██░░░░] 20%',
+  'Patching vibes.exe... [████░░] 60%',
+  'Boosting coolness settings... [███████] 90%',
+  'Self-diagnostic complete. You are operating at 100% awesome.'
 ];
 
 // other utility pools
@@ -417,8 +416,10 @@ module.exports = {
 
       // ---------- TOKEN ----------
       if (sub === 'token') {
-        const fake = () => `${Math.random().toString(36).slice(2)}.${Math.random().toString(36).slice(2)}.${Math.random().toString(36).slice(2)}`;
-        return interaction.reply({ embeds: [mkEmbed('🔑 Fun Token', `\`${fake()}\`\n\n> *${rand(ANIMU_QUOTES_SELF)}*`)] });
+        const coinId = `ARCADE-${Math.floor(100000 + Math.random() * 900000)}`;
+        return interaction.reply({
+          embeds: [mkEmbed('🪙 Arcade Token', `You claimed arcade token: \`${coinId}\`!\n\n> *${rand(ANIMU_QUOTES_SELF)}*`)]
+        });
       }
 
       // ---------- XMAS (fixed) ----------

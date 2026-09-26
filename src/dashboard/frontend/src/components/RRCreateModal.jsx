@@ -267,7 +267,7 @@ function StepMode({ formData, updateField }) {
 }
 
 function StepChannel({ formData, updateField, channels }) {
-  const textChannels = channels.text || [];
+  const textChannels = Array.isArray(channels) ? channels : (channels.text || channels.channels || []);
 
   return (
     <div className="space-y-4">

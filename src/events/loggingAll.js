@@ -31,6 +31,11 @@ const EVENTS = {
 
 async function sendLog(client, guildId, embed) {
   try {
+    const pluginStorage = require('../utils/pluginStorage');
+    if (pluginStorage && !(await pluginStorage.isPluginEnabled(guildId, 'logging'))) return false;
+  } catch {}
+
+  try {
     const ok = await webhookHelper.sendViaWebhookIfConfigured(client, guildId, { embeds: [embed] });
     if (ok) return true;
   } catch {}

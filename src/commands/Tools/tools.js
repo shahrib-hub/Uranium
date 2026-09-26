@@ -288,7 +288,9 @@ module.exports = {
         embeds: [new EmbedBuilder()
           .setTitle('🔐 Generated Password')
           .setDescription(`\`\`\`${password}\`\`\``)
-          .setColor(0x2b2d31)]
+          .setFooter({ text: 'Visible only to you for privacy & security.' })
+          .setColor(0x2b2d31)],
+        flags: 64
       });
     }
 

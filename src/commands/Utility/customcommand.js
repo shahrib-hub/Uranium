@@ -47,6 +47,12 @@ module.exports = {
             .setDescription('Brief description of what this command does')
             .setRequired(false)
         )
+        .addStringOption(opt =>
+          opt
+            .setName('prefix')
+            .setDescription('Trigger prefix (e.g. !, ?, ., $, -) [default: !]')
+            .setRequired(false)
+        )
         .addBooleanOption(opt =>
           opt
             .setName('private')
@@ -63,6 +69,12 @@ module.exports = {
             .setName('name')
             .setDescription('Name of the command to edit')
             .setRequired(true)
+        )
+        .addStringOption(opt =>
+          opt
+            .setName('prefix')
+            .setDescription('New trigger prefix (e.g. !, ?, ., $, -)')
+            .setRequired(false)
         )
         .addStringOption(opt =>
           opt
@@ -234,10 +246,12 @@ module.exports = {
       const response = interaction.options.getString('response');
       const description = interaction.options.getString('description') || '';
       const isPrivate = interaction.options.getBoolean('private') || false;
+      const prefix = interaction.options.getString('prefix') || '!';
 
       try {
         const saved = await saveCustomCommand(guildId, {
           name,
+          prefix: prefix.trim(),
           description,
           message: response,
           ephemeral: isPrivate,
@@ -255,13 +269,15 @@ module.exports = {
         const isPrem = await isPremiumGuild(guildId);
         const count = await countCustomCommands(guildId);
         const max = isPrem ? 50 : 10;
+        const triggerPrefix = saved.data?.prefix || prefix.trim() || '!';
 
         const embed = new EmbedBuilder()
           .setColor(0x57F287)
           .setTitle('✅ Custom Command Created!')
-          .setDescription(`Custom command \`/${saved.name}\` has been successfully created.`)
+          .setDescription(`Custom command \`${triggerPrefix}${saved.name}\` has been successfully created.`)
           .addFields(
-            { name: 'Trigger', value: `\`${saved.name}\``, inline: true },
+            { name: 'Trigger', value: `\`${triggerPrefix}${saved.name}\``, inline: true },
+            { name: 'Prefix', value: `\`${triggerPrefix}\``, inline: true },
             { name: 'Visibility', value: isPrivate ? '🔒 Private (Ephemeral)' : '🌐 Public in Channel', inline: true },
             { name: 'Quota Usage', value: `${count}/${max} commands`, inline: true },
             { name: 'Response Preview', value: response.slice(0, 1024) }
@@ -285,12 +301,14 @@ module.exports = {
         });
       }
 
+      const prefix = interaction.options.getString('prefix');
       const response = interaction.options.getString('response');
       const description = interaction.options.getString('description');
       const isPrivate = interaction.options.getBoolean('private');
 
       const updatedData = {
         name,
+        prefix: prefix !== null ? prefix.trim() : (existing.data?.prefix || '!'),
         description: description !== null ? description : existing.description,
         message: response !== null ? response : existing.data?.message,
         ephemeral: isPrivate !== null ? isPrivate : existing.data?.ephemeral,
@@ -308,8 +326,9 @@ module.exports = {
 
       await saveCustomCommand(guildId, updatedData);
 
+      const displayPrefix = updatedData.prefix || '!';
       return interaction.reply({
-        content: `✅ Successfully updated custom command \`${name}\`!`,
+        content: `✅ Successfully updated custom command \`${displayPrefix}${name}\`!`,
         flags: 64
       });
     }
@@ -360,7 +379,8 @@ module.exports = {
           const priv = c.data?.ephemeral ? '🔒' : '🌐';
           const uses = `(${c.uses || 0} uses)`;
           const desc = c.description ? `— *${c.description}*` : '';
-          return `**${i + 1}.** \`${c.name}\` ${priv} ${uses} ${desc}`;
+          const pfx = c.data?.prefix || '!';
+          return `**${i + 1}.** \`${pfx}${c.name}\` ${priv} ${uses} ${desc}`;
         })
         .join('\n');
 
@@ -386,12 +406,15 @@ module.exports = {
       const perms = cmd.data?.permissions || {};
       const cooldown = cmd.data?.cooldown || { type: 'none', seconds: 0 };
       const actions = cmd.data?.actions || [];
+      const pfx = cmd.data?.prefix || '!';
 
       const embed = new EmbedBuilder()
         .setColor(0x5865F2)
-        .setTitle(`⚙️ Custom Command: /${cmd.name}`)
+        .setTitle(`⚙️ Custom Command: ${pfx}${cmd.name}`)
         .setDescription(cmd.description || 'No description set.')
         .addFields(
+          { name: 'Trigger', value: `\`${pfx}${cmd.name}\``, inline: true },
+          { name: 'Prefix', value: `\`${pfx}\``, inline: true },
           { name: 'Total Uses', value: `${cmd.uses || 0}`, inline: true },
           { name: 'Visibility', value: cmd.data?.ephemeral ? '🔒 Private' : '🌐 Public', inline: true },
           {

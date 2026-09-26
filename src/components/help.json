@@ -210,6 +210,8 @@
         "/bot invite — invite link",
         "/bot settings — manage server bot settings",
         "/bot dashboard — get the dashboard link",
+        "/privacy policy — view privacy policy & terms",
+        "/privacy delete-my-data — delete your stored personal data",
         "/help — open this help"
       ]
     },

@@ -251,7 +251,7 @@ export default function PrivacyPolicy() {
               Server configurations are retained as long as Uranium remains in your Discord community. If you remove Uranium from a server, associated configuration files may be automatically purged after a 30-day grace period.
             </p>
             <p className="text-sm leading-relaxed text-white/80">
-              You have the right to request immediate and total deletion of all records associated with your User ID or Guild ID at any time by contacting our development team.
+              You have the right to request immediate and total deletion of all records associated with your User ID or Guild ID at any time. You can instantly exercise your right to erasure directly inside Discord using the <code className="px-1.5 py-0.5 rounded bg-white/10 text-rose-300 font-mono text-xs">/privacy delete-my-data</code> command, or purge server configurations via <code className="px-1.5 py-0.5 rounded bg-white/10 text-rose-300 font-mono text-xs">/privacy delete-server-data</code>. You may also contact our support team on Discord.
             </p>
           </section>
 

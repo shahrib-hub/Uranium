@@ -72,7 +72,7 @@ const PLUGIN_REGISTRY = [
     category: 'Social & Engagement',
     description: 'Interactive marriage, adoption, family trees, and partnership interactions.',
     icon: 'HeartHandshake',
-    href: null, // "FAMILY SYSTEM - toggle settings only no sidebar only plugins section"
+    href: null,
     hasDedicatedPage: false,
     commands: ['family']
   },
@@ -80,31 +80,35 @@ const PLUGIN_REGISTRY = [
     id: 'moderation',
     name: 'Moderator & AutoMod',
     category: 'Server Management',
-    description: 'Anti-raid, anti-spam, link purges, user warnings, and strike system.',
+    description: 'Anti-raid, anti-spam, link purges, user warnings, slowmode, and strike system.',
     icon: 'ShieldAlert',
     href: '/dashboard/moderation',
     hasDedicatedPage: true,
-    commands: ['ban', 'kick', 'timeout', 'warn', 'warnings', 'clearwarn', 'purge', 'lock', 'unlock', 'slowmode', 'automod', 'antilink', 'antispam', 'antighost']
+    commands: [
+      'mod', 'automod', 'ban', 'kick', 'timeout', 'warn', 'warnings', 'unwarn', 'unban', 'unmute',
+      'clearwarn', 'purge', 'lock', 'unlock', 'slowmode', 'antinuke', 'anti-ghostping', 'antighost',
+      'softban', 'tempban', 'infractions'
+    ]
   },
   {
     id: 'verification',
     name: 'Server Verification',
     category: 'Server Management',
-    description: 'Gatekeeper system with one-click, captcha, and 2FA OTP security.',
+    description: 'Gatekeeper system with one-click, captcha, YouTube verify, and security roles.',
     icon: 'ShieldCheck',
     href: '/dashboard/verification',
     hasDedicatedPage: true,
-    commands: ['verify', 'verification']
+    commands: ['verify', 'verification', 'ytverify']
   },
   {
     id: 'rr',
     name: 'Reaction Roles',
     category: 'Essentials',
-    description: 'Interactive role self-assignment buttons and dropdown menus.',
+    description: 'Interactive role self-assignment buttons, dropdown menus, and reactions.',
     icon: 'Users',
     href: '/dashboard/rr',
     hasDedicatedPage: true,
-    commands: ['reactionrole', 'rr']
+    commands: ['rr', 'reactionrole', 'reactionroles']
   },
   {
     id: 'giveaways',
@@ -117,6 +121,16 @@ const PLUGIN_REGISTRY = [
     commands: ['giveaway', 'gstart', 'gend', 'greroll']
   },
   {
+    id: 'tickets',
+    name: 'Ticket Support System',
+    category: 'Essentials',
+    description: 'Private multi-category ticket channels, claim system, transcripts, and staff controls.',
+    icon: 'Ticket',
+    href: '/dashboard/tickets',
+    hasDedicatedPage: true,
+    commands: ['ticket', 'tickets']
+  },
+  {
     id: 'music',
     name: 'Music & Audio Studio',
     category: 'Utilities',
@@ -124,7 +138,7 @@ const PLUGIN_REGISTRY = [
     icon: 'Music2',
     href: '/dashboard/music',
     hasDedicatedPage: true,
-    commands: ['play', 'pause', 'skip', 'stop', 'queue', 'nowplaying', 'volume', 'filter', 'lyrics']
+    commands: ['music', 'playlist', 'play', 'pause', 'skip', 'stop', 'queue', 'nowplaying', 'volume', 'filter', 'lyrics']
   },
   {
     id: 'games',
@@ -134,7 +148,7 @@ const PLUGIN_REGISTRY = [
     icon: 'Gamepad2',
     href: null,
     hasDedicatedPage: false,
-    commands: ['dice', 'slots', 'coinflip', 'rps', 'tictactoe', 'trivia', 'connect4']
+    commands: ['games', 'dice', 'slots', 'coinflip', 'rps', 'tictactoe', 'trivia', 'connect4', 'hangman', 'memory']
   },
   {
     id: 'economy',
@@ -144,7 +158,7 @@ const PLUGIN_REGISTRY = [
     icon: 'Coins',
     href: null,
     hasDedicatedPage: false,
-    commands: ['balance', 'bal', 'pay', 'work', 'daily', 'shop', 'buy', 'inventory', 'rob', 'deposit', 'withdraw']
+    commands: ['eco', 'economy', 'ecoadmin', 'ecoconfig', 'balance', 'bal', 'pay', 'work', 'daily', 'shop', 'buy', 'inventory', 'rob', 'deposit', 'withdraw']
   },
   {
     id: 'ai',
@@ -155,6 +169,26 @@ const PLUGIN_REGISTRY = [
     href: null,
     hasDedicatedPage: false,
     commands: ['ai', 'ask', 'imagine', 'summarize']
+  },
+  {
+    id: 'fun',
+    name: 'Fun & Entertainment',
+    category: 'Social & Engagement',
+    description: 'Memes, animal facts, image actions, roasts, clever rate, and funny roleplays.',
+    icon: 'Smile',
+    href: null,
+    hasDedicatedPage: false,
+    commands: ['fun', 'facts', 'meme']
+  },
+  {
+    id: 'utility',
+    name: 'Server Utilities & Tools',
+    category: 'Utilities',
+    description: 'AFK statuses, server backups, birthdays, countdowns, embed builder, sticky messages, and join pings.',
+    icon: 'Wrench',
+    href: null,
+    hasDedicatedPage: false,
+    commands: ['tools', 'afk', 'backup', 'birthday', 'countdown', 'country', 'embedbuilder', 'pokedex', 'stickymessage', 'dbmigrate', 'notificationtesting', 'join-ping', 'join-to-create']
   }
 ];
 

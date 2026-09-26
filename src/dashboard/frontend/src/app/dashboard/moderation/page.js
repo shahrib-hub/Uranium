@@ -183,7 +183,7 @@ export default function ModerationPage() {
       ]);
       if (channelsRes.ok) {
         const data = await channelsRes.json();
-        const textChannels = data.text || [];
+        const textChannels = Array.isArray(data) ? data : (data.text || data.channels || []);
         setChannels(textChannels);
         if (textChannels.length && !selectedChannelId) {
           setSelectedChannelId(textChannels[0].id);

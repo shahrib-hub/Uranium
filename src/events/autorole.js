@@ -7,6 +7,10 @@ module.exports = {
   once: false,
   async execute(member) {
     try {
+      if (!member?.guild) return;
+      const pluginStorage = require('../utils/pluginStorage');
+      if (pluginStorage && !(await pluginStorage.isPluginEnabled(member.guild.id, 'welcome'))) return;
+
       await autoroleStore.initAutoroleStorage();
 
       const guild = member.guild;

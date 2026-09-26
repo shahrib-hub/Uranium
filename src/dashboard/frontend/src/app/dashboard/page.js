@@ -30,7 +30,10 @@ import {
   Sliders,
   AlertTriangle,
   Lock,
-  ChevronRight
+  ChevronRight,
+  Ticket,
+  Smile,
+  Wrench
 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useStore } from '@/store';
@@ -52,7 +55,10 @@ const ICON_MAP = {
   Gamepad2,
   Coins,
   Sparkles,
-  Settings
+  Settings,
+  Ticket,
+  Smile,
+  Wrench
 };
 
 export default function DashboardPage() {
