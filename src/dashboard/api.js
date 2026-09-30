@@ -3408,6 +3408,17 @@ function createApiRouter(client) {
     }
   });
 
+  // Mount Modular System Routers
+  const middleware = { requireGuildAccess, requireGuildAdmin, requireGuildMod };
+  router.use(require('./routes/tickets')(client, middleware));
+  router.use(require('./routes/backups')(client, middleware));
+  router.use(require('./routes/security')(client, middleware));
+  router.use(require('./routes/autoresponder')(client, middleware));
+  router.use(require('./routes/ai')(client, middleware));
+  router.use(require('./routes/ytVerify')(client, middleware));
+  router.use(require('./routes/utilities')(client, middleware));
+  router.use(require('./routes/economy')(client, middleware));
+
   return router;
 }
 

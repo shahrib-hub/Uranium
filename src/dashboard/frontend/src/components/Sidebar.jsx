@@ -25,7 +25,12 @@ import {
   ShieldCheck,
   Trophy,
   FileText,
-  Terminal
+  Terminal,
+  Shield,
+  Ticket,
+  MessageSquare,
+  Wrench,
+  Coins
 } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useStore } from '@/store';
@@ -40,6 +45,7 @@ export default function Sidebar() {
   const [essentialsOpen, setEssentialsOpen] = useState(true);
   const [serverManagementOpen, setServerManagementOpen] = useState(true);
   const [utilitiesOpen, setUtilitiesOpen] = useState(true);
+  const [socialOpen, setSocialOpen] = useState(true);
   const [premiumOpen, setPremiumOpen] = useState(true);
 
   const guildId = params.get('guild');
@@ -234,7 +240,7 @@ export default function Sidebar() {
             </Link>
           </div>
 
-          {/* ESSENTIALS Group */}
+          {/* ESSENTIALS & ENGAGEMENT Group */}
           <div className="space-y-1">
             <button
               type="button"
@@ -256,7 +262,8 @@ export default function Sidebar() {
                   { href: '/dashboard/welcome', label: 'Welcome & Goodbye', icon: UserPlus },
                   { href: '/dashboard/ranking', label: 'Levels & Ranking', icon: Trophy },
                   { href: '/dashboard/rr', label: 'Reaction Roles', icon: Users },
-                  { href: '/dashboard/giveaways', label: 'Giveaways', icon: Gift }
+                  { href: '/dashboard/giveaways', label: 'Giveaways', icon: Gift },
+                  { href: '/dashboard/tickets', label: 'Ticket Support', icon: Ticket }
                 ].map(({ href, label, icon: Icon }) => {
                   const active = pathname === href;
                   return (
@@ -264,9 +271,9 @@ export default function Sidebar() {
                       key={href}
                       href={withGuild(href)}
                       onClick={() => setSidebarOpen(false)}
-                      className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-semibold transition ${
+                      className={`flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-semibold transition ${
                         active
-                          ? 'bg-[#222432] text-white'
+                          ? 'bg-[#222432] text-white shadow-sm'
                           : 'text-[#949ba4] hover:text-white hover:bg-[#1a1b24]'
                       }`}
                     >
@@ -281,14 +288,14 @@ export default function Sidebar() {
             )}
           </div>
 
-          {/* SERVER MANAGEMENT Group */}
+          {/* SERVER SECURITY & DEFENSE Group */}
           <div className="space-y-1">
             <button
               type="button"
               onClick={() => setServerManagementOpen(!serverManagementOpen)}
               className="flex w-full items-center justify-between px-3 py-1.5 text-[11px] font-black uppercase tracking-wider text-white/40 hover:text-white/70 transition"
             >
-              <span>Server Management</span>
+              <span>Security & Defense</span>
               <ChevronDown
                 size={12}
                 className={`transition-transform duration-150 ${
@@ -300,10 +307,11 @@ export default function Sidebar() {
             {serverManagementOpen && (
               <div className="space-y-0.5 pt-0.5">
                 {[
-                  { href: '/dashboard/customcommands', label: 'Custom Commands', icon: Terminal },
-                  { href: '/dashboard/logging', label: 'Server Logging', icon: FileText },
+                  { href: '/dashboard/security', label: 'Anti-Nuke & Shield', icon: Shield },
                   { href: '/dashboard/moderation', label: 'Moderator & AutoMod', icon: ShieldAlert },
-                  { href: '/dashboard/verification', label: 'Server Verification', icon: ShieldCheck }
+                  { href: '/dashboard/verification', label: 'Server Verification', icon: ShieldCheck },
+                  { href: '/dashboard/logging', label: 'Server Logging', icon: FileText },
+                  { href: '/dashboard/backups', label: 'Server Backups', icon: Database }
                 ].map(({ href, label, icon: Icon }) => {
                   const active = pathname === href;
                   return (
@@ -311,9 +319,9 @@ export default function Sidebar() {
                       key={href}
                       href={withGuild(href)}
                       onClick={() => setSidebarOpen(false)}
-                      className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-semibold transition ${
+                      className={`flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-semibold transition ${
                         active
-                          ? 'bg-[#222432] text-white'
+                          ? 'bg-[#222432] text-white shadow-sm'
                           : 'text-[#949ba4] hover:text-white hover:bg-[#1a1b24]'
                       }`}
                     >
@@ -328,14 +336,14 @@ export default function Sidebar() {
             )}
           </div>
 
-          {/* UTILITIES & AUDIO Group */}
+          {/* AUTOMATION & UTILITIES Group */}
           <div className="space-y-1">
             <button
               type="button"
               onClick={() => setUtilitiesOpen(!utilitiesOpen)}
               className="flex w-full items-center justify-between px-3 py-1.5 text-[11px] font-black uppercase tracking-wider text-white/40 hover:text-white/70 transition"
             >
-              <span>Utilities & Media</span>
+              <span>Automation & Tools</span>
               <ChevronDown
                 size={12}
                 className={`transition-transform duration-150 ${
@@ -347,8 +355,10 @@ export default function Sidebar() {
             {utilitiesOpen && (
               <div className="space-y-0.5 pt-0.5">
                 {[
-                  { href: '/dashboard/music', label: 'Music & Audio', icon: Music2 },
-                  { href: '/dashboard/settings', label: 'Server Settings', icon: Settings }
+                  { href: '/dashboard/customcommands', label: 'Custom Commands', icon: Terminal },
+                  { href: '/dashboard/autoresponder', label: 'Auto Responses', icon: MessageSquare },
+                  { href: '/dashboard/utilities', label: 'Server Utilities', icon: Wrench },
+                  { href: '/dashboard/music', label: 'Music & Audio', icon: Music2 }
                 ].map(({ href, label, icon: Icon }) => {
                   const active = pathname === href;
                   return (
@@ -356,9 +366,9 @@ export default function Sidebar() {
                       key={href}
                       href={withGuild(href)}
                       onClick={() => setSidebarOpen(false)}
-                      className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-semibold transition ${
+                      className={`flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-semibold transition ${
                         active
-                          ? 'bg-[#222432] text-white'
+                          ? 'bg-[#222432] text-white shadow-sm'
                           : 'text-[#949ba4] hover:text-white hover:bg-[#1a1b24]'
                       }`}
                     >
@@ -373,16 +383,61 @@ export default function Sidebar() {
             )}
           </div>
 
-          {/* PREMIUM & ADVANCED Group */}
+          {/* ECONOMY & SETTINGS Group */}
+          <div className="space-y-1">
+            <button
+              type="button"
+              onClick={() => setSocialOpen(!socialOpen)}
+              className="flex w-full items-center justify-between px-3 py-1.5 text-[11px] font-black uppercase tracking-wider text-white/40 hover:text-white/70 transition"
+            >
+              <span>Economy & Config</span>
+              <ChevronDown
+                size={12}
+                className={`transition-transform duration-150 ${
+                  socialOpen ? 'rotate-0' : '-rotate-90'
+                }`}
+              />
+            </button>
+
+            {socialOpen && (
+              <div className="space-y-0.5 pt-0.5">
+                {[
+                  { href: '/dashboard/economy', label: 'Economy System', icon: Coins },
+                  { href: '/dashboard/settings', label: 'Server Settings', icon: Settings }
+                ].map(({ href, label, icon: Icon }) => {
+                  const active = pathname === href;
+                  return (
+                    <Link
+                      key={href}
+                      href={withGuild(href)}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-semibold transition ${
+                        active
+                          ? 'bg-[#222432] text-white shadow-sm'
+                          : 'text-[#949ba4] hover:text-white hover:bg-[#1a1b24]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon size={16} className={active ? 'text-rose-400' : ''} />
+                        <span>{label}</span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* PREMIUM STUDIO (Exclusive) Group */}
           <div className="space-y-1">
             <button
               type="button"
               onClick={() => setPremiumOpen(!premiumOpen)}
-              className="flex w-full items-center justify-between px-3 py-1 text-[10px] font-black uppercase tracking-wider text-amber-400/70 hover:text-amber-300 transition"
+              className="flex w-full items-center justify-between px-3 py-1 text-[10px] font-black uppercase tracking-wider text-amber-400/80 hover:text-amber-300 transition"
             >
               <span className="flex items-center gap-1.5">
                 <Crown size={11} className="fill-amber-400 text-amber-400" />
-                <span>Premium Perks</span>
+                <span>Premium Studio</span>
               </span>
               <ChevronDown
                 size={12}
@@ -394,61 +449,53 @@ export default function Sidebar() {
 
             {premiumOpen && (
               <div className="space-y-0.5 pt-0.5">
-                {[
-                  {
-                    href: withGuild('/dashboard/premium'),
-                    label: 'Premium & Codes',
-                    icon: Crown,
-                    isInternal: true,
-                    highlight: true
-                  },
-                  {
-                    href: 'https://discord.gg/26ThFyckFX',
-                    label: 'Buy Premium License',
-                    icon: ExternalLink,
-                    external: true
-                  }
-                ].map(({ href, label, icon: Icon, external, isInternal, highlight }) => {
-                  const isActive = isInternal && pathname === href.split('?')[0];
-                  if (isInternal) {
-                    return (
-                      <Link
-                        key={label}
-                        href={href}
-                        onClick={() => setSidebarOpen(false)}
-                        className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-semibold transition group ${
-                          isActive
-                            ? 'bg-[#222432] text-amber-300'
-                            : highlight
-                            ? 'text-amber-300/90 hover:text-amber-200 hover:bg-amber-500/10'
-                            : 'text-[#949ba4] hover:text-white hover:bg-[#1a1b24]'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Icon size={17} className={isActive || highlight ? 'text-amber-400' : 'text-amber-400/80 group-hover:text-amber-300'} />
-                          <span>{label}</span>
-                        </div>
-                        <Crown size={13} className="fill-amber-400 text-amber-400 shrink-0" />
-                      </Link>
-                    );
-                  }
-                  return (
-                    <a
-                      key={label}
-                      href={href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => setSidebarOpen(false)}
-                      className="flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-semibold text-[#949ba4] hover:text-white hover:bg-[#1a1b24] transition group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Icon size={17} className="text-amber-400/80 group-hover:text-amber-300" />
-                        <span>{label}</span>
-                      </div>
-                      <ExternalLink size={12} className="text-white/40 group-hover:text-white/70 shrink-0" />
-                    </a>
-                  );
-                })}
+                <Link
+                  href={withGuild('/dashboard/ai')}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-semibold transition group ${
+                    pathname === '/dashboard/ai'
+                      ? 'bg-gradient-to-r from-amber-500/20 to-purple-500/20 border border-amber-500/30 text-amber-300'
+                      : 'text-amber-300/80 hover:text-amber-200 hover:bg-amber-500/10'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Sparkles size={16} className="text-amber-400" />
+                    <span>AI Assistant Studio</span>
+                  </div>
+                  <span className="text-[9px] font-black tracking-wider uppercase px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                    PRO
+                  </span>
+                </Link>
+
+                <Link
+                  href={withGuild('/dashboard/premium')}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-semibold transition group ${
+                    pathname === '/dashboard/premium'
+                      ? 'bg-[#222432] text-amber-300'
+                      : 'text-[#949ba4] hover:text-white hover:bg-[#1a1b24]'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Crown size={16} className="text-amber-400" />
+                    <span>Premium & Codes</span>
+                  </div>
+                  <Crown size={12} className="fill-amber-400 text-amber-400 shrink-0" />
+                </Link>
+
+                <a
+                  href="https://discord.gg/26ThFyckFX"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setSidebarOpen(false)}
+                  className="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-semibold text-[#949ba4] hover:text-white hover:bg-[#1a1b24] transition group"
+                >
+                  <div className="flex items-center gap-3">
+                    <ExternalLink size={16} className="text-white/40 group-hover:text-white/70" />
+                    <span>Get Premium License</span>
+                  </div>
+                  <ExternalLink size={11} className="text-white/40 group-hover:text-white/70 shrink-0" />
+                </a>
               </div>
             )}
           </div>

@@ -69,6 +69,23 @@ module.exports = {
     }
   },
 
+  getChannels(guildId) {
+    return new Promise((resolve) => {
+      try {
+        db.all(`SELECT channel_id FROM ai_channels WHERE guild_id = ?`, [guildId], (err, rows) => {
+          if (err) {
+            console.error('[ai.getChannels] DB error:', err);
+            return resolve([]);
+          }
+          resolve((rows || []).map(r => r.channel_id));
+        });
+      } catch (e) {
+        console.error('[ai.getChannels] error:', e);
+        resolve([]);
+      }
+    });
+  },
+
   isChannelEnabled(guildId, channelId, callback) {
     try {
       db.get(

@@ -37,70 +37,6 @@ const PLUGIN_REGISTRY = [
     commands: ['rank', 'leaderboard', 'xp']
   },
   {
-    id: 'logging',
-    name: 'Server Logging',
-    category: 'Server Management',
-    description: 'Audit trail for message edits/deletions, member joins/leaves, role changes, and webhooks.',
-    icon: 'FileText',
-    href: '/dashboard/logging',
-    hasDedicatedPage: true,
-    commands: ['log', 'logs', 'logging']
-  },
-  {
-    id: 'customcommands',
-    name: 'Custom Commands',
-    category: 'Server Management',
-    description: 'Create custom bot commands with automated embed responses, random choices, and permission rules.',
-    icon: 'Terminal',
-    href: '/dashboard/customcommands',
-    hasDedicatedPage: true,
-    commands: ['customcommand']
-  },
-  {
-    id: 'autoresponse',
-    name: 'Auto Responses',
-    category: 'Server Management',
-    description: 'Automatically reply to specific triggers, keywords, or phrases sent in server chat.',
-    icon: 'MessageSquare',
-    href: '/dashboard/customcommands',
-    hasDedicatedPage: true,
-    commands: ['autoresponse']
-  },
-  {
-    id: 'family',
-    name: 'Family System',
-    category: 'Social & Engagement',
-    description: 'Interactive marriage, adoption, family trees, and partnership interactions.',
-    icon: 'HeartHandshake',
-    href: null,
-    hasDedicatedPage: false,
-    commands: ['family']
-  },
-  {
-    id: 'moderation',
-    name: 'Moderator & AutoMod',
-    category: 'Server Management',
-    description: 'Anti-raid, anti-spam, link purges, user warnings, slowmode, and strike system.',
-    icon: 'ShieldAlert',
-    href: '/dashboard/moderation',
-    hasDedicatedPage: true,
-    commands: [
-      'mod', 'automod', 'ban', 'kick', 'timeout', 'warn', 'warnings', 'unwarn', 'unban', 'unmute',
-      'clearwarn', 'purge', 'lock', 'unlock', 'slowmode', 'antinuke', 'anti-ghostping', 'antighost',
-      'softban', 'tempban', 'infractions'
-    ]
-  },
-  {
-    id: 'verification',
-    name: 'Server Verification',
-    category: 'Server Management',
-    description: 'Gatekeeper system with one-click, captcha, YouTube verify, and security roles.',
-    icon: 'ShieldCheck',
-    href: '/dashboard/verification',
-    hasDedicatedPage: true,
-    commands: ['verify', 'verification', 'ytverify']
-  },
-  {
     id: 'rr',
     name: 'Reaction Roles',
     category: 'Essentials',
@@ -131,6 +67,90 @@ const PLUGIN_REGISTRY = [
     commands: ['ticket', 'tickets']
   },
   {
+    id: 'security',
+    name: 'Anti-Nuke & Server Shield',
+    category: 'Server Management',
+    description: 'Rogue admin protection, channel/role deletion shields, mass kick/ban defenses, and recovery.',
+    icon: 'Shield',
+    href: '/dashboard/security',
+    hasDedicatedPage: true,
+    commands: ['antinuke', 'shield']
+  },
+  {
+    id: 'moderation',
+    name: 'Moderator & AutoMod',
+    category: 'Server Management',
+    description: 'Anti-raid, anti-spam, link purges, user warnings, slowmode, and strike system.',
+    icon: 'ShieldAlert',
+    href: '/dashboard/moderation',
+    hasDedicatedPage: true,
+    commands: [
+      'mod', 'automod', 'ban', 'kick', 'timeout', 'warn', 'warnings', 'unwarn', 'unban', 'unmute',
+      'clearwarn', 'purge', 'lock', 'unlock', 'slowmode', 'anti-ghostping', 'antighost',
+      'softban', 'tempban', 'infractions'
+    ]
+  },
+  {
+    id: 'verification',
+    name: 'Server Verification',
+    category: 'Server Management',
+    description: 'Gatekeeper system with one-click, captcha, YouTube verify (Premium), and security roles.',
+    icon: 'ShieldCheck',
+    href: '/dashboard/verification',
+    hasDedicatedPage: true,
+    commands: ['verify', 'verification', 'ytverify']
+  },
+  {
+    id: 'logging',
+    name: 'Server Logging',
+    category: 'Server Management',
+    description: 'Audit trail for message edits/deletions, member joins/leaves, role changes, and webhooks.',
+    icon: 'FileText',
+    href: '/dashboard/logging',
+    hasDedicatedPage: true,
+    commands: ['log', 'logs', 'logging']
+  },
+  {
+    id: 'backups',
+    name: 'Server Backups & Clones',
+    category: 'Server Management',
+    description: 'Create instantaneous snapshot backups of server channels, roles, and permissions with 1-click restore.',
+    icon: 'Database',
+    href: '/dashboard/backups',
+    hasDedicatedPage: true,
+    commands: ['backup']
+  },
+  {
+    id: 'customcommands',
+    name: 'Custom Commands',
+    category: 'Server Management',
+    description: 'Create custom bot commands with automated embed responses, random choices, and permission rules.',
+    icon: 'Terminal',
+    href: '/dashboard/customcommands',
+    hasDedicatedPage: true,
+    commands: ['customcommand']
+  },
+  {
+    id: 'autoresponse',
+    name: 'Auto Responses',
+    category: 'Utilities',
+    description: 'Automatically reply to specific triggers, keywords, or phrases sent in server chat.',
+    icon: 'MessageSquare',
+    href: '/dashboard/autoresponder',
+    hasDedicatedPage: true,
+    commands: ['autoresponse']
+  },
+  {
+    id: 'utility',
+    name: 'Server Utilities & Tools',
+    category: 'Utilities',
+    description: 'Join-to-Create voice channels, sticky messages, ghost ping protection, join pings, and member birthdays.',
+    icon: 'Wrench',
+    href: '/dashboard/utilities',
+    hasDedicatedPage: true,
+    commands: ['tools', 'afk', 'birthday', 'countdown', 'country', 'embedbuilder', 'pokedex', 'stickymessage', 'dbmigrate', 'notificationtesting', 'join-ping', 'join-to-create']
+  },
+  {
     id: 'music',
     name: 'Music & Audio Studio',
     category: 'Utilities',
@@ -139,6 +159,36 @@ const PLUGIN_REGISTRY = [
     href: '/dashboard/music',
     hasDedicatedPage: true,
     commands: ['music', 'playlist', 'play', 'pause', 'skip', 'stop', 'queue', 'nowplaying', 'volume', 'filter', 'lyrics']
+  },
+  {
+    id: 'ai',
+    name: 'AI Assistant Studio',
+    category: 'Utilities',
+    description: 'Next-generation Groq/Llama AI chatbot channels, customized personalities, and autonomous responses (Premium exclusive).',
+    icon: 'Sparkles',
+    href: '/dashboard/ai',
+    hasDedicatedPage: true,
+    commands: ['ai', 'ask', 'imagine', 'summarize']
+  },
+  {
+    id: 'economy',
+    name: 'Economy System',
+    category: 'Social & Engagement',
+    description: 'Server currency, custom daily payouts, job payouts, and server net-worth leaderboards.',
+    icon: 'Coins',
+    href: '/dashboard/economy',
+    hasDedicatedPage: true,
+    commands: ['eco', 'economy', 'ecoadmin', 'ecoconfig', 'balance', 'bal', 'pay', 'work', 'daily', 'shop', 'buy', 'inventory', 'rob', 'deposit', 'withdraw']
+  },
+  {
+    id: 'family',
+    name: 'Family System',
+    category: 'Social & Engagement',
+    description: 'Interactive marriage, adoption, family trees, and partnership interactions.',
+    icon: 'HeartHandshake',
+    href: null,
+    hasDedicatedPage: false,
+    commands: ['family']
   },
   {
     id: 'games',
@@ -151,26 +201,6 @@ const PLUGIN_REGISTRY = [
     commands: ['games', 'dice', 'slots', 'coinflip', 'rps', 'tictactoe', 'trivia', 'connect4', 'hangman', 'memory']
   },
   {
-    id: 'economy',
-    name: 'Economy System',
-    category: 'Social & Engagement',
-    description: 'Server currency, daily rewards, work, rob, bank, and customizable store.',
-    icon: 'Coins',
-    href: null,
-    hasDedicatedPage: false,
-    commands: ['eco', 'economy', 'ecoadmin', 'ecoconfig', 'balance', 'bal', 'pay', 'work', 'daily', 'shop', 'buy', 'inventory', 'rob', 'deposit', 'withdraw']
-  },
-  {
-    id: 'ai',
-    name: 'AI Assistance',
-    category: 'Utilities',
-    description: 'Next-generation AI chat, image generation, and summarization.',
-    icon: 'Sparkles',
-    href: null,
-    hasDedicatedPage: false,
-    commands: ['ai', 'ask', 'imagine', 'summarize']
-  },
-  {
     id: 'fun',
     name: 'Fun & Entertainment',
     category: 'Social & Engagement',
@@ -179,16 +209,6 @@ const PLUGIN_REGISTRY = [
     href: null,
     hasDedicatedPage: false,
     commands: ['fun', 'facts', 'meme']
-  },
-  {
-    id: 'utility',
-    name: 'Server Utilities & Tools',
-    category: 'Utilities',
-    description: 'AFK statuses, server backups, birthdays, countdowns, embed builder, sticky messages, and join pings.',
-    icon: 'Wrench',
-    href: null,
-    hasDedicatedPage: false,
-    commands: ['tools', 'afk', 'backup', 'birthday', 'countdown', 'country', 'embedbuilder', 'pokedex', 'stickymessage', 'dbmigrate', 'notificationtesting', 'join-ping', 'join-to-create']
   }
 ];
 

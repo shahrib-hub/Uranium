@@ -28,9 +28,19 @@ import {
   RotateCcw,
   Power,
   Radio,
-  X
+  X,
+  Crown
 } from 'lucide-react';
+import Link from 'next/link';
 import Toast from '@/components/Toast';
+
+function YoutubeIcon({ size = 18, className = '' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+    </svg>
+  );
+}
 
 const PRESET_COLORS = [
   { name: 'Emerald', hex: '#10b981' },
@@ -49,6 +59,22 @@ export default function VerificationDashboardPage() {
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [toast, setToast] = useState(null);
+  const [activeTab, setActiveTab] = useState('gatekeeper'); // 'gatekeeper' | 'youtube'
+
+  // YouTube Verification state
+  const [ytData, setYtData] = useState({
+    isPremium: false,
+    settings: {
+      enabled: false,
+      channel_name: '',
+      verify_channel_id: '',
+      grant_roles: []
+    },
+    roles: [],
+    channels: []
+  });
+  const [loadingYt, setLoadingYt] = useState(false);
+  const [savingYt, setSavingYt] = useState(false);
 
   // Guild metadata
   const [channels, setChannels] = useState([]);
@@ -245,6 +271,56 @@ export default function VerificationDashboardPage() {
     }
   };
 
+  const loadYtData = useCallback(async () => {
+    if (!guildId) return;
+    setLoadingYt(true);
+    try {
+      const res = await fetch(`/api/guild/${guildId}/verification/yt`);
+      if (res.ok) {
+        const json = await res.json();
+        setYtData(json);
+      }
+    } catch (e) {
+      console.error('[YT Verify load error]', e);
+    } finally {
+      setLoadingYt(false);
+    }
+  }, [guildId]);
+
+  const handleSaveYt = async () => {
+    if (!guildId) return;
+    setSavingYt(true);
+    try {
+      const res = await fetch(`/api/guild/${guildId}/verification/yt`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ytData.settings)
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to update YouTube verify settings');
+      showToast('YouTube verification settings saved!', 'success');
+      loadYtData();
+    } catch (e) {
+      showToast(e.message, 'error');
+    } finally {
+      setSavingYt(false);
+    }
+  };
+
+  const handleDisableYt = async () => {
+    if (!guildId) return;
+    try {
+      const res = await fetch(`/api/guild/${guildId}/verification/yt/disable`, {
+        method: 'POST'
+      });
+      if (!res.ok) throw new Error('Failed to disable YouTube verification');
+      showToast('YouTube verification disabled.', 'success');
+      loadYtData();
+    } catch (e) {
+      showToast(e.message, 'error');
+    }
+  };
+
   const selectedRole = roles.find(r => r.id === config.role_id);
   const selectedUnverifiedRole = roles.find(r => r.id === config.unverified_role_id);
   const selectedChannel = channels.find(c => c.id === config.channel_id);
@@ -349,18 +425,56 @@ export default function VerificationDashboardPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 space-y-6">
-        {/* Disabled Warning Banner */}
-        {!config.enabled && (
-          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-200 flex items-start gap-3 shadow-lg">
-            <AlertCircle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
-            <div>
-              <h4 className="text-xs font-bold text-amber-300 uppercase tracking-wide">Verification System Disabled</h4>
-              <p className="text-xs text-amber-200/80 mt-1 leading-relaxed">
-                The verification gate is currently switched OFF. Any Discord members clicking on existing verification embeds will be immediately blocked and will not receive any roles until you re-enable the system.
-              </p>
-            </div>
-          </div>
-        )}
+        {/* Verification Sub-Mode Switcher */}
+        <div className="flex items-center gap-2 border-b border-white/10 pb-3">
+          <button
+            type="button"
+            onClick={() => setActiveTab('gatekeeper')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+              activeTab === 'gatekeeper'
+                ? 'bg-emerald-600 text-white shadow-md'
+                : 'text-white/60 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <ShieldCheck size={14} />
+            <span>Member Gatekeeper (Buttons & OTP)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('youtube');
+              loadYtData();
+            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+              activeTab === 'youtube'
+                ? 'bg-red-600 text-white shadow-md'
+                : 'text-white/60 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <YoutubeIcon size={14} />
+            <span>YouTube Subscriber Verification</span>
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-amber-400/20 text-amber-300 border border-amber-400/30 flex items-center gap-0.5">
+              <Crown size={9} className="fill-amber-300" />
+              PRO
+            </span>
+          </button>
+        </div>
+
+        {activeTab === 'gatekeeper' && (
+          <div className="space-y-6">
+            {/* Disabled Warning Banner */}
+            {!config.enabled && (
+              <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-200 flex items-start gap-3 shadow-lg">
+                <AlertCircle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="text-xs font-bold text-amber-300 uppercase tracking-wide">Verification System Disabled</h4>
+                  <p className="text-xs text-amber-200/80 mt-1 leading-relaxed">
+                    The verification gate is currently switched OFF. Any Discord members clicking on existing verification embeds will be immediately blocked and will not receive any roles until you re-enable the system.
+                  </p>
+                </div>
+              </div>
+            )}
 
         {/* Live Discord Embed Status Banner */}
         <div className="rounded-2xl border border-white/10 bg-[#13151f] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md">
@@ -1027,6 +1141,120 @@ export default function VerificationDashboardPage() {
             </div>
           </div>
         </div>
+        </div>
+      )}
+
+      {/* YOUTUBE VERIFICATION SECTION (PREMIUM) */}
+      {activeTab === 'youtube' && (
+        <div className="space-y-6">
+          {!ytData.isPremium ? (
+            <div className="rounded-3xl border border-amber-500/30 bg-gradient-to-b from-[#1c1418] via-[#14141e] to-[#0f1016] p-8 sm:p-12 text-center space-y-6 shadow-2xl relative overflow-hidden">
+              <div className="mx-auto h-16 w-16 rounded-2xl bg-red-500/15 border border-red-500/30 grid place-items-center text-red-400 shadow-lg shadow-red-500/20">
+                <YoutubeIcon size={36} />
+              </div>
+              <div className="space-y-2">
+                <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  Premium Subscriber Verification
+                </span>
+                <h2 className="text-2xl sm:text-4xl font-black uppercase tracking-tight text-white mt-2">
+                  YouTube Community Verification
+                </h2>
+                <p className="text-xs sm:text-sm text-white/60 max-w-lg mx-auto leading-relaxed">
+                  Automatically award verified Discord roles to members who subscribe to your official YouTube channel. Validated in real-time via YouTube OAuth and API checks.
+                </p>
+              </div>
+
+              <div className="pt-2 flex justify-center">
+                <Link
+                  href={`/dashboard/premium?guild=${guildId}`}
+                  className="h-11 px-8 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-xs font-bold text-black flex items-center gap-2 transition shadow-xl shadow-amber-500/25"
+                >
+                  <Crown size={16} className="fill-black" />
+                  <span>Unlock YouTube Verification (Premium)</span>
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-[#232534] bg-[#161722] p-6 space-y-5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <YoutubeIcon className="text-red-500" size={24} />
+                  <h2 className="text-base font-bold text-white">YouTube Subscriber Verification Config</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleDisableYt}
+                  className="px-3 py-1.5 rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-xs font-bold text-red-300 transition"
+                >
+                  Disable System
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-semibold text-white/70">Target YouTube Channel Name or Handle</label>
+                  <input
+                    type="text"
+                    value={ytData.settings?.channel_name || ''}
+                    onChange={(e) => setYtData({
+                      ...ytData,
+                      settings: { ...ytData.settings, channel_name: e.target.value }
+                    })}
+                    placeholder="e.g. @MrBeast or UraniumBot"
+                    className="mt-1.5 w-full h-10 rounded-xl border border-[#262838] bg-[#101118] px-3.5 text-xs text-white outline-none focus:border-red-500 transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-white/70">Discord Channel for Verification Prompts</label>
+                  <select
+                    value={ytData.settings?.verify_channel_id || ''}
+                    onChange={(e) => setYtData({
+                      ...ytData,
+                      settings: { ...ytData.settings, verify_channel_id: e.target.value }
+                    })}
+                    className="mt-1.5 w-full h-10 rounded-xl border border-[#262838] bg-[#101118] px-3.5 text-xs text-white outline-none focus:border-red-500 transition"
+                  >
+                    <option value="">Select a channel...</option>
+                    {channels.map((c) => (
+                      <option key={c.id} value={c.id}>#{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="text-xs font-semibold text-white/70">Roles to Grant to Verified Subscribers</label>
+                  <select
+                    value={ytData.settings?.grant_roles?.[0] || ''}
+                    onChange={(e) => setYtData({
+                      ...ytData,
+                      settings: { ...ytData.settings, grant_roles: [e.target.value] }
+                    })}
+                    className="mt-1.5 w-full h-10 rounded-xl border border-[#262838] bg-[#101118] px-3.5 text-xs text-white outline-none focus:border-red-500 transition"
+                  >
+                    <option value="">Select role to award...</option>
+                    {roles.map((r) => (
+                      <option key={r.id} value={r.id}>@{r.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="pt-2 flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleSaveYt}
+                  disabled={savingYt}
+                  className="h-10 px-6 rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-50 text-xs font-bold text-white flex items-center gap-2 transition shadow-md shadow-red-600/20"
+                >
+                  {savingYt ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
+                  <span>Save YouTube Verification</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
       </div>
 
       {/* Reset Confirmation Modal */}

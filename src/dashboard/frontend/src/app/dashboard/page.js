@@ -33,7 +33,9 @@ import {
   ChevronRight,
   Ticket,
   Smile,
-  Wrench
+  Wrench,
+  Shield,
+  Database
 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useStore } from '@/store';
@@ -49,6 +51,8 @@ const ICON_MAP = {
   HeartHandshake,
   ShieldAlert,
   ShieldCheck,
+  Shield,
+  Database,
   Users,
   Gift,
   Music2,
