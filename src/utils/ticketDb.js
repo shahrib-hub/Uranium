@@ -358,6 +358,43 @@ async function deleteAllGuildTickets(guildId) {
   await run(`DELETE FROM ticket_members WHERE guild_id = ?`, [guildId]);
 }
 
+async function listGuildTickets(guildId, limit = 100) {
+  if (useMongoDB && getDbStatus()) {
+    const docs = await Ticket.find({ guildId }).sort({ ticketId: -1 }).limit(limit);
+    return docs.map(doc => ({
+      id: doc.ticketId,
+      guild_id: doc.guildId,
+      opener_id: doc.openerId,
+      channel_id: doc.channelId,
+      type: doc.type,
+      status: doc.status,
+      claim_user_id: doc.claimUserId,
+      created_at: doc.createdAt,
+      closed_at: doc.closedAt,
+      description: doc.description,
+      form_responses: doc.formResponses
+    }));
+  }
+  return await all(`SELECT * FROM tickets WHERE guild_id = ? ORDER BY id DESC LIMIT ?`, [guildId, limit]);
+}
+
+async function savePanel(panelIdOrData, guildId, channelId, name, is_premium_only = 0, types = '[]') {
+  if (typeof panelIdOrData === 'object' && panelIdOrData !== null) {
+    return await createPanel(panelIdOrData);
+  }
+  return await createPanel({
+    panel_id: panelIdOrData,
+    guild_id: guildId,
+    channel_id: channelId,
+    name: name,
+    is_premium_only: is_premium_only ? 1 : 0,
+    types: typeof types === 'string' ? types : JSON.stringify(types || [])
+  });
+}
+
+const getPanelsByGuild = getPanels;
+const deletePanel = removePanel;
+
 module.exports = {
   db,
   run,
@@ -370,13 +407,17 @@ module.exports = {
   getTicketByChannel,
   updateTicket,
   deleteTicket,
+  listGuildTickets,
   addTicketMember,
   removeTicketMember,
   getTicketMembers,
   getPanels,
+  getPanelsByGuild,
   getPanelById,
   createPanel,
+  savePanel,
   removePanel,
+  deletePanel,
   deleteGuildConfig,
   deleteGuildCounter,
   deleteAllGuildTickets

@@ -19,8 +19,8 @@ module.exports = function createTicketsRouter(client, { requireGuildAccess, requ
         support_role_id: null
       };
 
-      const panels = (await ticketDb.getPanelsByGuild(guild.id)) || [];
-      const allTickets = (await ticketDb.listGuildTickets(guild.id)) || [];
+      const panels = (ticketDb.getPanelsByGuild ? await ticketDb.getPanelsByGuild(guild.id) : (ticketDb.getPanels ? await ticketDb.getPanels(guild.id) : [])) || [];
+      const allTickets = (ticketDb.listGuildTickets ? await ticketDb.listGuildTickets(guild.id) : []) || [];
       const openTickets = allTickets.filter(t => t.status === 'open');
       const closedTickets = allTickets.filter(t => t.status === 'closed');
 
@@ -141,14 +141,12 @@ module.exports = function createTicketsRouter(client, { requireGuildAccess, requ
 
       const sentMsg = await channel.send({ embeds: [embed], components: [row] });
 
-      await ticketDb.savePanel(
-        panelId,
-        guild.id,
-        channel.id,
-        name,
-        0,
-        JSON.stringify({ messageId: sentMsg.id, title, description, button_text })
-      );
+      const metadata = JSON.stringify({ messageId: sentMsg.id, title, description, button_text });
+      if (typeof ticketDb.savePanel === 'function') {
+        await ticketDb.savePanel(panelId, guild.id, channel.id, name, 0, metadata);
+      } else if (typeof ticketDb.createPanel === 'function') {
+        await ticketDb.createPanel({ panel_id: panelId, guild_id: guild.id, channel_id: channel.id, name, is_premium_only: 0, types: metadata });
+      }
 
       res.json({ success: true, panelId, messageId: sentMsg.id });
     } catch (err) {
@@ -161,7 +159,11 @@ module.exports = function createTicketsRouter(client, { requireGuildAccess, requ
   router.delete('/guild/:guildId/tickets/panels/:panelId', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
     try {
       const { panelId } = req.params;
-      await ticketDb.deletePanel(panelId);
+      if (typeof ticketDb.deletePanel === 'function') {
+        await ticketDb.deletePanel(panelId);
+      } else if (typeof ticketDb.removePanel === 'function') {
+        await ticketDb.removePanel(panelId);
+      }
       res.json({ success: true, message: 'Ticket panel deleted.' });
     } catch (err) {
       console.error('[Tickets API] Error deleting ticket panel:', err);
@@ -173,7 +175,7 @@ module.exports = function createTicketsRouter(client, { requireGuildAccess, requ
   router.get('/guild/:guildId/tickets/list', requireGuildAccess(client), requireGuildMod, async (req, res) => {
     try {
       const { guild } = req;
-      const tickets = (await ticketDb.listGuildTickets(guild.id)) || [];
+      const tickets = (ticketDb.listGuildTickets ? await ticketDb.listGuildTickets(guild.id) : []) || [];
 
       // Enrich with opener usernames from cache if possible
       const enriched = tickets.map(t => {
