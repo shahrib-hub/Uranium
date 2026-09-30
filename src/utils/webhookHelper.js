@@ -12,20 +12,28 @@ const logStorage = require('./logStorage');
  * @param {string} name - webhook display name
  * @returns {Promise<{id: string|null, token: string|null, url: string|null}>}
  */
-async function createAndSaveWebhook(client, guildId, channelId, name = 'Guild Logger') {
+async function createAndSaveWebhook(client, guildId, channelOrId, name = 'Guild Logger') {
   // ensure storage ready
   await logStorage.init?.();
 
-  const guild = client.guilds.cache.get(guildId);
+  const guild = client.guilds.cache.get(guildId) || await client.guilds.fetch(guildId).catch(() => null);
   if (!guild) throw new Error('Guild not cached on client');
 
-  const channel = guild.channels.cache.get(channelId);
+  let channel = null;
+  if (channelOrId && typeof channelOrId === 'object' && typeof channelOrId.isTextBased === 'function') {
+    channel = channelOrId;
+  } else {
+    const rawId = typeof channelOrId === 'string' ? channelOrId : (channelOrId?.id || String(channelOrId || ''));
+    channel = guild.channels.cache.get(rawId) || await guild.channels.fetch(rawId).catch(() => null);
+  }
+
   if (!channel || !channel.isTextBased?.()) throw new Error('Invalid text channel');
 
   // permission check
-  const me = guild.members.me;
+  const me = guild.members.me || await guild.members.fetchMe().catch(() => null);
   if (!me) throw new Error('Bot member not available');
-  if (!me.permissionsIn(channel).has('ManageWebhooks')) {
+  const perms = channel.permissionsFor(me);
+  if (!perms || !perms.has('ManageWebhooks')) {
     throw new Error('Missing Manage Webhooks permission in target channel');
   }
 
@@ -145,5 +153,6 @@ async function sendViaWebhookIfConfigured(client, guildId, payload) {
 module.exports = {
   createAndSaveWebhook,
   removeSavedWebhook,
+  deleteSavedWebhook: removeSavedWebhook,
   sendViaWebhookIfConfigured
 };

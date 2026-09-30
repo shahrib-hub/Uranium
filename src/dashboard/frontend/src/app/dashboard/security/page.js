@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   Shield,
@@ -20,10 +20,11 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function SecurityDashboardPage() {
+function SecurityDashboardContent() {
   const searchParams = useSearchParams();
-  const guildId = searchParams.get('guild');
+  const guildId = searchParams ? searchParams.get('guild') : null;
 
+  const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [newWhitelistId, setNewWhitelistId] = useState('');
@@ -43,20 +44,40 @@ export default function SecurityDashboardPage() {
   const [recoveryLogs, setRecoveryLogs] = useState([]);
   const [textChannels, setTextChannels] = useState([]);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const fetchSecurityData = async () => {
-    if (!guildId) return;
+    if (!guildId) {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       const res = await fetch(`/api/guild/${guildId}/security`);
       if (res.ok) {
         const data = await res.json();
-        setConfig(data.config || {});
-        setAvailableFeatures(data.availableFeatures || []);
-        setWhitelist(data.whitelist || []);
-        setRecoveryLogs(data.recoveryLogs || []);
-        setTextChannels(data.textChannels || []);
+        if (data && typeof data === 'object') {
+          setConfig(data.config || {
+            enabled: false,
+            punishment: 'ban',
+            action_limit: 3,
+            autorecovery: true,
+            log_channel: null,
+            features: {}
+          });
+          setAvailableFeatures(Array.isArray(data.availableFeatures) ? data.availableFeatures : []);
+          setWhitelist(Array.isArray(data.whitelist) ? data.whitelist : []);
+          setRecoveryLogs(Array.isArray(data.recoveryLogs) ? data.recoveryLogs : []);
+          setTextChannels(Array.isArray(data.textChannels) ? data.textChannels : []);
+        }
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        toast.error(errData.error || 'Failed to load security settings');
       }
     } catch (err) {
+      console.error('[Security Fetch Error]:', err);
       toast.error('Failed to load security settings: ' + err.message);
     } finally {
       setLoading(false);
@@ -80,17 +101,17 @@ export default function SecurityDashboardPage() {
       if (!res.ok) throw new Error(data.error || 'Failed to update settings');
       toast.success('Anti-Nuke settings saved successfully!');
     } catch (err) {
-      toast.error(err.message);
+      toast.error(err.message || 'Error saving settings');
     } finally {
       setSaving(false);
     }
   };
 
   const handleToggleFeature = async (featureId, nextState) => {
-    // Optimistic
+    // Optimistic UI update
     setConfig(prev => ({
       ...prev,
-      features: { ...prev.features, [featureId]: nextState ? 1 : 0 }
+      features: { ...(prev.features || {}), [featureId]: nextState ? 1 : 0 }
     }));
 
     try {
@@ -100,16 +121,17 @@ export default function SecurityDashboardPage() {
         body: JSON.stringify({ feature: featureId, enabled: nextState })
       });
       if (!res.ok) throw new Error('Failed to toggle shield');
-      toast.success(`${featureId.replace('_', ' ')} ${nextState ? 'enabled' : 'disabled'}.`);
+      toast.success(`Shield ${nextState ? 'enabled' : 'disabled'}.`);
     } catch (err) {
-      toast.error(err.message);
-      // Revert
+      toast.error(err.message || 'Error toggling shield');
+      // Revert on error
       fetchSecurityData();
     }
   };
 
   const handleAddWhitelist = async () => {
-    if (!newWhitelistId || !/^\d{17,20}$/.test(newWhitelistId)) {
+    const trimmedId = (newWhitelistId || '').trim();
+    if (!trimmedId || !/^\d{17,20}$/.test(trimmedId)) {
       toast.error('Please enter a valid 17-20 digit Discord User ID.');
       return;
     }
@@ -118,7 +140,7 @@ export default function SecurityDashboardPage() {
       const res = await fetch(`/api/guild/${guildId}/security/whitelist`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: newWhitelistId })
+        body: JSON.stringify({ userId: trimmedId })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to add whitelist user');
@@ -126,22 +148,24 @@ export default function SecurityDashboardPage() {
       setNewWhitelistId('');
       await fetchSecurityData();
     } catch (err) {
-      toast.error(err.message);
+      toast.error(err.message || 'Error adding whitelist user');
     } finally {
       setAddingWhitelist(false);
     }
   };
 
   const handleRemoveWhitelist = async (userId) => {
+    const cleanId = String(userId || '').trim();
+    if (!cleanId) return;
     try {
-      const res = await fetch(`/api/guild/${guildId}/security/whitelist/${userId}`, {
+      const res = await fetch(`/api/guild/${guildId}/security/whitelist/${cleanId}`, {
         method: 'DELETE'
       });
       if (!res.ok) throw new Error('Failed to remove whitelist user');
       toast.success('User removed from whitelist.');
-      setWhitelist(prev => prev.filter(w => w.id !== userId));
+      setWhitelist(prev => prev.filter(w => String(w?.id) !== cleanId));
     } catch (err) {
-      toast.error(err.message);
+      toast.error(err.message || 'Error removing user from whitelist');
     }
   };
 
@@ -243,7 +267,7 @@ export default function SecurityDashboardPage() {
               <div>
                 <label className="text-[11px] font-semibold text-white/60">Punishment on Breach</label>
                 <select
-                  value={config.punishment}
+                  value={config.punishment || 'ban'}
                   onChange={(e) => setConfig({ ...config, punishment: e.target.value })}
                   className="mt-1.5 w-full h-10 rounded-xl border border-[#262838] bg-[#101118] px-3 text-xs text-white outline-none focus:border-rose-500 transition"
                 >
@@ -255,13 +279,13 @@ export default function SecurityDashboardPage() {
 
               <div>
                 <label className="text-[11px] font-semibold text-white/60">
-                  Action Threshold Limit ({config.action_limit} actions / 10s)
+                  Action Threshold Limit ({config.action_limit ?? 3} actions / 10s)
                 </label>
                 <input
                   type="number"
                   min={1}
                   max={20}
-                  value={config.action_limit}
+                  value={config.action_limit ?? 3}
                   onChange={(e) => setConfig({ ...config, action_limit: parseInt(e.target.value, 10) || 3 })}
                   className="mt-1.5 w-full h-10 rounded-xl border border-[#262838] bg-[#101118] px-3 text-xs text-white outline-none focus:border-rose-500 transition"
                 />
@@ -279,7 +303,7 @@ export default function SecurityDashboardPage() {
                 >
                   <option value="">None (Don't send alerts)</option>
                   {textChannels.map((c) => (
-                    <option key={c.id} value={c.id}>#{c.name}</option>
+                    <option key={String(c.id)} value={String(c.id)}>#{c.name}</option>
                   ))}
                 </select>
               </div>
@@ -308,7 +332,7 @@ export default function SecurityDashboardPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {availableFeatures.map((feat) => {
-                const isEnabled = config.features && (config.features[feat.id] === 1 || config.features[feat.id] === true);
+                const isEnabled = config.features && (config.features[feat.id] === 1 || config.features[feat.id] === true || (feat.alias && (config.features[feat.alias] === 1 || config.features[feat.alias] === true)));
                 return (
                   <div
                     key={feat.id}
@@ -370,34 +394,38 @@ export default function SecurityDashboardPage() {
               {whitelist.length === 0 ? (
                 <p className="text-xs text-white/30 text-center py-4">No users whitelisted.</p>
               ) : (
-                whitelist.map((w) => (
-                  <div
-                    key={w.id}
-                    className="flex items-center justify-between p-2 rounded-xl bg-[#101118] border border-[#232534]"
-                  >
-                    <div className="flex items-center gap-2.5 truncate">
-                      {w.avatar ? (
-                        <img src={w.avatar} alt="" className="h-6 w-6 rounded-full object-cover shrink-0" />
-                      ) : (
-                        <div className="h-6 w-6 rounded-full bg-white/10 grid place-items-center text-[10px] text-white/60">
-                          ?
-                        </div>
-                      )}
-                      <div className="truncate">
-                        <p className="text-xs font-semibold text-white truncate">{w.displayName || w.username}</p>
-                        <p className="text-[10px] text-white/40 font-mono">{w.id}</p>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveWhitelist(w.id)}
-                      className="p-1 rounded-lg text-white/30 hover:text-red-400 hover:bg-red-500/10 transition"
+                whitelist.map((w, index) => {
+                  const safeId = String(w?.id || w?.user_id || index);
+                  const safeName = String(w?.displayName || w?.username || safeId);
+                  return (
+                    <div
+                      key={safeId}
+                      className="flex items-center justify-between p-2 rounded-xl bg-[#101118] border border-[#232534]"
                     >
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                ))
+                      <div className="flex items-center gap-2.5 truncate">
+                        {w?.avatar ? (
+                          <img src={w.avatar} alt="" className="h-6 w-6 rounded-full object-cover shrink-0" />
+                        ) : (
+                          <div className="h-6 w-6 rounded-full bg-white/10 grid place-items-center text-[10px] text-white/60">
+                            ?
+                          </div>
+                        )}
+                        <div className="truncate">
+                          <p className="text-xs font-semibold text-white truncate">{safeName}</p>
+                          <p className="text-[10px] text-white/40 font-mono">{safeId}</p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveWhitelist(safeId)}
+                        className="p-1 rounded-lg text-white/30 hover:text-red-400 hover:bg-red-500/10 transition"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  );
+                })
               )}
             </div>
           </div>
@@ -417,13 +445,13 @@ export default function SecurityDashboardPage() {
                   <div key={idx} className="p-2.5 rounded-xl bg-[#101118] border border-[#232534] space-y-1">
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-red-400 uppercase text-[10px] tracking-wider">
-                        {log.action}
+                        {String(log?.action || 'Event')}
                       </span>
                       <span className="text-[10px] text-white/40">
-                        {new Date(log.timestamp).toLocaleTimeString()}
+                        {mounted && log?.timestamp ? new Date(log.timestamp).toLocaleTimeString() : 'Recent'}
                       </span>
                     </div>
-                    <p className="text-[11px] text-white/60 font-mono">Target: {log.target_id || 'System'}</p>
+                    <p className="text-[11px] text-white/60 font-mono">Target: {String(log?.target_id || 'System')}</p>
                   </div>
                 ))
               )}
@@ -432,5 +460,22 @@ export default function SecurityDashboardPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SecurityDashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-rose-500 border-t-transparent" />
+            <span className="text-xs text-white/40">Loading server shields...</span>
+          </div>
+        </div>
+      }
+    >
+      <SecurityDashboardContent />
+    </Suspense>
   );
 }

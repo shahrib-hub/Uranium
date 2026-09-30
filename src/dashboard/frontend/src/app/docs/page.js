@@ -26,7 +26,17 @@ import {
   Palette,
   Settings,
   Headphones,
-  MessageSquare
+  MessageSquare,
+  Ticket,
+  Database,
+  ShieldAlert,
+  Wrench,
+  Coins,
+  Bot,
+  Radio,
+  Pin,
+  Ghost,
+  Calendar
 } from 'lucide-react';
 
 const DOCS_SECTIONS = [
@@ -488,6 +498,417 @@ You can view, redeem, and manage your server's premium status directly on Discor
 
 > [!IMPORTANT]
 > To purchase or inquire about Premium for your server, visit our official [Support & Premium Portal](https://discord.gg/26ThFyckFX).
+`
+      }
+    ]
+  },
+  {
+    id: 'tickets-support',
+    category: 'Ticket Support System',
+    icon: Ticket,
+    items: [
+      {
+        id: 'tickets-overview',
+        title: 'Ticket System Setup & Custom Panels',
+        description: 'Create multi-category support desks with interactive buttons, modal forms, and staff assignment.',
+        content: `
+Uranium's **Ticket Support Desk** ([/dashboard/tickets](/dashboard/tickets)) provides an enterprise-grade customer support and issue resolution platform directly inside Discord.
+
+### Key Capabilities
+- **Multi-Category Panels**: Route tickets to specialized departments (e.g. \`General Support\`, \`Billing Inquiries\`, \`Player Reports\`).
+- **Interactive Modals**: Collect crucial context (e.g. in-game username, order number, proof link) before the ticket channel is even opened.
+- **Dedicated Role Assignment**: Only assigned support staff and the ticket creator can view the channel.
+- **HTML Transcripts**: Complete, browsable chat logs automatically uploaded to your log channel upon ticket closure.
+
+### How to Deploy a Ticket Panel:
+1. Open the [Ticket Support System](/dashboard/tickets) in your dashboard.
+2. Select or create your **Open Tickets Category** (e.g. \`🎫 TICKETS\`).
+3. Select your **Closed Tickets Category** (e.g. \`📁 ARCHIVED TICKETS\`).
+4. Select your **Transcript Channel** (e.g. \`#ticket-logs\`).
+5. Choose your **Support Staff Roles** that should have full permission to respond to and manage tickets.
+6. Design your **Ticket Panel Embed** with a title, description, custom accent color, and action button.
+7. Click **Deploy Ticket Panel** — Uranium will immediately post the interactive panel into your designated channel!
+`
+      },
+      {
+        id: 'tickets-lifecycle',
+        title: 'Ticket Lifecycle & Slash Commands',
+        description: 'Manage open tickets, claim staff ownership, add collaborators, and export transcripts.',
+        content: `
+Once a user clicks to open a ticket, Uranium provisions a private text channel with custom permission overwrites so only the user and support staff can participate.
+
+### Ticket Lifecycle Controls
+- **Claiming Tickets**: Staff can click the **Claim Ticket** button or use \`/ticket claim\` to assign ownership, notifying other staff members that the inquiry is being addressed.
+- **Adding / Removing Users**: Invite witnesses or co-op members into the ticket using \`/ticket add-user <user>\`.
+- **Closing with Confirmation**: Staff or the creator can click **Close Ticket**. Uranium prompts with a confirmation dialog to prevent accidental closures.
+- **Automatic Archival & Logging**: When closed, Uranium generates a searchable HTML transcript, sends it to the transcript channel, DMs a copy to the user, and archives or deletes the channel according to your settings.
+
+### Essential Ticket Slash Commands
+\`\`\`bash
+/ticket setup channel:#support transcript_channel:#logs open_category:Tickets closed_category:Closed archive_category:Archive support_role:@Support
+/ticket panel channel:#support name:"Billing Support" types:"Billing,Report,General"
+/ticket claim                         # Claim ownership of the active ticket
+/ticket unclaim                       # Release ownership
+/ticket add-user user:@Member         # Add collaborator to ticket channel
+/ticket remove-user user:@Member      # Remove collaborator
+/ticket close                         # Close ticket & export transcript
+/ticket information                   # View ticket status, creator, and claimed staff
+\`\`\`
+`
+      }
+    ]
+  },
+  {
+    id: 'server-backups',
+    category: 'Server Backups & Recovery',
+    icon: Database,
+    items: [
+      {
+        id: 'backups-overview',
+        title: 'Disaster Recovery & Snapshots',
+        description: 'Capture complete snapshots of server channels, permissions, roles, and settings for instant rollback.',
+        content: `
+Uranium's **Server Backup & Disaster Recovery Suite** ([/dashboard/backups](/dashboard/backups)) protects your community from rogue administrators, compromised accounts, or accidental deletions.
+
+### What is Preserved in a Backup?
+- **Channels & Categories**: Complete structure, topic descriptions, bitrates, slowmodes, and positional ordering.
+- **Permission Overwrites**: Every granular role and member permission overwrite for each channel.
+- **Server Roles**: Role names, hex colors, hoisted display status, and exact permission bitfields.
+- **Server Meta & Visuals**: Server name, verification tier, default notification levels, AFK channels, and icon settings.
+- **Custom Emojis & Stickers**: Server custom emoji and sticker asset references.
+
+> [!WARNING]
+> Discord Developer API privacy policies strictly prohibit bots from capturing member chat message history in backups. Backups preserve server infrastructure, roles, permissions, and channels.
+`
+      },
+      {
+        id: 'backups-tiers',
+        title: 'Backup Quotas: Free vs. Premium',
+        description: 'Understand snapshot slot allocations, cooldown timers, and restoration safety guarantees.',
+        content: `
+To ensure fair cloud storage and prevent abuse of intensive Discord channel-creation APIs, backup quotas are structured as follows:
+
+| Feature | Free Tier | Premium Tier |
+| :--- | :--- | :--- |
+| **Active Backup Slots** | **1 Slot** | **3 Slots** |
+| **Creation Cooldown** | **7 Days** | **24 Hours (1 Day)** |
+| **Restoration Speed** | High-Priority API Rate Limiting | VIP Rapid Rebuilding Engine |
+| **Cloud Storage** | Secure Cloud Storage | Persistent Multi-Region Cloud Storage |
+| **Direct Web Restores** | Available | Available |
+
+### Backup Slash Commands
+\`\`\`bash
+/backup info                          # Check current tier, remaining slots, and cooldown
+/backup create [name]                 # Capture a fresh snapshot (e.g. "Pre-Raid Backup")
+/backup restore slot:<1-3>            # Deep-restore server layout (Administrator only)
+/backup delete slot:<1-3>             # Free up a slot for a new backup
+\`\`\`
+
+> [!CAUTION]
+> Performing a **Deep Restore** will recreate your channels, permissions, and roles to match the snapshot. Always verify with other server owners before initiating a restore!
+`
+      }
+    ]
+  },
+  {
+    id: 'security-shield',
+    category: 'Anti-Nuke & Server Shield',
+    icon: ShieldAlert,
+    items: [
+      {
+        id: 'antinuke-overview',
+        title: 'Real-Time Audit Log Defense',
+        description: 'Detect and neutralize rogue administrators, hacked bot tokens, and mass-destruction attempts in milliseconds.',
+        content: `
+Uranium's **Anti-Nuke & Server Shield** ([/dashboard/security](/dashboard/security)) acts as an automated 24/7 internal affairs officer for your server, continuously inspecting Discord audit logs for rapid destructive activity.
+
+### Threat Vectors Monitored:
+1. **Mass Channel Deletion**: Halts attempts to delete multiple text or voice channels.
+2. **Mass Role Deletion**: Prevents malicious removal of community and staff roles.
+3. **Mass Member Bans & Kicks**: Intercepts rogue staff members purging your member list.
+4. **Rogue Bot Infiltration**: Flags and removes unauthorized bot additions made without owner clearance.
+5. **Webhook Poisoning**: Blocks mass webhook creation used for spam raids.
+6. **Mass Member Pruning**: Detects and aborts unauthorized server prunes.
+
+### Automated Punishment Protocols:
+When an unauthorized administrator or compromised account breaches your action limits, Uranium strikes instantly:
+- **Ban User**: Immediately issues a permanent ban to the attacker.
+- **Kick User**: Evicts the attacker from the server.
+- **Strip Administrative Roles**: Instantly removes all roles containing Administrator, Manage Channels, or Manage Roles permissions, neutralizing the threat while keeping the account present for investigation.
+`
+      },
+      {
+        id: 'antinuke-config',
+        title: 'Shield Configuration & Safe Whitelist',
+        description: 'Set custom action thresholds, enable auto-recovery, and whitelist trusted co-owners.',
+        content: `
+### Step 1: Configure Action Thresholds
+In [/dashboard/security](/dashboard/security) or via slash commands, establish your sensitivity:
+- **Action Limits**: Number of sensitive actions allowed within a rolling 10-second window (e.g., 3 actions).
+- **Auto-Recovery**: When enabled, Uranium will automatically recreate deleted channels or roles with their original names and settings!
+
+### Step 2: Establish the Whitelist
+Add trusted bot partners and co-owners to the Anti-Nuke Whitelist so routine maintenance is never falsely flagged:
+\`\`\`bash
+/antinuke enable                      # Activate master anti-nuke defense
+/antinuke punishment type:ban         # Set punishment to Ban (or kick/striproles)
+/antinuke limits actions:3            # Trigger defense if >3 actions occur in seconds
+/antinuke autorecovery enabled:true   # Automatically restore deleted channels/roles
+/antinuke whitelist add user:@CoOwner # Exempt trusted admin from anti-nuke checks
+/antinuke whitelist list              # Review all currently whitelisted accounts
+\`\`\`
+
+> [!IMPORTANT]
+> The Uranium bot role must be positioned **at the very top** of your server role hierarchy in Discord Server Settings > Roles so it can ban or strip permissions from malicious administrators.
+`
+      }
+    ]
+  },
+  {
+    id: 'autoresponder',
+    category: 'Auto-Responder & Automation',
+    icon: MessageSquare,
+    items: [
+      {
+        id: 'autoresponder-overview',
+        title: 'Chat Triggers & Dynamic Placeholders',
+        description: 'Configure automated instant replies for frequent questions, rules, links, and community keywords.',
+        content: `
+The **Auto-Responder Suite** ([/dashboard/autoresponder](/dashboard/autoresponder)) eliminates repetitive moderator questions by responding instantly whenever members mention specific keywords or phrases.
+
+### Trigger Matching Modes:
+- **Exact Match**: Fires only when the message exactly matches the trigger (case-insensitive).
+- **Contains Word**: Fires whenever the trigger phrase appears anywhere inside the message.
+- **Starts With**: Triggers if the message begins with the designated phrase.
+- **Regex / Wildcard**: Advanced pattern matching for power users.
+
+### Dynamic Template Variables:
+Personalize your auto-replies with dynamic variables:
+- \`{user}\` — Mentions the member who triggered the response (e.g. <@123456789>).
+- \`{username}\` — Member's Discord username (e.g. \`alex_dev\`).
+- \`{server}\` — Name of the Discord server.
+- \`{memberCount}\` — Current total server members.
+- \`{channel}\` — Channel mention where the response is posted.
+`
+      },
+      {
+        id: 'autoresponder-embeds',
+        title: 'Rich Embeds & Channel Scoping',
+        description: 'Deliver responses as studio-grade embeds, restrict triggers to specific channels, and slash commands.',
+        content: `
+### Plain Text vs. Rich Embed Responses
+- **Plain Text**: Clean, casual replies that blend into conversation naturally.
+- **Rich Embeds**: Professional boxed cards with custom accent hex colors, headers, thumbnail graphics, and footer timestamps.
+
+### Scoping & Whitelisting:
+Prevent spam by restricting auto-responders:
+- **Allowed Channels**: Only trigger inside specific channels (e.g. \`#faq\`, \`#help\`).
+- **Ignored Channels**: Mute triggers in high-speed channels (e.g. \`#general\`, \`#spam\`).
+- **Ignored Roles**: Allow moderators or staff to type trigger words without firing bot replies.
+
+### Auto-Response Slash Commands:
+\`\`\`bash
+/autoresponse list                    # View all active triggers in your server
+/autoresponse add                     # Launch interactive setup wizard
+/autoresponse remove trigger:"!faq"   # Delete an existing auto-response trigger
+\`\`\`
+`
+      }
+    ]
+  },
+  {
+    id: 'ai-studio',
+    category: 'AI Assistant Studio',
+    icon: Bot,
+    items: [
+      {
+        id: 'ai-overview',
+        title: 'Groq Llama 3.3 Engine & Personalities',
+        description: 'Integrate conversational artificial intelligence powered by ultra-fast Groq Llama 3.3 inference (Premium).',
+        content: `
+The **AI Assistant Studio** ([/dashboard/ai](/dashboard/ai)) turns Uranium into an intelligent, witty conversationalist for your community, powered by state-of-the-art Groq Llama 3.3 models with sub-second response times.
+
+> [!NOTE]
+> AI Assistant Studio is an exclusive **Premium Feature**. Free tier servers can upgrade anytime with \`/premium buy\` or \`/premium redeem\`.
+
+### Core Capabilities:
+- **Sub-Second Groq Inference**: Blazing-fast response speeds feel like a real human typing.
+- **Custom System Personalities**: Tailor the bot to speak like a fantasy RPG NPC, a sarcastic cyberpunk droid, a helpful gaming tutor, or a formal company representative.
+- **Conversation Memory Window**: Retains recent conversational turns so members can have natural, multi-part discussions.
+- **Creativity (Temperature) Slider**: Adjust between precise, factual responses (0.2) or whimsical, creative banter (0.9).
+`
+      },
+      {
+        id: 'ai-channels',
+        title: 'Dedicated AI Channels & Direct Mentions',
+        description: 'Configure automated auto-reply channels or summon the AI anywhere via mentions.',
+        content: `
+### Interaction Modes:
+1. **Dedicated AI Channels**: Bind the AI to a channel like \`#ask-ai\` or \`#bot-chat\`. Uranium will automatically converse with any message sent in that channel with zero prefix required!
+2. **Direct Mentions (@Uranium)**: Mention \`@Uranium <question>\` in any allowed server channel to get an immediate AI response.
+3. **Slash Command**: Use \`/ai chat prompt:<message>\` for private or ephemeral answers.
+
+### AI Slash Commands:
+\`\`\`bash
+/ai chat prompt:"Explain quantum entanglement in 2 sentences"
+/ai setup channel:#ask-ai             # Enable automatic AI chat in dedicated channel
+/ai disable channel:#ask-ai           # Disable automatic AI in that channel
+/ai style style:sarcastic             # Choose preset tone (casual, sarcastic, poetic, formal)
+/ai stats                             # View server AI message counters and tokens used
+/ai status                            # Check if AI is active in the current channel
+\`\`\`
+`
+      }
+    ]
+  },
+  {
+    id: 'yt-verification',
+    category: 'YouTube Verification',
+    icon: Sparkles,
+    items: [
+      {
+        id: 'yt-verify-overview',
+        title: 'Automated YouTube Subscriber Roles',
+        description: 'Verify members who subscribe to your YouTube channel and grant them exclusive roles (Premium).',
+        content: `
+The **YouTube Subscriber Verification System** ([/dashboard/verification](/dashboard/verification)) bridges your YouTube creator channel with your Discord community, rewarding real subscribers with special VIP roles.
+
+> [!NOTE]
+> YouTube Subscriber Verification is an exclusive **Premium Feature** designed for content creators and streamers.
+
+### How the Verification Flow Works:
+1. **Admin Setup**: Configure your YouTube Channel ID and select the target Discord reward role (e.g. \`@YouTube Subscriber\`).
+2. **Member Initiation**: A member types \`/ytverify\` in your server or clicks the interactive verification embed button.
+3. **Google OAuth Authorization**: Uranium provides a secure, official Google OAuth2 login link.
+4. **Subscription Validation**: The bot queries the YouTube Data API v3 to confirm the user is actively subscribed to your channel.
+5. **Instant Role Grant**: If verified, Uranium immediately assigns the reward role and logs the event!
+
+### Slash Commands:
+\`\`\`bash
+/ytverify setup                       # Interactive YouTube channel & role configuration
+/ytverify status                      # Check active YouTube verification settings
+/ytverify disable                     # Deactivate YouTube subscriber verification
+\`\`\`
+`
+      }
+    ]
+  },
+  {
+    id: 'utilities-tools',
+    category: 'Server Utilities & Tools',
+    icon: Wrench,
+    items: [
+      {
+        id: 'jtc-voice',
+        title: 'Join-to-Create Temporary Voice Channels',
+        description: 'Clean, dynamic voice channels created on demand when members join, auto-deleted when empty.',
+        content: `
+Say goodbye to cluttered voice channel lists! **Join-to-Create (JTC)** allows members to spin up their own private voice channels on demand.
+
+### How It Works:
+1. You designate a primary "Hub" voice channel (e.g. \`➕ Click to Create\`).
+2. When a member joins the Hub, Uranium instantly generates a new voice channel (e.g. \`Alex's Channel\`) and moves the member into it.
+3. The channel owner has full control over room permissions.
+4. When the last person leaves the room, Uranium immediately deletes the temporary channel to keep your server immaculate!
+
+### Setup Command:
+\`\`\`bash
+/join-to-create setup voice_channel:#Click-To-Create category:Voice-Rooms limit:5
+/join-to-create disable               # Turn off Join-to-Create voice system
+\`\`\`
+`
+      },
+      {
+        id: 'sticky-messages',
+        title: 'Sticky Messages & Channel Rules',
+        description: 'Pin persistent notices, guidelines, or announcements at the bottom of active chat channels.',
+        content: `
+**Sticky Messages** stick to the bottom of your chat channel! Whenever new messages are sent, Uranium automatically reposts the sticky notice so it is never lost in chat history.
+
+### Use Cases:
+- **Trading Channels**: Remind users of anti-scam rules and official trade formats.
+- **Help Channels**: Remind members to fill out support templates before asking questions.
+- **Announcement Channels**: Keep event dates or stream schedules persistently in view.
+
+### Sticky Slash Commands:
+\`\`\`bash
+/stickymessage create content:"⚠️ Follow Discord TOS" type:bottom channel:#general embed:true
+/stickymessage list                   # View all active sticky notices
+/stickymessage remove id:<id>         # Remove a sticky message
+\`\`\`
+`
+      },
+      {
+        id: 'anti-ghostping-tools',
+        title: 'Anti-Ghostping, Join-Pings & Birthdays',
+        description: 'Detect deleted mention alerts, grab newcomer attention with ephemeral pings, and celebrate birthdays.',
+        content: `
+### Anti-Ghostping Shield
+Catches members who mention a user or role and quickly delete their message:
+- **Notification**: Uranium alerts the victim with who pinged them, what was said, and the timestamp.
+- **Optional Timeouts**: Automatically timeout repeat offenders for 5 to 60 minutes.
+- **Command**: \`/anti-ghostping setup\` | \`/anti-ghostping config action:notify\`
+
+### Ephemeral Join-Pings
+Sends an instant ping in a welcome or rules channel when a member joins, then automatically deletes it 5 seconds later. This guarantees the newcomer receives a notification indicator on the channel without leaving clutter!
+- **Command**: \`/join-ping enable channel:#rules\` | \`/join-ping disable\`
+
+### Automated Birthday Celebrations
+Collect member birthdays and celebrate them automatically with an announcement card and custom celebratory role on their special day!
+- **Command**: \`/birthday set month:5 day:14\` | \`/birthday next\` | \`/birthday celebrate\`
+`
+      }
+    ]
+  },
+  {
+    id: 'economy-system',
+    category: 'Economy & Virtual Bank',
+    icon: Coins,
+    items: [
+      {
+        id: 'economy-overview',
+        title: 'Server Currency (Atoms), Jobs & Mining',
+        description: 'Engage your community with a full virtual economy featuring custom currency, daily rewards, and mining.',
+        content: `
+Uranium features a comprehensive virtual economy centered around **Atoms** (or your server's customized currency name and symbol).
+
+### How Members Earn Atoms:
+- \`/eco earn daily\`: Daily login rewards with recurring streak multipliers.
+- \`/eco earn work\`: Work various community jobs for paychecks.
+- \`/eco earn mine\`: Mine for rare ores (Iron, Gold, Uranium, Diamonds).
+- \`/eco earn chop\`: Chop timber in the community forest.
+- \`/eco earn crime\`: High-risk, high-reward criminal heists with potential fines!
+- \`/eco earn scavenge\`: Search abandoned sectors for valuable scrap and relics.
+- \`/eco earn reactor\`: Operate the nuclear reactor for massive energy payouts.
+`
+      },
+      {
+        id: 'economy-bank-shop',
+        title: 'Banking, Robbing, Gambling & Shop',
+        description: 'Protect wealth in the bank vault, rob careless members, gamble in dice games, and purchase server roles.',
+        content: `
+### Banking & Security:
+Cash held in members' wallets can be stolen by other members using \`/eco bank rob <user>\`! 
+- Members can deposit their cash into the Bank Vault using \`/eco bank deposit <amount>\`.
+- Wealth stored in the Bank Vault is 100% immune to robberies.
+- Purchase **Padlocks** and **Security Alarms** from the shop to defend your wallet.
+
+### Gambling & Games:
+Multiply your fortunes or lose it all in fair community games:
+- Coin Flips, Dice Rolls, Slots, and Blackjack tables.
+
+### Server Role Shop & Net Worth:
+Server administrators can configure custom shop items and roles using \`/eco-admin\`. Members can spend their hard-earned Atoms to unlock prestigious Discord roles and vanity perks!
+
+### Economy Slash Commands:
+\`\`\`bash
+/eco info balance [user]              # Check wallet & bank balance
+/eco info leaderboard type:net        # View richest members by net worth
+/eco bank deposit amount:all          # Secure all wallet cash into bank vault
+/eco bank transfer user:@Friend amount:500  # Send cash to another member
+/eco earn daily                       # Claim your daily login streak bonus
+/eco earn work                        # Complete a shift for Atoms
+\`\`\`
 `
       }
     ]

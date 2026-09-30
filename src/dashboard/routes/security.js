@@ -4,15 +4,21 @@ const { ChannelType } = require('discord.js');
 const antinukeDb = require('../../utils/antinukeDb');
 
 const DEFAULT_FEATURES = [
-  { id: 'channel_delete', name: 'Channel Deletion Shield', description: 'Triggers when unauthorized channels are deleted' },
-  { id: 'channel_create', name: 'Channel Mass-Create Shield', description: 'Triggers on channel spam creation' },
-  { id: 'role_delete', name: 'Role Deletion Shield', description: 'Protects critical server roles from deletion' },
-  { id: 'role_create', name: 'Role Spam Creation Shield', description: 'Prevents mass unauthorized role creation' },
-  { id: 'ban', name: 'Mass Ban Shield', description: 'Prevents rogue admins from mass banning members' },
-  { id: 'kick', name: 'Mass Kick Shield', description: 'Prevents rogue admins from mass kicking members' },
-  { id: 'bot_add', name: 'Rogue Bot Shield', description: 'Blocks unauthorized bot additions without admin whitelist' },
-  { id: 'webhook_create', name: 'Webhook Creation Shield', description: 'Blocks unauthorized webhook spams' }
+  { id: 'antichannel', alias: 'channel_delete', name: 'Channel Protection Shield', description: 'Triggers when unauthorized channels are deleted or created' },
+  { id: 'antirole', alias: 'role_delete', name: 'Role Protection Shield', description: 'Protects critical server roles from deletion or tampering' },
+  { id: 'antiban', alias: 'ban', name: 'Mass Ban Shield', description: 'Prevents rogue admins from mass banning members' },
+  { id: 'antikick', alias: 'kick', name: 'Mass Kick Shield', description: 'Prevents rogue admins from mass kicking members' },
+  { id: 'antibot', alias: 'bot_add', name: 'Rogue Bot Shield', description: 'Blocks unauthorized bot additions without admin whitelist' },
+  { id: 'antiwebhook', alias: 'webhook_create', name: 'Webhook Creation Shield', description: 'Blocks unauthorized webhook spams' },
+  { id: 'antiemoji', alias: 'emoji_delete', name: 'Emoji Shield', description: 'Protects server emojis and stickers from mass deletion' },
+  { id: 'antiprune', alias: 'prune', name: 'Prune Shield', description: 'Blocks unauthorized mass member pruning' }
 ];
+
+function resolveFeatureId(input) {
+  if (!input) return null;
+  const match = DEFAULT_FEATURES.find(f => f.id === input || f.alias === input);
+  return match ? match.id : null;
+}
 
 module.exports = function createSecurityRouter(client, { requireGuildAccess, requireGuildAdmin, requireGuildMod }) {
   const router = Router();
@@ -26,28 +32,31 @@ module.exports = function createSecurityRouter(client, { requireGuildAccess, req
         punishment: 'ban',
         action_limit: 3,
         autorecovery: 1,
-        log_channel: null,
-        features: {}
+        log_channel: null
       };
 
       const whitelist = (await antinukeDb.listWhitelist(guild.id)) || [];
       const recoveryLogs = (await antinukeDb.getRecoveryLogs(guild.id, 25)) || [];
 
-      // Enrich whitelist members with Discord details
+      // Enrich whitelist members with Discord details (ensuring id is strictly a string)
       const enrichedWhitelist = await Promise.all(
-        whitelist.map(async (userId) => {
+        whitelist.map(async (item) => {
+          const rawId = typeof item === 'string' ? item : (item?.user_id || item?.userId || item?.id);
+          const userId = rawId ? String(rawId) : null;
+          if (!userId) return null;
+
           try {
             const member = await guild.members.fetch(userId).catch(() => null);
             if (member) {
               return {
                 id: userId,
                 username: member.user.username,
-                displayName: member.displayName,
+                displayName: member.displayName || member.user.username,
                 avatar: member.user.displayAvatarURL({ dynamic: true, size: 64 })
               };
             }
           } catch {}
-          return { id: userId, username: `User (${userId})`, displayName: userId, avatar: null };
+          return { id: userId, username: `User (${userId})`, displayName: `User (${userId})`, avatar: null };
         })
       );
 
@@ -56,6 +65,14 @@ module.exports = function createSecurityRouter(client, { requireGuildAccess, req
         .filter(c => c.type === ChannelType.GuildText)
         .map(c => ({ id: c.id, name: c.name }));
 
+      // Map feature states
+      const featureMap = {};
+      for (const feat of DEFAULT_FEATURES) {
+        const val = config[feat.id] !== undefined ? config[feat.id] : (config[feat.alias] !== undefined ? config[feat.alias] : 0);
+        featureMap[feat.id] = (val === 1 || val === true) ? 1 : 0;
+        featureMap[feat.alias] = featureMap[feat.id]; // keep alias populated for frontend compatibility
+      }
+
       res.json({
         config: {
           enabled: !!config.enabled,
@@ -63,11 +80,11 @@ module.exports = function createSecurityRouter(client, { requireGuildAccess, req
           action_limit: config.action_limit || 3,
           autorecovery: !!config.autorecovery,
           log_channel: config.log_channel || null,
-          features: config.features || {}
+          features: featureMap
         },
         availableFeatures: DEFAULT_FEATURES,
-        whitelist: enrichedWhitelist,
-        recoveryLogs,
+        whitelist: enrichedWhitelist.filter(Boolean),
+        recoveryLogs: Array.isArray(recoveryLogs) ? recoveryLogs : [],
         textChannels
       });
     } catch (err) {
@@ -85,8 +102,8 @@ module.exports = function createSecurityRouter(client, { requireGuildAccess, req
       if (enabled !== undefined) {
         await antinukeDb.setEnabled(guild.id, enabled ? 1 : 0);
       }
-      if (punishment && ['ban', 'kick', 'strip_roles'].includes(punishment)) {
-        await antinukeDb.setPunishment(guild.id, punishment);
+      if (punishment && ['ban', 'kick', 'strip_roles', 'striproles'].includes(punishment)) {
+        await antinukeDb.setPunishment(guild.id, punishment === 'strip_roles' ? 'striproles' : punishment);
       }
       if (action_limit !== undefined) {
         const limit = Math.max(1, Math.min(20, parseInt(action_limit, 10) || 3));
@@ -112,13 +129,13 @@ module.exports = function createSecurityRouter(client, { requireGuildAccess, req
       const { guild } = req;
       const { feature, enabled } = req.body;
 
-      const validFeature = DEFAULT_FEATURES.find(f => f.id === feature);
-      if (!validFeature) {
+      const canonicalId = resolveFeatureId(feature);
+      if (!canonicalId) {
         return res.status(400).json({ error: 'Unknown shield feature.' });
       }
 
-      await antinukeDb.setFeature(guild.id, feature, enabled ? 1 : 0);
-      res.json({ success: true, message: `${validFeature.name} ${enabled ? 'enabled' : 'disabled'}.` });
+      await antinukeDb.setFeature(guild.id, canonicalId, enabled ? 1 : 0);
+      res.json({ success: true, message: `Shield ${canonicalId} ${enabled ? 'enabled' : 'disabled'}.` });
     } catch (err) {
       console.error('[Security API] FEATURE toggle error:', err);
       res.status(500).json({ error: err.message });
@@ -131,12 +148,13 @@ module.exports = function createSecurityRouter(client, { requireGuildAccess, req
       const { guild } = req;
       const { userId } = req.body;
 
-      if (!userId || !/^\d{17,20}$/.test(userId)) {
-        return res.status(400).json({ error: 'Invalid Discord User ID.' });
+      if (!userId || !/^\d{17,20}$/.test(String(userId).trim())) {
+        return res.status(400).json({ error: 'Please enter a valid 17-20 digit Discord User ID.' });
       }
 
-      await antinukeDb.addWhitelist(guild.id, userId);
-      res.json({ success: true, message: `User ${userId} added to Anti-Nuke whitelist.` });
+      const cleanId = String(userId).trim();
+      await antinukeDb.addWhitelist(guild.id, cleanId);
+      res.json({ success: true, message: `User ${cleanId} added to Anti-Nuke whitelist.` });
     } catch (err) {
       console.error('[Security API] WHITELIST ADD error:', err);
       res.status(500).json({ error: err.message });
@@ -153,8 +171,9 @@ module.exports = function createSecurityRouter(client, { requireGuildAccess, req
         return res.status(400).json({ error: 'User ID required.' });
       }
 
-      await antinukeDb.removeWhitelist(guild.id, userId);
-      res.json({ success: true, message: `User ${userId} removed from Anti-Nuke whitelist.` });
+      const cleanId = String(userId).trim();
+      await antinukeDb.removeWhitelist(guild.id, cleanId);
+      res.json({ success: true, message: `User ${cleanId} removed from Anti-Nuke whitelist.` });
     } catch (err) {
       console.error('[Security API] WHITELIST REMOVE error:', err);
       res.status(500).json({ error: err.message });
