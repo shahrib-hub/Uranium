@@ -39,11 +39,42 @@ function startDashboard(client) {
 
   if (process.env.MONGODB_URI) {
     try {
-      sessionOptions.store = MongoStore.create({
-        mongoUrl: process.env.MONGODB_URI,
+      const mongoose = require('mongoose');
+      const storeOptions = {
         collectionName: 'dashboard_sessions',
         ttl: 7 * 24 * 60 * 60 // 7 days
-      });
+      };
+
+      // Reuse existing Mongoose connection if already connected to prevent duplicate connection pools
+      if (mongoose.connection?.readyState === 1 && typeof mongoose.connection.getClient === 'function') {
+        storeOptions.client = mongoose.connection.getClient();
+      } else {
+        storeOptions.mongoUrl = process.env.MONGODB_URI;
+        storeOptions.mongoOptions = {
+          serverSelectionTimeoutMS: 15000,
+          connectTimeoutMS: 15000,
+          family: process.env.MONGODB_FORCE_IPV4 !== 'false' ? 4 : undefined
+        };
+      }
+
+      const store = MongoStore.create(storeOptions);
+      // Catch internal connection promises to avoid unhandled rejections if host times out
+      if (store.clientP) {
+        store.clientP.catch(err => {
+          console.warn('[Dashboard] MongoStore connection failed, session storage falling back:', err.message);
+        });
+      }
+      if (store.collectionP) {
+        store.collectionP.catch(err => {
+          console.warn('[Dashboard] MongoStore collection initialization failed:', err.message);
+        });
+      }
+      if (typeof store.on === 'function') {
+        store.on('error', err => {
+          console.warn('[Dashboard] MongoStore error:', err.message);
+        });
+      }
+      sessionOptions.store = store;
     } catch (storeErr) {
       console.warn('[Dashboard] Could not initialize MongoStore for sessions, using MemoryStore:', storeErr.message);
     }
@@ -73,7 +104,7 @@ function startDashboard(client) {
       ) {
         callback(null, true);
       } else {
-        callback(null, true);
+        callback(new Error('Blocked by CORS policy: Origin not allowed'));
       }
     },
     credentials: true

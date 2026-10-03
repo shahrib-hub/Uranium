@@ -22,6 +22,12 @@ const logStorage = require('../utils/logStorage');
 const webhookHelper = require('../utils/webhookHelper');
 const ranking = require('../utils/ranking');
 const customCommandStorage = require('../utils/customCommandStorage');
+const starboardStorage = require('../utils/starboardStorage');
+const automodEscalation = require('../utils/automodEscalation');
+const securityStorage = require('../utils/securityStorage');
+const splitLogger = require('../utils/splitLogger');
+
+
 
 function createApiRouter(client) {
   const router = Router();
@@ -71,6 +77,13 @@ function createApiRouter(client) {
       return res.status(403).json({ error: 'Missing Permissions: You need moderation permissions in this server.' });
     }
     next();
+  };
+
+  const requireBotAdmin = (req, res, next) => {
+    if (!req.session?.user) return res.status(401).json({ error: 'Not authenticated' });
+    const ownerIds = (process.env.BOT_OWNER_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
+    if (ownerIds.includes(req.session.user.id)) return next();
+    return res.status(403).json({ error: 'Access denied: Bot administrator permissions required.' });
   };
 
   // Ping endpoint to verify moderation API availability
@@ -618,7 +631,7 @@ function createApiRouter(client) {
     }
   });
 
-  router.post('/notifications', (req, res) => {
+  router.post('/notifications', requireBotAdmin, (req, res) => {
     try {
       const { title, message, type, badge, durationDays, link, linkText } = req.body;
       if (!title || !message) {
@@ -639,7 +652,7 @@ function createApiRouter(client) {
     }
   });
 
-  router.delete('/notifications/:id', (req, res) => {
+  router.delete('/notifications/:id', requireBotAdmin, (req, res) => {
     try {
       const deleted = notificationsManager.deleteNotification(req.params.id);
       res.json({ success: deleted });
@@ -672,7 +685,7 @@ function createApiRouter(client) {
     }
   });
 
-  router.post('/status/notice', (req, res) => {
+  router.post('/status/notice', requireBotAdmin, (req, res) => {
     try {
       const { title, message, severity, poster } = req.body;
       if (!title || !message) {
@@ -691,7 +704,7 @@ function createApiRouter(client) {
     }
   });
 
-  router.post('/status/resolve', (req, res) => {
+  router.post('/status/resolve', requireBotAdmin, (req, res) => {
     try {
       const poster = req.session?.user?.username || 'System Admin';
       const updated = statusWatcher.resolveAllAlerts(poster);
@@ -3116,6 +3129,8 @@ function createApiRouter(client) {
       const webhook = await logStorage.getWebhook(guildId);
       const configuredEvents = await logStorage.listEvents(guildId);
       const ignoredChannels = await logStorage.listIgnoredChannels(guildId);
+      const logConfig = await splitLogger.getLogConfig(guildId);
+      const splitChannels = logConfig?.channels || { mod: null, message: null, voice: null, member: null, server: null };
 
       const eventsMap = {};
       configuredEvents.forEach(e => {
@@ -3128,6 +3143,7 @@ function createApiRouter(client) {
         hasWebhook: !!(webhook && webhook.id),
         events: eventsMap,
         ignoredChannels,
+        splitChannels,
         availableEvents: ALL_LOG_EVENTS
       });
     } catch (err) {
@@ -3138,10 +3154,16 @@ function createApiRouter(client) {
   router.post('/guild/:guildId/logging', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
     try {
       const guildId = req.params.guildId;
-      const { logChannel, events = {}, ignoredChannels = [] } = req.body;
+      const { logChannel, events = {}, ignoredChannels = [], splitChannels = {} } = req.body;
 
       if (logChannel !== undefined) {
         await logStorage.setLogChannel(guildId, logChannel || null);
+      }
+
+      if (splitChannels && typeof splitChannels === 'object') {
+        for (const [cat, chId] of Object.entries(splitChannels)) {
+          await splitLogger.setCategoryChannel(guildId, cat, chId || null);
+        }
       }
 
       for (const [eventName, enabled] of Object.entries(events)) {
@@ -3167,6 +3189,7 @@ function createApiRouter(client) {
       res.status(500).json({ error: err.message });
     }
   });
+
 
   router.post('/guild/:guildId/logging/webhook', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
     try {
@@ -3229,7 +3252,122 @@ function createApiRouter(client) {
   });
 
   // ════════════════════════════════════════════════════════════════════════════
+  // ── STARBOARD SYSTEM API ────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════════════════════════
+  router.get('/guild/:guildId/starboard', requireGuildAccess(client), async (req, res) => {
+    try {
+      const guildId = req.params.guildId;
+      const config = await starboardStorage.getStarboardConfig(guildId);
+      res.json({
+        success: true,
+        config: config || {
+          channelId: null,
+          threshold: 3,
+          emoji: '⭐',
+          selfStar: false,
+          enabled: false,
+          ignoredChannels: []
+        }
+      });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  router.post('/guild/:guildId/starboard', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
+    try {
+      const guildId = req.params.guildId;
+      const { channelId, threshold, emoji, selfStar, enabled, ignoredChannels } = req.body;
+
+      const updateData = {};
+      if (channelId !== undefined) updateData.channelId = channelId || null;
+      if (threshold !== undefined) updateData.threshold = Math.max(1, parseInt(threshold, 10) || 3);
+      if (emoji !== undefined) updateData.emoji = emoji || '⭐';
+      if (selfStar !== undefined) updateData.selfStar = !!selfStar;
+      if (enabled !== undefined) updateData.enabled = !!enabled;
+      if (Array.isArray(ignoredChannels)) updateData.ignoredChannels = ignoredChannels;
+
+      const updated = await starboardStorage.setStarboardConfig(guildId, updateData);
+      res.json({ success: true, message: 'Starboard settings updated successfully.', config: updated });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // ── AUTOMOD STRIKE ESCALATION MATRIX API ────────────────────────────────────
+  // ════════════════════════════════════════════════════════════════════════════
+  router.get('/guild/:guildId/moderation/automod/escalation', requireGuildAccess(client), async (req, res) => {
+    try {
+      const guildId = req.params.guildId;
+      const rules = await automodEscalation.getEscalationRules(guildId);
+      res.json({ success: true, rules });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  router.post('/guild/:guildId/moderation/automod/escalation', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
+    try {
+      const guildId = req.params.guildId;
+      const { rules = [] } = req.body;
+
+      if (!Array.isArray(rules)) {
+        return res.status(400).json({ error: 'rules must be an array' });
+      }
+
+      await automodEscalation.clearEscalationRules(guildId);
+      for (const rule of rules) {
+        if (rule.strikes && rule.action) {
+          await automodEscalation.setEscalationRule(
+            guildId,
+            parseInt(rule.strikes, 10),
+            rule.action,
+            parseInt(rule.durationMs, 10) || 0
+          );
+        }
+      }
+
+      const updatedRules = await automodEscalation.getEscalationRules(guildId);
+      res.json({ success: true, message: 'Escalation matrix rules updated.', rules: updatedRules });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // ── SECURITY & PANIC LOCKDOWN API ───────────────────────────────────────────
+  // ════════════════════════════════════════════════════════════════════════════
+  router.get('/guild/:guildId/security/status', requireGuildAccess(client), async (req, res) => {
+    try {
+      const guildId = req.params.guildId;
+      const config = await securityStorage.getSecurityConfig(guildId);
+      res.json({ success: true, config });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  router.post('/guild/:guildId/security/panic-lockdown', requireGuildAccess(client), requireGuildAdmin, async (req, res) => {
+    try {
+      const guildId = req.params.guildId;
+      const { action = 'lock', reason = 'Emergency lockdown via Dashboard' } = req.body;
+
+      if (action === 'lock') {
+        const lockedChannels = await securityStorage.triggerPanicLockdown(req.guild, `[DASHBOARD PANIC] ${reason}`);
+        res.json({ success: true, message: `Emergency panic lockdown activated. Locked ${lockedChannels.length} channels.`, lockedChannels });
+      } else {
+        const unlockedCount = await securityStorage.releasePanicLockdown(req.guild, '[DASHBOARD RELEASE]');
+        res.json({ success: true, message: `Emergency panic lockdown lifted. Restored ${unlockedCount} channels.`, unlockedCount });
+      }
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ════════════════════════════════════════════════════════════════════════════
   // ── RANKING SYSTEM API ──────────────────────────────────────────────────────
+
   // ════════════════════════════════════════════════════════════════════════════
   router.get('/guild/:guildId/ranking', requireGuildAccess(client), async (req, res) => {
     try {

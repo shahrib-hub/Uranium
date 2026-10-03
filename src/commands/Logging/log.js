@@ -56,6 +56,19 @@ module.exports = {
            .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
            .setRequired(true)
         )
+        .addStringOption(o =>
+          o.setName('category')
+           .setDescription('Log category to route to this channel')
+           .addChoices(
+             { name: 'All / Fallback', value: 'all' },
+             { name: 'Mod Logs', value: 'mod' },
+             { name: 'Message Logs (Edits, Deletes)', value: 'message' },
+             { name: 'Voice Logs (Joins, Leaves, Moves)', value: 'voice' },
+             { name: 'Member Logs (Joins, Leaves, Nicknames)', value: 'member' },
+             { name: 'Server Logs (Channels, Roles)', value: 'server' }
+           )
+           .setRequired(false)
+        )
     )
     // create-webhook
     .addSubcommand(sc =>
@@ -159,8 +172,13 @@ module.exports = {
       // set-channel
       if (sub === 'set-channel') {
         const channel = interaction.options.getChannel('channel', true);
-        await logStorage.setLogChannel(guildId, channel.id);
-        return interaction.reply({ embeds: [makeEmbed('Saved', `Logs will now be sent to <#${channel.id}>`)] });
+        const category = interaction.options.getString('category') || 'all';
+        const { setCategoryChannel } = require('../../utils/splitLogger');
+        await setCategoryChannel(guildId, category, channel.id);
+        if (category === 'all') {
+          await logStorage.setLogChannel(guildId, channel.id);
+        }
+        return interaction.reply({ embeds: [makeEmbed('Saved', `✅ Successfully mapped **${category.toUpperCase()}** logs to <#${channel.id}>.`, 0x57F287)] });
       }
 
       // create-webhook
@@ -242,19 +260,29 @@ module.exports = {
 
       // status
       if (sub === 'status') {
-        const logChannelId = await logStorage.getLogChannel(guildId);
+        const { getLogConfig } = require('../../utils/splitLogger');
+        const cfg = await getLogConfig(guildId);
+        const logChannelId = cfg?.logChannel || (await logStorage.getLogChannel(guildId));
         const webhook = await logStorage.getWebhook(guildId);
         const rows = await logStorage.listEvents(guildId);
         const map = new Map(rows.map(r => [r.eventName, !!r.enabled]));
         const enabledList = EVENTS.filter(e => map.get(e)).join(', ') || '—';
 
         const lines = [
-          `Log channel: ${logChannelId ? `<#${logChannelId}>` : 'Not set'}`,
-          `Webhook: ${webhook ? (webhook.id ? `Saved (id: ${webhook.id})` : 'Saved') : 'Not set'}`,
-          `Enabled events: ${enabledList}`
+          `**Default Log Channel:** ${logChannelId ? `<#${logChannelId}>` : 'Not set'}`,
+          `**Webhook:** ${webhook ? (webhook.id ? `Saved (id: ${webhook.id})` : 'Saved') : 'Not set'}`,
+          '',
+          '**Categorized Split Channels:**',
+          `• Mod Logs: ${cfg?.channels?.mod ? `<#${cfg.channels.mod}>` : '*Fallback*'}`,
+          `• Message Logs: ${cfg?.channels?.message ? `<#${cfg.channels.message}>` : '*Fallback*'}`,
+          `• Voice Logs: ${cfg?.channels?.voice ? `<#${cfg.channels.voice}>` : '*Fallback*'}`,
+          `• Member Logs: ${cfg?.channels?.member ? `<#${cfg.channels.member}>` : '*Fallback*'}`,
+          `• Server Logs: ${cfg?.channels?.server ? `<#${cfg.channels.server}>` : '*Fallback*'}`,
+          '',
+          `**Enabled Events:** ${enabledList}`
         ].join('\n');
 
-        return interaction.reply({ embeds: [makeEmbed('Logging status', lines)] });
+        return interaction.reply({ embeds: [makeEmbed('Logging Status', lines, 0x5865F2)] });
       }
 
       return interaction.reply({ embeds: [makeEmbed('Unknown', 'Unknown subcommand')], flags: 64 });

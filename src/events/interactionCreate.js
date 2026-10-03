@@ -198,6 +198,26 @@ module.exports = {
           return;
         }
 
+        // Ticket CSAT rating buttons
+        if (id?.startsWith('ticket_rate_')) {
+          await safeExecute(async () => {
+            const parts = id.split('_'); // ['ticket', 'rate', ticketId, stars]
+            const ticketId = parseInt(parts[2], 10);
+            const stars = parseInt(parts[3], 10);
+            const { Ticket } = require('../database/mongoose');
+            if (Ticket && ticketId) {
+              await Ticket.findOneAndUpdate({ ticketId }, { $set: { rating: stars } }).catch(() => {});
+            }
+            const ratingLabels = ['', 'Disappointing', 'Acceptable', 'Good', 'Very Good', 'Exceptional!'];
+            const starEmojis = '⭐'.repeat(stars);
+            return interaction.update({
+              content: `🌟 **Thank you for your rating!** You rated this support ticket **${starEmojis} (${stars}/5 — ${ratingLabels[stars] || ''})**.\nYour feedback directly helps staff improve their support.`,
+              components: []
+            });
+          });
+          return;
+        }
+
         // Ticket system buttons
         if (id === 'ticket_create' || id?.startsWith('ticket_')) {
           if (interaction.guildId) {

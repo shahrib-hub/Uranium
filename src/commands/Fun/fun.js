@@ -8,11 +8,11 @@ const {
 } = require('discord.js');
 
 const GIPHY_TOKEN = process.env.GIPHY_TOKEN || '';
-const FOOTER = 'MULTi-Bot | SHM';
+const FOOTER = 'Uranium • Fun & Memes';
 
 // animu endpoints (base)
 const ANIMU_BASE = 'https://api.some-random-api.com/animu';
-const ANIMU_TYPES = ['nom','poke','cry','kiss','pat','hug','wink','face-palm','quote'];
+const ANIMU_TYPES = ['nom', 'poke', 'cry', 'kiss', 'pat', 'hug', 'wink', 'face-palm', 'quote'];
 
 // local quote pools (separate for target vs self)
 const ANIMU_QUOTES_TARGET = [
@@ -32,7 +32,7 @@ const ANIMU_QUOTES_SELF = [
   "We get stronger when we stand together."
 ];
 
-// roast pools (different for target vs self)
+// roast pools
 const ROASTS_TARGET = [
   "You're the reason the gene pool needs a lifeguard.",
   "I'd explain it to you, but I left my crayons at home.",
@@ -45,9 +45,14 @@ const ROASTS_SELF = [
   "Self-inflicted burn! Ow, that's gotta sting.",
   "You took one for the team and the team filed a complaint."
 ];
+const ROASTS_GENERIC = [
+  "You're as sharp as a butter knife dipped in marshmallow.",
+  "You're the human version of a typo.",
+  "You bring everyone so much joy — when you leave the room."
+];
 
-// fun simulation stages: target vs self
-const HACK_STAGES_TARGET = (targetTag, targetUser) => [
+// simulation stages
+const HACK_STAGES_TARGET = (targetTag) => [
   `Initializing fun simulation on ${targetTag}...`,
   'Calibrating humor sensors... [███░░░] 35%',
   'Calculating epic gamer score... [██████░] 70%',
@@ -62,7 +67,6 @@ const HACK_STAGES_SELF = (invTag) => [
   'Self-diagnostic complete. You are operating at 100% awesome.'
 ];
 
-// other utility pools
 const ROAST_BUTTONS_POOL = {
   lol: '😂 LOL',
   own: '🔥 OWN'
@@ -78,9 +82,8 @@ const safeFetchJson = async (url) => {
   }
 };
 const rand = (arr) => Array.isArray(arr) && arr.length ? arr[Math.floor(Math.random() * arr.length)] : null;
-const truncate = (s, n = 100) => (s && s.length > n ? s.slice(0, n-3) + '...' : s);
+const truncate = (s, n = 100) => (s && s.length > n ? s.slice(0, n - 3) + '...' : s);
 
-// static art
 const DINO = `
               __
              / _)
@@ -90,14 +93,6 @@ const DINO = `
 `;
 const asciiArt = (t) => '```\n' + t.toUpperCase().split('').join(' ') + '\n```';
 
-// roast pool fallback (generic)
-const ROASTS_GENERIC = [
-  "You're as sharp as a butter knife dipped in marshmallow.",
-  "You're the human version of a typo.",
-  "You bring everyone so much joy — when you leave the room."
-];
-
-// fetch animu image
 async function fetchAnimu(type) {
   if (!ANIMU_TYPES.includes(type)) return null;
   const j = await safeFetchJson(`${ANIMU_BASE}/${type}`);
@@ -105,7 +100,6 @@ async function fetchAnimu(type) {
   return j.link || j.url || j.image || (typeof j === 'string' ? j : null);
 }
 
-// embed factory
 function mkEmbed(title, desc, opts = {}) {
   const e = new EmbedBuilder()
     .setTitle(title)
@@ -117,7 +111,6 @@ function mkEmbed(title, desc, opts = {}) {
   return e;
 }
 
-// UI helpers
 const anotherRow = (tag, ownerId) => new ActionRowBuilder().addComponents(
   new ButtonBuilder().setCustomId(`${tag}_another_${ownerId}`).setLabel('Another').setStyle(ButtonStyle.Primary)
 );
@@ -126,42 +119,77 @@ const roastButtonRow = (ownerId) => new ActionRowBuilder().addComponents(
   new ButtonBuilder().setCustomId(`roast_own_${ownerId}`).setLabel(ROAST_BUTTONS_POOL.own).setStyle(ButtonStyle.Danger)
 );
 
-// exported command
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('fun')
-    .setDescription('Fun utilities and memes')
-    // ANIMU (9)
-    .addSubcommand(s => s.setName('nom').setDescription('Nom someone').addUserOption(o => o.setName('target').setDescription('Who to nom')))
-    .addSubcommand(s => s.setName('poke').setDescription('Poke someone').addUserOption(o => o.setName('target').setDescription('Who to poke')))
-    .addSubcommand(s => s.setName('cry').setDescription('Show a crying image').addUserOption(o => o.setName('target').setDescription('Optional target')))
-    .addSubcommand(s => s.setName('kiss').setDescription('Kiss someone').addUserOption(o => o.setName('target').setDescription('Optional target')))
-    .addSubcommand(s => s.setName('pat').setDescription('Pat someone').addUserOption(o => o.setName('target').setDescription('Optional target')))
-    .addSubcommand(s => s.setName('hug').setDescription('Hug someone').addUserOption(o => o.setName('target').setDescription('Optional target')))
-    .addSubcommand(s => s.setName('wink').setDescription('Wink at someone').addUserOption(o => o.setName('target').setDescription('Optional target')))
-    .addSubcommand(s => s.setName('facepalm').setDescription('Facepalm (animu)').addUserOption(o => o.setName('target').setDescription('Optional target')))
-    .addSubcommand(s => s.setName('quote').setDescription('Animu quote/image').addUserOption(o => o.setName('target').setDescription('Optional target')))
-    // MISC (16) - total 25
-    .addSubcommand(s => s.setName('ascii').setDescription('ASCII-ish text').addStringOption(o => o.setName('text').setDescription('Text to convert').setRequired(true)))
-    .addSubcommand(s => s.setName('cleverrate').setDescription('Rate how clever someone is').addUserOption(u => u.setName('target').setDescription('Optional user to rate')))
-    .addSubcommand(s => s.setName('confused').setDescription('Show a confused animu image').addUserOption(o => o.setName('target').setDescription('Optional target')))
-    .addSubcommand(s => s.setName('dinochrome').setDescription('Show dinosaur ASCII art'))
-    .addSubcommand(s => s.setName('epicgamerrate').setDescription('Rate gamer epicness').addUserOption(u => u.setName('target').setDescription('Optional user')))
-    .addSubcommand(s => s.setName('gif').setDescription('Search a GIPHY GIF').addStringOption(o => o.setName('query').setDescription('Search term').setRequired(true)))
-    .addSubcommand(s => s.setName('hack').setDescription('Fake-hack').addUserOption(o => o.setName('target').setDescription('Optional target')))
-    .addSubcommand(s => s.setName('kill').setDescription('Playfully kill').addUserOption(o => o.setName('target').setDescription('Optional target')))
-    .addSubcommand(s => s.setName('lovemeter').setDescription('Love meter between two users').addUserOption(u => u.setName('a').setDescription('User A').setRequired(true)).addUserOption(u => u.setName('b').setDescription('User B').setRequired(true)))
-    .addSubcommand(s => s.setName('reverse').setDescription('Reverse text').addStringOption(o => o.setName('text').setDescription('Text to reverse').setRequired(true)))
-    .addSubcommand(s => s.setName('rickroll').setDescription('Rickroll someone').addUserOption(o => o.setName('target').setDescription('Optional target')))
-    .addSubcommand(s => s.setName('roast').setDescription('Roast').addUserOption(o => o.setName('target').setDescription('Optional target')))
-    .addSubcommand(s => s.setName('sudo').setDescription('Pretend to run sudo').addStringOption(o => o.setName('cmd').setDescription('Command').setRequired(true)))
-    .addSubcommand(s => s.setName('token').setDescription('Generate a fake token for fun'))
-    .addSubcommand(s => s.setName('xmas').setDescription('Send a festive image/GIF')),
+    .setDescription('🎉 Fun, memes, animal facts, anime reactions, and mini-games')
+
+    // GROUP: ANIME
+    .addSubcommandGroup(g =>
+      g.setName('anime')
+        .setDescription('Anime reactions, gifs, and expressions')
+        .addSubcommand(s => s.setName('nom').setDescription('Nom someone').addUserOption(o => o.setName('target').setDescription('Who to nom')))
+        .addSubcommand(s => s.setName('poke').setDescription('Poke someone').addUserOption(o => o.setName('target').setDescription('Who to poke')))
+        .addSubcommand(s => s.setName('cry').setDescription('Show a crying image').addUserOption(o => o.setName('target').setDescription('Optional target')))
+        .addSubcommand(s => s.setName('kiss').setDescription('Kiss someone').addUserOption(o => o.setName('target').setDescription('Optional target')))
+        .addSubcommand(s => s.setName('pat').setDescription('Pat someone').addUserOption(o => o.setName('target').setDescription('Optional target')))
+        .addSubcommand(s => s.setName('hug').setDescription('Hug someone').addUserOption(o => o.setName('target').setDescription('Optional target')))
+        .addSubcommand(s => s.setName('wink').setDescription('Wink at someone').addUserOption(o => o.setName('target').setDescription('Optional target')))
+        .addSubcommand(s => s.setName('facepalm').setDescription('Facepalm (animu)').addUserOption(o => o.setName('target').setDescription('Optional target')))
+        .addSubcommand(s => s.setName('quote').setDescription('Animu quote/image').addUserOption(o => o.setName('target').setDescription('Optional target')))
+        .addSubcommand(s => s.setName('confused').setDescription('Show a confused animu image').addUserOption(o => o.setName('target').setDescription('Optional target')))
+    )
+
+    // GROUP: FACTS
+    .addSubcommandGroup(g =>
+      g.setName('facts')
+        .setDescription('Random facts and animal facts')
+        .addSubcommand(s => s.setName('random').setDescription('Random useless fun fact'))
+        .addSubcommand(s => s.setName('bird').setDescription('Random bird fact'))
+        .addSubcommand(s => s.setName('cat').setDescription('Random cat fact'))
+        .addSubcommand(s => s.setName('dog').setDescription('Random dog fact'))
+        .addSubcommand(s => s.setName('koala').setDescription('Random koala fact & image'))
+        .addSubcommand(s => s.setName('panda').setDescription('Random panda fact & image'))
+    )
+
+    // GROUP: MEDIA
+    .addSubcommandGroup(g =>
+      g.setName('media')
+        .setDescription('Memes, gifs, and holiday media')
+        .addSubcommand(s => s.setName('meme').setDescription('Random hot meme from Reddit'))
+        .addSubcommand(s => s.setName('gif').setDescription('Search a GIPHY GIF').addStringOption(o => o.setName('query').setDescription('Search term').setRequired(true)))
+        .addSubcommand(s => s.setName('xmas').setDescription('Send a festive holiday image/GIF'))
+    )
+
+    // GROUP: TEXT
+    .addSubcommandGroup(g =>
+      g.setName('text')
+        .setDescription('Text toys, roasts, and prank tools')
+        .addSubcommand(s => s.setName('ascii').setDescription('ASCII text art').addStringOption(o => o.setName('text').setDescription('Text to convert').setRequired(true)))
+        .addSubcommand(s => s.setName('reverse').setDescription('Reverse text string').addStringOption(o => o.setName('text').setDescription('Text to reverse').setRequired(true)))
+        .addSubcommand(s => s.setName('sudo').setDescription('Pretend to run sudo as superuser').addStringOption(o => o.setName('cmd').setDescription('Command').setRequired(true)))
+        .addSubcommand(s => s.setName('token').setDescription('Generate a fake arcade/bot token'))
+        .addSubcommand(s => s.setName('roast').setDescription('Roast yourself or a friend').addUserOption(o => o.setName('target').setDescription('Optional target')))
+        .addSubcommand(s => s.setName('rickroll').setDescription('Rickroll someone').addUserOption(o => o.setName('target').setDescription('Optional target')))
+        .addSubcommand(s => s.setName('kill').setDescription('Playfully defeat someone').addUserOption(o => o.setName('target').setDescription('Optional target')))
+    )
+
+    // GROUP: GAMES
+    .addSubcommandGroup(g =>
+      g.setName('games')
+        .setDescription('Fun mini games and rating tools')
+        .addSubcommand(s => s.setName('lovemeter').setDescription('Love compatibility between two users').addUserOption(u => u.setName('a').setDescription('User A').setRequired(true)).addUserOption(u => u.setName('b').setDescription('User B').setRequired(true)))
+        .addSubcommand(s => s.setName('cleverrate').setDescription('Rate how clever someone is').addUserOption(u => u.setName('target').setDescription('Optional target')))
+        .addSubcommand(s => s.setName('epicgamerrate').setDescription('Rate gamer epicness').addUserOption(u => u.setName('target').setDescription('Optional target')))
+        .addSubcommand(s => s.setName('hack').setDescription('Fake hack terminal simulation').addUserOption(o => o.setName('target').setDescription('Optional target')))
+        .addSubcommand(s => s.setName('dinochrome').setDescription('Show dinosaur ASCII art'))
+    ),
+
   async execute(interaction) {
+    const group = interaction.options.getSubcommandGroup(false);
     const sub = interaction.options.getSubcommand();
     const inv = interaction.user;
 
-    // imageFlow uses interaction directly
     async function imageFlow(title, desc, imageUrl, tag) {
       const embed = mkEmbed(title, desc, { image: imageUrl || undefined, timestamp: true });
       const row = anotherRow(tag, interaction.user.id);
@@ -188,290 +216,348 @@ module.exports = {
         const newEmbed = mkEmbed(title, desc, { image: next || undefined, timestamp: true });
         await msg.edit({ embeds: [newEmbed], components: [row] }).catch(() => {});
       });
-
-      return;
     }
 
     try {
-      // ---------- ANIMU ----------
-      if (ANIMU_TYPES.includes(sub)) {
-        const target = interaction.options.getUser('target') || null;
-        const image = await fetchAnimu(sub);
-        // If a target is provided: dialogue prefix + target quote + action line
-        // If no target: only a self quote (no dialogue)
-        if (target) {
-          const quote = rand(ANIMU_QUOTES_TARGET);
-          let dialoguePrefix;
-          if (sub === 'hug') dialoguePrefix = `${inv.tag} whispers: "Come here — you deserve a hug."`;
-          else if (sub === 'kiss') dialoguePrefix = `${inv.tag} murmurs: "One kiss, just for you."`;
-          else if (sub === 'pat') dialoguePrefix = `${inv.tag} says softly: "There, there — good job."`;
-          else if (sub === 'nom') dialoguePrefix = `${inv.tag} exclaims: "Snacks incoming!"`;
-          else if (sub === 'poke') dialoguePrefix = `${inv.tag} teases: "Poke!"`;
-          else if (sub === 'wink') dialoguePrefix = `${inv.tag} winks: "You know what I mean."`;
-          else if (sub === 'cry') dialoguePrefix = `${inv.tag} sighs: "This one's a tear-jerker..."`;
-          else if (sub === 'face-palm') dialoguePrefix = `${inv.tag} groans: "Oh no, not again..."`;
-          else dialoguePrefix = `${inv.tag} shares a moment.`;
+      // ══════════════════════════════════════════════
+      // GROUP: ANIME
+      // ══════════════════════════════════════════════
+      if (group === 'anime') {
+        const animuKey = sub === 'facepalm' ? 'face-palm' : sub;
+        if (ANIMU_TYPES.includes(animuKey)) {
+          const target = interaction.options.getUser('target') || null;
+          const image = await fetchAnimu(animuKey);
+          if (target) {
+            const quote = rand(ANIMU_QUOTES_TARGET);
+            let dialoguePrefix;
+            if (sub === 'hug') dialoguePrefix = `${inv.tag} whispers: "Come here — you deserve a hug."`;
+            else if (sub === 'kiss') dialoguePrefix = `${inv.tag} murmurs: "One kiss, just for you."`;
+            else if (sub === 'pat') dialoguePrefix = `${inv.tag} says softly: "There, there — good job."`;
+            else if (sub === 'nom') dialoguePrefix = `${inv.tag} exclaims: "Snacks incoming!"`;
+            else if (sub === 'poke') dialoguePrefix = `${inv.tag} teases: "Poke!"`;
+            else if (sub === 'wink') dialoguePrefix = `${inv.tag} winks: "You know what I mean."`;
+            else if (sub === 'cry') dialoguePrefix = `${inv.tag} sighs: "This one's a tear-jerker..."`;
+            else if (sub === 'facepalm') dialoguePrefix = `${inv.tag} groans: "Oh no, not again..."`;
+            else dialoguePrefix = `${inv.tag} shares a moment.`;
 
-          const desc = `${dialoguePrefix}\n\n> *${quote}*\n\nAction directed at: <@${target.id}>`;
-          return imageFlow(sub.toUpperCase(), desc, image, `animu_${sub}`);
-        } else {
-          // no target -> just a self quote
-          const quote = rand(ANIMU_QUOTES_SELF);
-          const desc = `> *${quote}*`;
-          return imageFlow(sub.toUpperCase(), desc, image, `animu_${sub}`);
+            const desc = `${dialoguePrefix}\n\n> *${quote}*\n\nAction directed at: <@${target.id}>`;
+            return imageFlow(sub.toUpperCase(), desc, image, `animu_${animuKey}`);
+          } else {
+            const quote = rand(ANIMU_QUOTES_SELF);
+            const desc = `> *${quote}*`;
+            return imageFlow(sub.toUpperCase(), desc, image, `animu_${animuKey}`);
+          }
+        }
+
+        if (sub === 'confused') {
+          const target = interaction.options.getUser('target') || null;
+          const img = await fetchAnimu('cry') || await fetchAnimu('face-palm') || null;
+          if (target) {
+            const quote = rand(ANIMU_QUOTES_TARGET);
+            const dialogue = `${inv.tag} mutters: "Wait—what did I just read?"`;
+            const desc = `${dialogue}\n\n> *${quote}*\n\nAction directed at: <@${target.id}>`;
+            return imageFlow('Confused', desc, img, 'animu_cry');
+          } else {
+            const quote = rand(ANIMU_QUOTES_SELF);
+            const desc = `> *${quote}*`;
+            return imageFlow('Confused', desc, img, 'animu_cry');
+          }
         }
       }
 
-      // ---------- ASCII ----------
-      if (sub === 'ascii') {
-        const t = interaction.options.getString('text', true).slice(0, 60);
-        return interaction.reply({ content: asciiArt(t) });
-      }
+      // ══════════════════════════════════════════════
+      // GROUP: FACTS
+      // ══════════════════════════════════════════════
+      if (group === 'facts') {
+        const factEmbed = (title, text, img = null) => {
+          const e = new EmbedBuilder().setTitle(title).setDescription(text).setColor(0x57F287).setFooter({ text: FOOTER }).setTimestamp();
+          if (img) e.setImage(img);
+          return e;
+        };
 
-      // ---------- CONFUSED ----------
-      if (sub === 'confused') {
-        const target = interaction.options.getUser('target') || null;
-        const img = await fetchAnimu('cry') || await fetchAnimu('face-palm') || null;
-        if (target) {
-          const quote = rand(ANIMU_QUOTES_TARGET);
-          const dialogue = `${inv.tag} mutters: "Wait—what did I just read?"`;
-          const desc = `${dialogue}\n\n> *${quote}*\n\nAction directed at: <@${target.id}>`;
-          return imageFlow('Confused', desc, img, 'animu_cry');
-        } else {
-          const quote = rand(ANIMU_QUOTES_SELF);
-          const desc = `> *${quote}*`;
-          return imageFlow('Confused', desc, img, 'animu_cry');
+        if (sub === 'random') {
+          const j = await safeFetchJson('https://uselessfacts.jsph.pl/random.json?language=en');
+          const text = j?.text || 'Could not fetch fact right now.';
+          return interaction.reply({ embeds: [factEmbed('💡 Random Fact', text)] });
+        }
+
+        if (sub === 'bird') {
+          const j = await safeFetchJson('https://some-random-api.com/facts/bird');
+          const fact = j?.fact || j?.message || 'Birds are winged, egg-laying animals.';
+          return interaction.reply({ embeds: [factEmbed('🐦 Bird Fact', fact)] });
+        }
+
+        if (sub === 'cat') {
+          const j = await safeFetchJson('https://some-random-api.com/facts/cat');
+          const fact = j?.fact || j?.message || 'Cats sleep for 70% of their lives.';
+          return interaction.reply({ embeds: [factEmbed('🐱 Cat Fact', fact)] });
+        }
+
+        if (sub === 'dog') {
+          const j = await safeFetchJson('https://some-random-api.com/facts/dog');
+          const fact = j?.fact || j?.message || 'A dog\'s sense of smell is 40 times better than ours.';
+          return interaction.reply({ embeds: [factEmbed('🐶 Dog Fact', fact)] });
+        }
+
+        if (sub === 'koala') {
+          const j = await safeFetchJson('https://some-random-api.com/animal/koala') || await safeFetchJson('https://some-random-api.com/facts/koala');
+          const fact = j?.fact || j?.message || 'Koalas sleep up to 18-22 hours a day.';
+          const img = j?.image || j?.link || null;
+          return interaction.reply({ embeds: [factEmbed('🐨 Koala Fact', fact, img)] });
+        }
+
+        if (sub === 'panda') {
+          const j = await safeFetchJson('https://some-random-api.com/animal/panda') || await safeFetchJson('https://some-random-api.com/facts/panda');
+          const fact = j?.fact || j?.message || 'Giant pandas spend around 12 hours a day eating bamboo.';
+          const img = j?.image || j?.link || null;
+          return interaction.reply({ embeds: [factEmbed('🐼 Panda Fact', fact, img)] });
         }
       }
 
-      // ---------- DINO ----------
-      if (sub === 'dinochrome') {
-        const e = mkEmbed('🦕 Dinochrome', `${inv.tag} proclaims: "Behold, the dino."\n\n> *${rand(ANIMU_QUOTES_SELF)}*`, { timestamp: true });
-        await interaction.reply({ embeds: [e], withResponse: true }).catch(() => {});
-        return interaction.followUp({ content: '```' + DINO + '```' });
-      }
+      // ══════════════════════════════════════════════
+      // GROUP: MEDIA
+      // ══════════════════════════════════════════════
+      if (group === 'media') {
+        if (sub === 'meme') {
+          await interaction.deferReply();
+          try {
+            const res = await fetch('https://www.reddit.com/r/memes/hot.json?limit=50');
+            const json = await res.json();
+            const posts = json.data?.children
+              ?.map(p => p.data)
+              ?.filter(p => !p.over_18 && (p.post_hint === 'image' || /\.(jpg|png|jpeg|gif)$/.test(p.url))) || [];
 
-      // ---------- CLEVERRATE / EPICGAMERRATE ----------
-      if (sub === 'cleverrate' || sub === 'epicgamerrate') {
-        const target = interaction.options.getUser('target') || interaction.user;
-        const val = Math.floor(Math.random() * 101);
-        const title = sub === 'cleverrate' ? '🧠 Cleverness Rate' : '🎮 Epic Gamer Rate';
-        const desc = `${target} is **${val}%** ${sub === 'cleverrate' ? 'clever' : 'epic gamer'}.\n\n${val > 80 ? 'Legendary.' : val > 50 ? 'Pretty good.' : 'Needs practice.'}\n\n> *${rand(ANIMU_QUOTES_SELF)}*`;
-        return interaction.reply({ embeds: [mkEmbed(title, desc, { timestamp: true })] });
-      }
+            if (!posts.length) {
+              return interaction.editReply('⚠️ No safe memes found right now. Try again later!');
+            }
 
-      // ---------- GIF (GIPHY) ----------
-      if (sub === 'gif') {
-        const q = truncate(interaction.options.getString('query', true), 100);
-        if (!GIPHY_TOKEN || GIPHY_TOKEN === 'YOUR_GIPHY_TOKEN_HERE') return interaction.reply({ content: 'GIPHY token not set (GIPHY_TOKEN env).', flags: 64 });
-        const jr = await safeFetchJson(`https://api.giphy.com/v1/gifs/search?api_key=${encodeURIComponent(GIPHY_TOKEN)}&q=${encodeURIComponent(q)}&limit=25&rating=pg-13`);
-        const gif = jr?.data?.length ? rand(jr.data).images.original.url : null;
-        if (!gif) return interaction.reply({ content: 'No GIFs found.', flags: 64 });
-        const row = anotherRow('gif', interaction.user.id);
-        const embed = mkEmbed(`GIF: ${q}`, `Here's a GIF for **${q}** — press Another to fetch more.\n\n> *${rand(ANIMU_QUOTES_SELF)}*`, { image: gif, timestamp: true });
-        const msg = await interaction.reply({ embeds: [embed], components: [row], withResponse: true });
+            const post = posts[Math.floor(Math.random() * posts.length)];
+            const embed = new EmbedBuilder()
+              .setTitle(post.title)
+              .setURL(`https://reddit.com${post.permalink}`)
+              .setImage(post.url)
+              .setColor(0xFF5700)
+              .setFooter({ text: `👍 ${post.ups} | 💬 ${post.num_comments} • r/memes` });
 
-        const coll = msg.createMessageComponentCollector({ filter: b => b.user.id === interaction.user.id, time: 30000, max: 4 });
-        coll.on('collect', async b => {
-          await b.deferUpdate().catch(() => {});
-          const jr2 = await safeFetchJson(`https://api.giphy.com/v1/gifs/search?api_key=${encodeURIComponent(GIPHY_TOKEN)}&q=${encodeURIComponent(q)}&limit=50&rating=pg-13`);
-          const next = jr2?.data?.length ? rand(jr2.data).images.original.url : null;
-          const newE = mkEmbed(`GIF: ${q}`, `Another GIF for **${q}**\n\n> *${rand(ANIMU_QUOTES_SELF)}*`, { image: next || undefined, timestamp: true });
-          await msg.edit({ embeds: [newE], components: [row] }).catch(() => {});
-        });
-
-        return;
-      }
-
-      // ---------- REVERSE ----------
-      if (sub === 'reverse') {
-        const t = interaction.options.getString('text', true);
-        return interaction.reply({ content: `🔁 ${t.split('').reverse().join('')}` });
-      }
-
-      // ---------- KILL ----------
-      if (sub === 'kill') {
-        const target = interaction.options.getUser('target') || null;
-        const methods_target = [
-          'was overwhelmed by an army of rubber ducks.',
-          'tripped on a banana peel and became a legend.',
-          'lost a duel with a sandwich.',
-          'was outwitted by a goldfish.'
-        ];
-        const methods_self = [
-          'accidentally imploded from too much swagger.',
-          'was defeated by their own overconfidence.',
-          'took one for the team and the team still complained.'
-        ];
-        if (target) {
-          const desc = `<@${target.id}> ${rand(methods_target)}\n\n> *${rand(ANIMU_QUOTES_TARGET)}*`;
-          return interaction.reply({ embeds: [mkEmbed('🔪 Playful Kill', desc, { timestamp: true })] });
-        } else {
-          const desc = `${inv.tag} ${rand(methods_self)}\n\n> *${rand(ANIMU_QUOTES_SELF)}*`;
-          return interaction.reply({ embeds: [mkEmbed('🔪 Self Playful Kill', desc, { timestamp: true })] });
+            return interaction.editReply({ embeds: [embed] });
+          } catch (e) {
+            return interaction.editReply('❌ Failed to fetch meme from Reddit.');
+          }
         }
-      }
 
-      // ---------- LOVEMETER ----------
-      if (sub === 'lovemeter') {
-        const a = interaction.options.getUser('a', true);
-        const b = interaction.options.getUser('b', true);
-        const val = Math.floor(Math.random() * 101);
-        const hearts = '❤️'.repeat(Math.round((val / 100) * 5)) || '💔';
-        const text = `💘 **Love Meter**\n\n<@${a.id}> + <@${b.id}> = **${val}%**\n\n${hearts}\n\n> *${rand(ANIMU_QUOTES_SELF)}*`;
-        return interaction.reply({ embeds: [mkEmbed('Love Meter', text, { timestamp: true })] });
-      }
+        if (sub === 'gif') {
+          const q = truncate(interaction.options.getString('query', true), 100);
+          if (!GIPHY_TOKEN || GIPHY_TOKEN === 'YOUR_GIPHY_TOKEN_HERE') {
+            return interaction.reply({ content: 'GIPHY token not set in environment.', flags: 64 });
+          }
+          const jr = await safeFetchJson(`https://api.giphy.com/v1/gifs/search?api_key=${encodeURIComponent(GIPHY_TOKEN)}&q=${encodeURIComponent(q)}&limit=25&rating=pg-13`);
+          const gif = jr?.data?.length ? rand(jr.data).images.original.url : null;
+          if (!gif) return interaction.reply({ content: 'No GIFs found.', flags: 64 });
+          const row = anotherRow('gif', interaction.user.id);
+          const embed = mkEmbed(`GIF: ${q}`, `Here's a GIF for **${q}**\n\n> *${rand(ANIMU_QUOTES_SELF)}*`, { image: gif, timestamp: true });
+          const msg = await interaction.reply({ embeds: [embed], components: [row], withResponse: true });
 
-      // ---------- RICKROLL ----------
-      if (sub === 'rickroll') {
-        const target = interaction.options.getUser('target') || null;
-        const mention = target ? `<@${target.id}>` : 'everyone';
-        const main = `${mention}, here's a gift for you 🎵\nhttps://www.youtube.com/watch?v=dQw4w9WgXcQ`;
-        const extra = target ? `\n\n> *${rand(ANIMU_QUOTES_TARGET)}*` : `\n\n> *${rand(ANIMU_QUOTES_SELF)}*`;
-        return interaction.reply({ embeds: [mkEmbed('😈 Rickroll', main + extra, { timestamp: true })] });
-      }
-
-      // ---------- ROAST ----------
-      if (sub === 'roast') {
-        const target = interaction.options.getUser('target') || null;
-        if (target) {
-          const roast = rand(ROASTS_TARGET) || rand(ROASTS_GENERIC);
-          const long = `🔥 **Roast for <@${target.id}>**\n\n${roast}\n\n> *${rand(ANIMU_QUOTES_TARGET)}*`;
-          const row = roastButtonRow(interaction.user.id);
-          const sent = await interaction.reply({ embeds: [mkEmbed('Roast', long, { timestamp: true })], components: [row], withResponse: true });
-          const coll = sent.createMessageComponentCollector({ time: 30000 });
+          const coll = msg.createMessageComponentCollector({ filter: b => b.user.id === interaction.user.id, time: 30000, max: 4 });
           coll.on('collect', async b => {
-            if (b.customId.startsWith('roast_lol_')) await b.reply({ content: '😂 LOL', flags: 64 }).catch(() => {});
-            else if (b.customId.startsWith('roast_own_')) await b.reply({ content: '🔥 OWN', flags: 64 }).catch(() => {});
-            else await b.reply({ content: 'Reacted!', flags: 64 }).catch(() => {});
-          });
-          return;
-        } else {
-          const roast = rand(ROASTS_SELF) || rand(ROASTS_GENERIC);
-          const long = `🔥 **Self Roast for ${inv.tag}**\n\n${roast}\n\n> *${rand(ANIMU_QUOTES_SELF)}*`;
-          const row = roastButtonRow(interaction.user.id);
-          const sent = await interaction.reply({ embeds: [mkEmbed('Self Roast', long, { timestamp: true })], components: [row], withResponse: true });
-          const coll = sent.createMessageComponentCollector({ time: 30000 });
-          coll.on('collect', async b => {
-            if (b.customId.startsWith('roast_lol_')) await b.reply({ content: '😂 LOL', flags: 64 }).catch(() => {});
-            else if (b.customId.startsWith('roast_own_')) await b.reply({ content: '🔥 OWN', flags: 64 }).catch(() => {});
-            else await b.reply({ content: 'Reacted!', flags: 64 }).catch(() => {});
+            await b.deferUpdate().catch(() => {});
+            const jr2 = await safeFetchJson(`https://api.giphy.com/v1/gifs/search?api_key=${encodeURIComponent(GIPHY_TOKEN)}&q=${encodeURIComponent(q)}&limit=50&rating=pg-13`);
+            const next = jr2?.data?.length ? rand(jr2.data).images.original.url : null;
+            const newE = mkEmbed(`GIF: ${q}`, `Another GIF for **${q}**\n\n> *${rand(ANIMU_QUOTES_SELF)}*`, { image: next || undefined, timestamp: true });
+            await msg.edit({ embeds: [newE], components: [row] }).catch(() => {});
           });
           return;
         }
-      }
 
-      // ---------- HACK ----------
-      if (sub === 'hack') {
-        const target = interaction.options.getUser('target') || null;
-        if (target) {
-          // target hack (progressive)
-          const stages = HACK_STAGES_TARGET(`<@${target.id}>`, target.username || target.id);
-          const start = mkEmbed('💻 Fake Hack', 'Starting hack sequence...', { timestamp: true });
-          const sent = await interaction.reply({ embeds: [start], withResponse: true });
-          for (let i = 0; i < stages.length; i++) {
-            ((idx) => {
-              setTimeout(async () => {
-                try {
-                  const e = mkEmbed('💻 Fake Hack', `\`\`\`\n${stages[idx]}\n\`\`\``, { timestamp: true });
-                  await sent.edit({ embeds: [e] }).catch(() => {});
-                  if (idx === stages.length - 1) {
-                    const done = mkEmbed('💻 Fake Hack — Complete', `All operations finished on <@${target.id}>.`, { timestamp: true });
-                    await sent.edit({ embeds: [done] }).catch(() => {});
-                  }
-                } catch {}
-              }, 700 * (idx + 1));
-            })(i);
+        if (sub === 'xmas') {
+          const holidayResp = await safeFetchJson('https://some-random-api.com/img/holidays');
+          const imgFromResp = holidayResp?.link || holidayResp?.url || holidayResp?.image || holidayResp?.data || null;
+
+          if (imgFromResp) {
+            const txt = `🎄 Merry and cozy — enjoy the season!\n\n> *${rand(ANIMU_QUOTES_SELF)}*`;
+            return interaction.reply({ embeds: [mkEmbed('🎄 Happy Holidays', txt, { image: imgFromResp, timestamp: true })] });
           }
-          return;
-        } else {
-          // self-hack (shorter progressive)
-          const stages = HACK_STAGES_SELF(inv.tag);
-          const start = mkEmbed('💻 Self Hack', 'Running self-improvement sequence...', { timestamp: true });
-          const sent = await interaction.reply({ embeds: [start], withResponse: true });
-          for (let i = 0; i < stages.length; i++) {
-            ((idx) => {
-              setTimeout(async () => {
-                try {
-                  const e = mkEmbed('💻 Self Hack', `\`\`\`\n${stages[idx]}\n\`\`\``, { timestamp: true });
-                  await sent.edit({ embeds: [e] }).catch(() => {});
-                  if (idx === stages.length - 1) {
-                    const done = mkEmbed('💻 Self Hack — Complete', `Self improvement applied to ${inv.tag}.`, { timestamp: true });
-                    await sent.edit({ embeds: [done] }).catch(() => {});
-                  }
-                } catch {}
-              }, 700 * (idx + 1));
-            })(i);
-          }
-          return;
+
+          const asciiTree = [
+            '         *',
+            '        /|\\',
+            '       /*|O\\',
+            '      /*/|\\*\\',
+            '     /X/ * | \\',
+            '    /*/X/\\X|*\\',
+            '   /O/*/X/\\*\\O\\',
+            '        | |',
+            '        | |',
+            '       ====='
+          ].join('\n');
+
+          const txt = `🎄 Merry and cozy — seasons greetings!\n\n> *${rand(ANIMU_QUOTES_SELF)}*`;
+          await interaction.reply({ embeds: [mkEmbed('🎄 Happy Holidays', txt, { timestamp: true })] });
+          return interaction.followUp({ content: '```' + asciiTree + '```' });
         }
       }
 
-      // ---------- SUDO ----------
-      if (sub === 'sudo') {
-        const cmd = interaction.options.getString('cmd', true).slice(0, 200);
-        const out = `🔐 Pretending to run: \`${cmd}\`\n\nPermission denied. (simulation)\n\n> *${rand(ANIMU_QUOTES_SELF)}*`;
-        return interaction.reply({ embeds: [mkEmbed('SUDO', out, { timestamp: true })] });
+      // ══════════════════════════════════════════════
+      // GROUP: TEXT
+      // ══════════════════════════════════════════════
+      if (group === 'text') {
+        if (sub === 'ascii') {
+          const t = interaction.options.getString('text', true).slice(0, 60);
+          return interaction.reply({ content: asciiArt(t) });
+        }
+
+        if (sub === 'reverse') {
+          const t = interaction.options.getString('text', true);
+          return interaction.reply({ content: `🔁 ${t.split('').reverse().join('')}` });
+        }
+
+        if (sub === 'sudo') {
+          const cmd = interaction.options.getString('cmd', true).slice(0, 200);
+          const out = `🔐 Pretending to run: \`${cmd}\`\n\nPermission denied. (simulation)\n\n> *${rand(ANIMU_QUOTES_SELF)}*`;
+          return interaction.reply({ embeds: [mkEmbed('SUDO', out, { timestamp: true })] });
+        }
+
+        if (sub === 'token') {
+          const coinId = `ARCADE-${Math.floor(100000 + Math.random() * 900000)}`;
+          return interaction.reply({
+            embeds: [mkEmbed('🪙 Arcade Token', `You claimed arcade token: \`${coinId}\`!\n\n> *${rand(ANIMU_QUOTES_SELF)}*`)]
+          });
+        }
+
+        if (sub === 'roast') {
+          const target = interaction.options.getUser('target') || null;
+          if (target) {
+            const roast = rand(ROASTS_TARGET) || rand(ROASTS_GENERIC);
+            const long = `🔥 **Roast for <@${target.id}>**\n\n${roast}\n\n> *${rand(ANIMU_QUOTES_TARGET)}*`;
+            const row = roastButtonRow(interaction.user.id);
+            const sent = await interaction.reply({ embeds: [mkEmbed('Roast', long, { timestamp: true })], components: [row], withResponse: true });
+            const coll = sent.createMessageComponentCollector({ time: 30000 });
+            coll.on('collect', async b => {
+              if (b.customId.startsWith('roast_lol_')) await b.reply({ content: '😂 LOL', flags: 64 }).catch(() => {});
+              else if (b.customId.startsWith('roast_own_')) await b.reply({ content: '🔥 OWN', flags: 64 }).catch(() => {});
+              else await b.reply({ content: 'Reacted!', flags: 64 }).catch(() => {});
+            });
+            return;
+          } else {
+            const roast = rand(ROASTS_SELF) || rand(ROASTS_GENERIC);
+            const long = `🔥 **Self Roast for ${inv.tag}**\n\n${roast}\n\n> *${rand(ANIMU_QUOTES_SELF)}*`;
+            const row = roastButtonRow(interaction.user.id);
+            const sent = await interaction.reply({ embeds: [mkEmbed('Self Roast', long, { timestamp: true })], components: [row], withResponse: true });
+            const coll = sent.createMessageComponentCollector({ time: 30000 });
+            coll.on('collect', async b => {
+              if (b.customId.startsWith('roast_lol_')) await b.reply({ content: '😂 LOL', flags: 64 }).catch(() => {});
+              else if (b.customId.startsWith('roast_own_')) await b.reply({ content: '🔥 OWN', flags: 64 }).catch(() => {});
+              else await b.reply({ content: 'Reacted!', flags: 64 }).catch(() => {});
+            });
+            return;
+          }
+        }
+
+        if (sub === 'rickroll') {
+          const target = interaction.options.getUser('target') || null;
+          const mention = target ? `<@${target.id}>` : 'everyone';
+          const main = `${mention}, here's a gift for you 🎵\nhttps://www.youtube.com/watch?v=dQw4w9WgXcQ`;
+          const extra = target ? `\n\n> *${rand(ANIMU_QUOTES_TARGET)}*` : `\n\n> *${rand(ANIMU_QUOTES_SELF)}*`;
+          return interaction.reply({ embeds: [mkEmbed('😈 Rickroll', main + extra, { timestamp: true })] });
+        }
+
+        if (sub === 'kill') {
+          const target = interaction.options.getUser('target') || null;
+          const methods_target = [
+            'was overwhelmed by an army of rubber ducks.',
+            'tripped on a banana peel and became a legend.',
+            'lost a duel with a sandwich.',
+            'was outwitted by a goldfish.'
+          ];
+          const methods_self = [
+            'accidentally imploded from too much swagger.',
+            'was defeated by their own overconfidence.',
+            'took one for the team and the team still complained.'
+          ];
+          if (target) {
+            const desc = `<@${target.id}> ${rand(methods_target)}\n\n> *${rand(ANIMU_QUOTES_TARGET)}*`;
+            return interaction.reply({ embeds: [mkEmbed('🔪 Playful Kill', desc, { timestamp: true })] });
+          } else {
+            const desc = `${inv.tag} ${rand(methods_self)}\n\n> *${rand(ANIMU_QUOTES_SELF)}*`;
+            return interaction.reply({ embeds: [mkEmbed('🔪 Self Playful Kill', desc, { timestamp: true })] });
+          }
+        }
       }
 
-      // ---------- TOKEN ----------
-      if (sub === 'token') {
-        const coinId = `ARCADE-${Math.floor(100000 + Math.random() * 900000)}`;
-        return interaction.reply({
-          embeds: [mkEmbed('🪙 Arcade Token', `You claimed arcade token: \`${coinId}\`!\n\n> *${rand(ANIMU_QUOTES_SELF)}*`)]
-        });
+      // ══════════════════════════════════════════════
+      // GROUP: GAMES
+      // ══════════════════════════════════════════════
+      if (group === 'games') {
+        if (sub === 'lovemeter') {
+          const a = interaction.options.getUser('a', true);
+          const b = interaction.options.getUser('b', true);
+          const val = Math.floor(Math.random() * 101);
+          const hearts = '❤️'.repeat(Math.round((val / 100) * 5)) || '💔';
+          const text = `💘 **Love Meter**\n\n<@${a.id}> + <@${b.id}> = **${val}%**\n\n${hearts}\n\n> *${rand(ANIMU_QUOTES_SELF)}*`;
+          return interaction.reply({ embeds: [mkEmbed('Love Meter', text, { timestamp: true })] });
+        }
+
+        if (sub === 'cleverrate' || sub === 'epicgamerrate') {
+          const target = interaction.options.getUser('target') || interaction.user;
+          const val = Math.floor(Math.random() * 101);
+          const title = sub === 'cleverrate' ? '🧠 Cleverness Rate' : '🎮 Epic Gamer Rate';
+          const desc = `${target} is **${val}%** ${sub === 'cleverrate' ? 'clever' : 'epic gamer'}.\n\n${val > 80 ? 'Legendary.' : val > 50 ? 'Pretty good.' : 'Needs practice.'}\n\n> *${rand(ANIMU_QUOTES_SELF)}*`;
+          return interaction.reply({ embeds: [mkEmbed(title, desc, { timestamp: true })] });
+        }
+
+        if (sub === 'hack') {
+          const target = interaction.options.getUser('target') || null;
+          if (target) {
+            const stages = HACK_STAGES_TARGET(`<@${target.id}>`);
+            const start = mkEmbed('💻 Fake Hack', 'Starting hack sequence...', { timestamp: true });
+            const sent = await interaction.reply({ embeds: [start], withResponse: true });
+            for (let i = 0; i < stages.length; i++) {
+              ((idx) => {
+                setTimeout(async () => {
+                  try {
+                    const e = mkEmbed('💻 Fake Hack', `\`\`\`\n${stages[idx]}\n\`\`\``, { timestamp: true });
+                    await sent.edit({ embeds: [e] }).catch(() => {});
+                    if (idx === stages.length - 1) {
+                      const done = mkEmbed('💻 Fake Hack — Complete', `All operations finished on <@${target.id}>.`, { timestamp: true });
+                      await sent.edit({ embeds: [done] }).catch(() => {});
+                    }
+                  } catch {}
+                }, 700 * (idx + 1));
+              })(i);
+            }
+            return;
+          } else {
+            const stages = HACK_STAGES_SELF(inv.tag);
+            const start = mkEmbed('💻 Self Hack', 'Running self-improvement sequence...', { timestamp: true });
+            const sent = await interaction.reply({ embeds: [start], withResponse: true });
+            for (let i = 0; i < stages.length; i++) {
+              ((idx) => {
+                setTimeout(async () => {
+                  try {
+                    const e = mkEmbed('💻 Self Hack', `\`\`\`\n${stages[idx]}\n\`\`\``, { timestamp: true });
+                    await sent.edit({ embeds: [e] }).catch(() => {});
+                    if (idx === stages.length - 1) {
+                      const done = mkEmbed('💻 Self Hack — Complete', `Self improvement applied to ${inv.tag}.`, { timestamp: true });
+                      await sent.edit({ embeds: [done] }).catch(() => {});
+                    }
+                  } catch {}
+                }, 700 * (idx + 1));
+              })(i);
+            }
+            return;
+          }
+        }
+
+        if (sub === 'dinochrome') {
+          const e = mkEmbed('🦕 Dinochrome', `${inv.tag} proclaims: "Behold, the dino."\n\n> *${rand(ANIMU_QUOTES_SELF)}*`, { timestamp: true });
+          await interaction.reply({ embeds: [e], withResponse: true }).catch(() => {});
+          return interaction.followUp({ content: '```' + DINO + '```' });
+        }
       }
 
-      // ---------- XMAS (fixed) ----------
-if (sub === 'xmas') {
-  // try a dedicated holidays image endpoint first
-  const holidayResp = await safeFetchJson('https://some-random-api.com/img/holidays');
-  const imgFromResp = holidayResp?.link || holidayResp?.url || holidayResp?.image || holidayResp?.data || null;
-
-  if (imgFromResp) {
-    const txt = `🎄 Merry and cozy — enjoy the season!\n\n> *${rand(ANIMU_QUOTES_SELF)}*`;
-    return interaction.reply({
-      embeds: [mkEmbed('🎄 Happy Holidays', txt, { image: imgFromResp, timestamp: true })]
-    });
-  }
-
-  // If the API didn't provide a holiday image, try a safe secondary source (animu 'quote' isn't appropriate)
-  // We'll attempt any available "animu/quote" image as a last resort, but only use it if it looks like an image URL.
-  const quoteImgCandidate = await fetchAnimu('quote');
-  const looksLikeImage = typeof quoteImgCandidate === 'string' && (quoteImgCandidate.startsWith('http://') || quoteImgCandidate.startsWith('https://'));
-
-  if (looksLikeImage) {
-    const txt = `🎄 Happy Holidays — small visual treat!\n\n> *${rand(ANIMU_QUOTES_SELF)}*`;
-    return interaction.reply({
-      embeds: [mkEmbed('🎄 Happy Holidays', txt, { image: quoteImgCandidate, timestamp: true })]
-    });
-  }
-
-  // Final fallback: plain embed + ASCII art (no animu kiss)
-  const asciiTree = [
-    '         *',
-    '        /|\\',
-    '       /*|O\\',
-    '      /*/|\\*\\',
-    '     /X/ * | \\',
-    '    /*/X/\\X|*\\',
-    '   /O/*/X/\\*\\O\\',
-    '        | |',
-    '        | |',
-    '       ====='
-  ].join('\n');
-
-  const txt = `🎄 Merry and cozy — no images available right now, enjoy this instead!\n\n> *${rand(ANIMU_QUOTES_SELF)}*`;
-  await interaction.reply({ embeds: [mkEmbed('🎄 Happy Holidays', txt, { timestamp: true })] });
-  return interaction.followUp({ content: '```' + asciiTree + '```' });
-}
-        
-      // fallback
-      return interaction.reply({ content: 'Subcommand not implemented.', flags: 64 });
+      return interaction.reply({ content: 'Subcommand not found.', flags: 64 });
     } catch (err) {
       console.error('fun command error', err);
       if (!interaction.replied) return interaction.reply({ content: 'An internal error occurred.', flags: 64 });
-      return;
     }
   }
 };

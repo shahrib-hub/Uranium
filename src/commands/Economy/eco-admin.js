@@ -1,12 +1,15 @@
-// src/commands/Economy/ecoadmin.js
+// src/commands/Economy/eco-admin.js
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const {
   getBalance,
   setBalance,
   addWallet,
-  addBank,
   resetUserEconomy,
-  wipeEverything
+  wipeEverything,
+  getGlobalEconomyDisabled,
+  setGlobalEconomyDisabled,
+  getMeta,
+  setMeta
 } = require('../../utils/economyStorage');
 
 const OWNER_IDS = (process.env.BOT_OWNER_IDS || '835826354515214336')
@@ -15,11 +18,11 @@ const OWNER_IDS = (process.env.BOT_OWNER_IDS || '835826354515214336')
   .filter(Boolean);
 
 module.exports = {
-  devOnly: true, // 👈 IMPORTANT: part of the main export
+  devOnly: true,
 
   data: new SlashCommandBuilder()
     .setName('ecoadmin')
-    .setDescription('Owner-only economy admin tools')
+    .setDescription('Owner-only economy admin and configuration tools')
     .setDMPermission(false)
     .addSubcommand(sc =>
       sc.setName('give')
@@ -42,6 +45,28 @@ module.exports = {
     .addSubcommand(sc =>
       sc.setName('wipe-all')
         .setDescription('WIPE ALL ECONOMY DATA (no joke)')
+    )
+    .addSubcommand(sc =>
+      sc.setName('status')
+        .setDescription('Show current global economy configuration status')
+    )
+    .addSubcommand(sc =>
+      sc.setName('toggle-global')
+        .setDescription('Enable/disable global economy system')
+        .addBooleanOption(o =>
+          o.setName('disabled')
+            .setDescription('Whether to disable economy globally')
+            .setRequired(true)
+        )
+    )
+    .addSubcommand(sc =>
+      sc.setName('set-multiplier')
+        .setDescription('Set a global earning multiplier')
+        .addNumberOption(o =>
+          o.setName('value')
+            .setDescription('Multiplier (e.g. 1.0, 1.5, 2.0)')
+            .setRequired(true)
+        )
     ),
 
   async execute(interaction) {
@@ -94,6 +119,41 @@ module.exports = {
       await wipeEverything();
       return interaction.reply({
         content: '💀 All economy data wiped.',
+        flags: 64
+      });
+    }
+
+    if (sub === 'status') {
+      const disabled = await getGlobalEconomyDisabled();
+      const mult = Number(await getMeta('eco_multiplier') || '1') || 1;
+
+      const embed = new EmbedBuilder()
+        .setColor(0x3498db)
+        .setTitle('💼 Economy Global Configuration')
+        .addFields(
+          { name: 'System Status', value: disabled ? '🔴 Disabled' : '🟢 Active', inline: true },
+          { name: 'Global Multiplier', value: `\`${mult}x\``, inline: true }
+        );
+
+      return interaction.reply({ embeds: [embed], flags: 64 });
+    }
+
+    if (sub === 'toggle-global') {
+      const disabled = interaction.options.getBoolean('disabled', true);
+      await setGlobalEconomyDisabled(disabled);
+
+      return interaction.reply({
+        content: `✅ Global economy system is now **${disabled ? 'DISABLED' : 'ENABLED'}**.`,
+        flags: 64
+      });
+    }
+
+    if (sub === 'set-multiplier') {
+      const value = interaction.options.getNumber('value', true);
+      await setMeta('eco_multiplier', String(value));
+
+      return interaction.reply({
+        content: `✅ Global economy earning multiplier set to **${value}x**.`,
         flags: 64
       });
     }

@@ -433,7 +433,9 @@ const TicketSchema = new mongoose.Schema({
   createdAt: { type: Number, required: true },
   closedAt: { type: Number, default: null },
   description: { type: String, default: null },
-  formResponses: { type: String, default: null }
+  formResponses: { type: String, default: null },
+  rating: { type: Number, default: null },
+  ratingFeedback: { type: String, default: null }
 });
 TicketSchema.index({ guildId: 1, ticketId: 1 }, { unique: true });
 
@@ -644,6 +646,13 @@ YTVerifySchema.index({ guildId: 1, channelId: 1 }, { unique: true });
 const LogConfigSchema = new mongoose.Schema({
   guildId: { type: String, required: true, unique: true },
   logChannel: { type: String, default: null },
+  channels: {
+    mod: { type: String, default: null },
+    message: { type: String, default: null },
+    voice: { type: String, default: null },
+    member: { type: String, default: null },
+    server: { type: String, default: null }
+  },
   webhookId: { type: String, default: null },
   webhookToken: { type: String, default: null }
 });
@@ -719,41 +728,11 @@ const logger = require('../utils/logger');
 
 // Setup DB connection
 let isConnected = false;
-async function connectToMongo() {
-  if (!useMongoDB) return;
-  if (isConnected) return;
+let listenersRegistered = false;
 
-  try {
-    const timeoutMs = parseInt(process.env.MONGODB_TIMEOUT_MS) || 15000;
-    logger.info('[Database] Connecting to MongoDB...');
-    const connectOptions = {
-      serverSelectionTimeoutMS: timeoutMs,
-      connectTimeoutMS: timeoutMs,
-      socketTimeoutMS: 45000
-    };
-    if (process.env.MONGODB_FORCE_IPV4 === 'true') {
-      connectOptions.family = 4;
-    }
-    await mongoose.connect(mongoURI, connectOptions);
-    isConnected = true;
-    logger.info('[Database] Successfully connected to MongoDB.');
-  } catch (err) {
-    const isDnsError = err.message.includes('ENOTFOUND') || err.message.includes('querySrv');
-    logger.error('[Database] Failed to connect to MongoDB: %s', err.message);
-    if (isDnsError) {
-      logger.error('💡 HINT: This is a DNS error. Please ensure your host machine can resolve the MongoDB Atlas address.');
-      logger.error('   If you are on a VPS/network with custom DNS, try setting your DNS servers to 8.8.8.8 or 1.1.1.1.');
-    } else if (err.message.includes('Server selection timed out')) {
-      logger.error('💡 HINT: Connection timed out. This usually means:');
-      logger.error('   1. Your current IP is not whitelisted in MongoDB Atlas under "Network Access" (add 0.0.0.0/0 to allow all IPs).');
-      logger.error('   2. Network latency to MongoDB Atlas exceeded the timeout threshold.');
-      if (mongoURI.includes('localhost') || mongoURI.includes('127.0.0.1')) {
-        logger.error('   3. Connecting to localhost:27017 failed because the local MongoDB service is not running.');
-      }
-    } else if (err.message.includes('Authentication failed') || err.message.includes('bad auth')) {
-      logger.error('💡 HINT: MongoDB authentication failed. Please verify the username and password in your MONGODB_URI.');
-    }
-  }
+function setupConnectionListeners() {
+  if (listenersRegistered) return;
+  listenersRegistered = true;
 
   mongoose.connection.on('error', err => {
     logger.error('[Database] MongoDB runtime error: %s', err.message);
@@ -768,6 +747,49 @@ async function connectToMongo() {
     console.log('✅ [DATABASE] MongoDB reconnected.');
     isConnected = true;
   });
+}
+
+async function connectToMongo() {
+  if (!useMongoDB) return;
+  if (isConnected) return;
+
+  setupConnectionListeners();
+
+  try {
+    const timeoutMs = parseInt(process.env.MONGODB_TIMEOUT_MS) || 15000;
+    logger.info('[Database] Connecting to MongoDB...');
+    const forceIpv4 = process.env.MONGODB_FORCE_IPV4 !== 'false';
+    const connectOptions = {
+      serverSelectionTimeoutMS: timeoutMs,
+      connectTimeoutMS: timeoutMs,
+      socketTimeoutMS: 45000
+    };
+    if (forceIpv4) {
+      connectOptions.family = 4;
+    }
+    await mongoose.connect(mongoURI, connectOptions);
+    isConnected = true;
+    logger.info('[Database] Successfully connected to MongoDB.');
+  } catch (err) {
+    const isDnsError = err.message.includes('ENOTFOUND') || err.message.includes('querySrv');
+    logger.error('[Database] Failed to connect to MongoDB: %s', err.message);
+    if (isDnsError) {
+      logger.error('💡 HINT: This is a DNS error. Please ensure your host machine can resolve the MongoDB Atlas address.');
+      logger.error('   If you are on a VPS/network with custom DNS, try setting your DNS servers to 8.8.8.8 or 1.1.1.1.');
+    } else if (err.message.includes('Server selection timed out') || err.message.includes('timed out') || err.name === 'MongoNetworkTimeoutError') {
+      logger.error('💡 HINT: Connection / TLS handshake timed out (secureConnect). This usually means:');
+      logger.error('   1. Your current server IP is NOT whitelisted in MongoDB Atlas under "Network Access".');
+      logger.error('      Go to cloud.mongodb.com -> Network Access -> Add IP Address -> Select "Allow Access from Anywhere" (0.0.0.0/0).');
+      logger.error('   2. Your hosting server (e.g. Pterodactyl / Docker container) cannot route IPv6.');
+      logger.error('      Ensure MONGODB_FORCE_IPV4=true is set in your .env file.');
+      logger.error('   3. Outbound connection on port 27017 is blocked by your hosting provider.');
+      if (mongoURI.includes('localhost') || mongoURI.includes('127.0.0.1')) {
+        logger.error('   4. Connecting to localhost:27017 failed because the local MongoDB service is not running.');
+      }
+    } else if (err.message.includes('Authentication failed') || err.message.includes('bad auth')) {
+      logger.error('💡 HINT: MongoDB authentication failed. Please verify the username and password in your MONGODB_URI.');
+    }
+  }
 }
 
 function getDbStatus() {
@@ -880,3 +902,70 @@ const UserPlaylistSchema = new mongoose.Schema({
   tracksJson: { type: String, default: '[]' }
 });
 exports.UserPlaylist = mongoose.model('UserPlaylist', UserPlaylistSchema);
+
+// Starboard Schemas
+const StarboardConfigSchema = new mongoose.Schema({
+  guildId: { type: String, required: true, unique: true },
+  channelId: { type: String, default: null },
+  emoji: { type: String, default: '⭐' },
+  threshold: { type: Number, default: 3 },
+  selfStar: { type: Boolean, default: false },
+  enabled: { type: Boolean, default: true },
+  ignoredChannels: { type: [String], default: [] }
+});
+exports.StarboardConfig = mongoose.model('StarboardConfig', StarboardConfigSchema);
+
+const StarboardMessageSchema = new mongoose.Schema({
+  guildId: { type: String, required: true },
+  originalMessageId: { type: String, required: true },
+  originalChannelId: { type: String, required: true },
+  starboardMessageId: { type: String, default: null },
+  authorId: { type: String, required: true },
+  starCount: { type: Number, default: 0 },
+  starredUsers: { type: [String], default: [] }
+});
+StarboardMessageSchema.index({ guildId: 1, originalMessageId: 1 }, { unique: true });
+exports.StarboardMessage = mongoose.model('StarboardMessage', StarboardMessageSchema);
+
+// AutoMod Strike & Escalation Matrix Schemas
+const AutoModStrikeSchema = new mongoose.Schema({
+  guildId: { type: String, required: true },
+  userId: { type: String, required: true },
+  reason: { type: String, default: 'AutoMod Violation' },
+  ruleType: { type: String, default: 'general' },
+  timestamp: { type: Number, default: Date.now },
+  expiresAt: { type: Number, required: true }
+});
+AutoModStrikeSchema.index({ guildId: 1, userId: 1, expiresAt: 1 });
+exports.AutoModStrike = mongoose.model('AutoModStrike', AutoModStrikeSchema);
+
+const AutoModEscalationRuleSchema = new mongoose.Schema({
+  guildId: { type: String, required: true },
+  strikes: { type: Number, required: true },
+  action: { type: String, required: true }, // 'timeout' | 'kick' | 'ban'
+  durationMs: { type: Number, default: 0 } // duration for timeout (e.g. 600000 = 10m)
+});
+AutoModEscalationRuleSchema.index({ guildId: 1, strikes: 1 }, { unique: true });
+exports.AutoModEscalationRule = mongoose.model('AutoModEscalationRule', AutoModEscalationRuleSchema);
+
+// Security & Quarantine Schemas
+const SecurityConfigSchema = new mongoose.Schema({
+  guildId: { type: String, required: true, unique: true },
+  quarantineRoleId: { type: String, default: null },
+  quarantineChannelId: { type: String, default: null },
+  isPanicLockdown: { type: Boolean, default: false },
+  lockedChannels: { type: [String], default: [] }
+});
+exports.SecurityConfig = mongoose.model('SecurityConfig', SecurityConfigSchema);
+
+const QuarantineMemberSchema = new mongoose.Schema({
+  guildId: { type: String, required: true },
+  userId: { type: String, required: true },
+  savedRoleIds: { type: [String], default: [] },
+  quarantinedAt: { type: Number, default: Date.now },
+  quarantinedBy: { type: String, default: null },
+  reason: { type: String, default: 'Security Quarantine' }
+});
+QuarantineMemberSchema.index({ guildId: 1, userId: 1 }, { unique: true });
+exports.QuarantineMember = mongoose.model('QuarantineMember', QuarantineMemberSchema);
+

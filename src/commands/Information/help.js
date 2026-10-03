@@ -33,81 +33,132 @@ function formatUptime(ms) {
   return parts.join(' ');
 }
 
+function buildHomeButtons(helpData) {
+  const cleanDash = (process.env.DASHBOARD_URL || 'https://uraniumbot.vercel.app').replace(/\/+$/, '');
+  const invite = helpData.bot?.invite_url || 'https://discord.com/oauth2/authorize?client_id=932136827605905489&scope=bot%20applications.commands&permissions=8';
+  const support = helpData.bot?.support_url || 'https://discord.gg/26ThFyckFX';
+
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setLabel('Dashboard')
+      .setStyle(ButtonStyle.Link)
+      .setURL(`${cleanDash}/`)
+      .setEmoji('🚀'),
+    new ButtonBuilder()
+      .setLabel('Invite')
+      .setStyle(ButtonStyle.Link)
+      .setURL(invite)
+      .setEmoji('📨'),
+    new ButtonBuilder()
+      .setLabel('Support')
+      .setStyle(ButtonStyle.Link)
+      .setURL(support)
+      .setEmoji('🛠️')
+  );
+}
+
 function buildMainEmbed(helpData, interaction) {
   const botInfo = helpData.bot || {};
-  const totalCommands = countCommands(helpData.categories || []);
+  const categories = helpData.categories || [];
+  const totalCommands = countCommands(categories);
   const botUser = interaction.client?.user;
   const author = interaction.user;
   const guilds = interaction.client.guilds.cache.size;
-  const users = interaction.client.guilds.cache.reduce((s, g) => s + g.memberCount, 0);
+  const users = interaction.client.guilds.cache.reduce((s, g) => s + (g.memberCount || 0), 0);
+  const ping = interaction.client.ws?.ping ?? -1;
+  const pingDisplay = ping >= 0 ? `${ping}ms` : 'Connecting...';
+  const cleanDash = (process.env.DASHBOARD_URL || 'https://uraniumbot.vercel.app').replace(/\/+$/, '');
 
   const embed = new EmbedBuilder()
-    .setColor(0x2F3136)
-    .setTitle(`✺ ${botInfo.name || 'Uranium'} — Command Center`)
+    .setColor(0x5865F2)
+    .setAuthor({
+      name: `${botInfo.name || 'Uranium'} • Command Center`,
+      iconURL: botUser?.displayAvatarURL?.({ size: 128 }),
+      url: cleanDash
+    })
+    .setTitle(`⚡ ${botInfo.name || 'Uranium'} — Interactive Command Center`)
     .setDescription([
-      '```ansi',
-      '\u001b[1;35m╔══════════════════════════════════════╗',
-      `║   \u001b[1;33m🤖 ${(botInfo.name || 'Uranium').padEnd(25)}\u001b[0;35m║`,
-      '║   \u001b[0;37mYour premium Discord companion\u001b[0;35m      ║',
-      '╚══════════════════════════════════════╝\u001b[0m',
-      '```',
+      '### ✦ Enterprise Discord Companion',
+      '> **Your all-in-one powerhouse for moderation, economy, security & web management.**',
+      '> Engineered for high performance with real-time audit logging, automated defense shields, and full dashboard integration.',
       '',
-      '**__📖 Quick Navigation__**',
-      '> Select a category from the dropdown below to browse all commands.',
-      '> Only **you** can interact with this panel.',
-      '',
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+      'Select a category from the dropdown menu below to view available commands.'
     ].join('\n'))
     .setThumbnail(botUser?.displayAvatarURL?.({ size: 256 }))
     .addFields(
       {
-        name: '⚡ Bot Statistics',
+        name: '📊 Network Metrics',
         value: [
-          `> \`📦 Version:\` **v${botInfo.version || '2.0'}**`,
-          `> \`🔧 Developer:\` **${botInfo.developer || 'SHM'}**`,
-          `> \`📊 Commands:\` **${totalCommands}** total`,
-          `> \`🌐 Servers:\` **${guilds.toLocaleString()}**`,
-          `> \`👥 Users:\` **${users.toLocaleString()}**`,
-          `> \`⏱ Uptime:\` **${formatUptime(interaction.client.uptime || 0)}**`
+          `> 🌐 **Servers:** \`${guilds.toLocaleString()}\``,
+          `> 👥 **Users:** \`${users.toLocaleString()}\``,
+          `> ⚡ **Latency:** \`${pingDisplay}\``
+        ].join('\n'),
+        inline: true
+      },
+      {
+        name: '⚙️ Core Engine',
+        value: [
+          `> 📦 **Version:** \`v${botInfo.version || '2.0.0'}\``,
+          `> ⏱️ **Uptime:** \`${formatUptime(interaction.client.uptime || 0)}\``,
+          `> 🔧 **Developer:** \`${botInfo.developer || 'SHM'}\``
+        ].join('\n'),
+        inline: true
+      },
+      {
+        name: '📂 Command Registry',
+        value: [
+          `> 📁 **Suites:** \`${categories.length} Modules\``,
+          `> 📜 **Commands:** \`${totalCommands} Total\``,
+          `> 🔒 **Interface:** \`Slash (/) Ready\``
+        ].join('\n'),
+        inline: true
+      },
+      {
+        name: '🌟 Core Module Highlights',
+        value: [
+          '• `🛡️ Moderation` — Warnings, bans, timeouts, audit logs & sanctions',
+          '• `🤖 AutoMod` — Anti-spam, anti-raid, strike escalation & auto-quarantine',
+          '• `💰 Economy` — Dynamic economy, jobs, shop, inventory & casino',
+          '• `🎫 Tickets` — Interactive ticket panels, transcripts & rating feedback',
+          '• `🎵 Music & Fun` — High-fidelity audio playback, filters & social mini-games'
+        ].join('\n'),
+        inline: false
+      },
+      {
+        name: '💡 Quick Navigation Guide',
+        value: [
+          '`1.` **Select a Module:** Use the select menu below to explore commands in any category.',
+          '`2.` **Browse Pages:** Use **◀ Previous** and **Next ▶** buttons for large categories.',
+          '`3.` **Return Home:** Click **Back** at any time to return to this overview.',
+          '`4.` **Run Commands:** All commands can be triggered directly using `/command` in chat.'
         ].join('\n'),
         inline: false
       }
     )
-    .setAuthor({ name: `Requested by ${author.username}`, iconURL: author.displayAvatarURL({ dynamic: true, size: 128 }) })
-    .setFooter({ text: `⚡ Uranium • Made with 💜 by ${botInfo.developer || 'SHM'} • ${new Date().toLocaleDateString()}` })
+    .setFooter({
+      text: `Requested by ${author.username} • Session locked to you`,
+      iconURL: author.displayAvatarURL({ dynamic: true, size: 128 })
+    })
     .setTimestamp();
-
-  embed.addFields({
-    name: '💡 How to Use',
-    value: [
-      '**1.** Use the dropdown menu below to select a command category.',
-      '**2.** Browse through the commands and their descriptions.',
-      '**3.** Use pagination buttons (◀ ▶) if a category has many commands.',
-      '**4.** Click __Back__ to return to the main menu.',
-      '',
-      '**Example:** `' + botInfo.name + ' ' + (helpData.categories?.[0]?.commands?.[0]?.split(' ')[0] || '/help') + '` to start.'
-    ].join('\n'),
-    inline: false
-  });
 
   return embed;
 }
 
-function buildCategoryEmbed(helpData, category, interaction, page = 0) {
+function buildCategoryEmbed(category, page = 0, perPage = 8, interaction = null) {
   const cmds = category.commands || [];
-  const totalPages = Math.max(1, Math.ceil(cmds.length / 8));
-  const start = page * 8;
-  const slice = cmds.slice(start, start + 8);
+  const totalPages = Math.max(1, Math.ceil(cmds.length / perPage));
+  const start = page * perPage;
+  const slice = cmds.slice(start, start + perPage);
   const botUser = interaction?.client?.user;
 
   const embed = new EmbedBuilder()
     .setColor(0x5865F2)
-    .setTitle(`${category.emoji || '📁'} **${category.id}**`)
+    .setTitle(`${category.emoji || '📁'} **${category.id} Commands**`)
     .setDescription([
-      `> **${cmds.length}** command${cmds.length === 1 ? '' : 's'} in this category`,
-      `> Page **${page + 1}** of **${totalPages}**`,
+      `> 📂 Category: **${category.id}** • **${cmds.length}** total command${cmds.length === 1 ? '' : 's'}`,
+      `> 📄 Page **${page + 1}** of **${totalPages}**`,
       '',
-      '╰─' + '─'.repeat(40)
+      'Select another category from the dropdown or click **Back** to return home.'
     ].join('\n'))
     .setFooter({ text: `Page ${page + 1} of ${totalPages} • ${cmds.length} total commands` })
     .setTimestamp();
@@ -128,7 +179,7 @@ function buildCategoryEmbed(helpData, category, interaction, page = 0) {
     const num = start + i + 1;
 
     fields.push({
-      name: `${num.toString().padStart(3, '0')}. ${command}`,
+      name: `${num.toString().padStart(2, '0')}. ${command}`,
       value: `> ${desc || 'No description available'}`,
       inline: false
     });
@@ -145,9 +196,9 @@ function buildSelectOptions(categories) {
     const parsed = parseEmoji(cat.emoji);
     const cmdsCount = (cat.commands || []).length;
     const opt = {
-      label: cat.id.length > 25 ? cat.id.substring(0, 22) + '...' : cat.id,
+      label: cat.id.substring(0, 100),
       value: cat.id,
-      description: `${cmdsCount} command${cmdsCount === 1 ? '' : 's'} • Click to view`,
+      description: `${cmdsCount} command${cmdsCount === 1 ? '' : 's'} • Click to browse`
     };
     if (parsed) opt.emoji = { id: parsed.id, name: parsed.name };
     options.push(opt);
@@ -169,56 +220,17 @@ module.exports = {
 
       const token = makeToken();
       const selectId = `help_select_${interaction.user.id}_${token}`;
-
-      const options = categories.slice(0, 25).map(cat => {
-        const parsed = parseEmoji(cat.emoji);
-        const cmdsCount = (cat.commands || []).length;
-        const opt = {
-          label: cat.id.substring(0, 100),
-          value: cat.id,
-          description: `${cmdsCount} command${cmdsCount === 1 ? '' : 's'} • Click to browse`
-        };
-        if (parsed) opt.emoji = { id: parsed.id, name: parsed.name };
-        return opt;
-      });
+      const selectOptions = buildSelectOptions(categories);
 
       const select = new StringSelectMenuBuilder()
         .setCustomId(selectId)
-        .setPlaceholder('✨ Choose a category to explore...')
-        .addOptions(options);
+        .setPlaceholder('✨ Select a module to explore commands...')
+        .addOptions(selectOptions);
 
       const selectRow = new ActionRowBuilder().addComponents(select);
-
-      const cleanDash = (process.env.DASHBOARD_URL || 'https://uraniumbot.vercel.app').replace(/\/+$/, '');
-      const buttons = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setLabel('Dashboard')
-          .setStyle(ButtonStyle.Link)
-          .setURL(`${cleanDash}/`)
-          .setEmoji('🚀'),
-        new ButtonBuilder()
-          .setLabel('Invite')
-          .setStyle(ButtonStyle.Link)
-          .setURL(helpData.bot?.invite_url || 'https://discord.com')
-          .setEmoji('📨'),
-        new ButtonBuilder()
-          .setLabel('Privacy')
-          .setStyle(ButtonStyle.Link)
-          .setURL(`${cleanDash}/privacy`)
-          .setEmoji('📜'),
-        new ButtonBuilder()
-          .setLabel('Terms')
-          .setStyle(ButtonStyle.Link)
-          .setURL(`${cleanDash}/tos`)
-          .setEmoji('⚖️'),
-        new ButtonBuilder()
-          .setLabel('Support')
-          .setStyle(ButtonStyle.Link)
-          .setURL(helpData.bot?.support_url || 'https://discord.gg/26ThFyckFX')
-          .setEmoji('🛠️')
-      );
-
+      const buttons = buildHomeButtons(helpData);
       const mainEmbed = buildMainEmbed(helpData, interaction);
+
       await interaction.reply({ embeds: [mainEmbed], components: [selectRow, buttons], flags: 0 });
     } catch (err) {
       console.error('[help]', err);
@@ -226,5 +238,14 @@ module.exports = {
         await interaction.reply({ content: '⚠️ Error opening help.', flags: 64 }).catch(() => {});
       }
     }
-  }
+  },
+  buildMainEmbed,
+  buildCategoryEmbed,
+  buildSelectOptions,
+  buildHomeButtons,
+  safeLoadJson,
+  countCommands,
+  formatUptime,
+  parseEmoji,
+  makeToken
 };

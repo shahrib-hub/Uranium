@@ -38,19 +38,33 @@ function requireGuildAccess(client) {
  * Requires the user to have MANAGE_GUILD permission (admin-level actions).
  */
 function requireGuildAdmin(req, res, next) {
-  const perms = parseInt(req.userGuild?.permissions || '0');
-  const MANAGE_GUILD = 0x20; // MANAGE_GUILD permission bit
-  const ADMINISTRATOR = 0x8;
+  const perms = BigInt(req.userGuild?.permissions || '0');
+  const MANAGE_GUILD = 0x20n; // MANAGE_GUILD permission bit
+  const ADMINISTRATOR = 0x8n;
 
   if ((perms & ADMINISTRATOR) === ADMINISTRATOR || (perms & MANAGE_GUILD) === MANAGE_GUILD) {
     return next();
   }
 
   // Also allow bot owner
-  const ownerIds = (process.env.BOT_OWNER_IDS || '').split(',').map(s => s.trim());
+  const ownerIds = (process.env.BOT_OWNER_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
   if (ownerIds.includes(req.session?.user?.id)) return next();
 
   return res.status(403).json({ error: 'You need Manage Server permission' });
 }
 
-module.exports = { requireAuth, requireGuildAccess, requireGuildAdmin };
+/**
+ * Requires the user to be a designated Bot Owner / Admin.
+ */
+function requireBotAdmin(req, res, next) {
+  if (!req.session?.user) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+  const ownerIds = (process.env.BOT_OWNER_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
+  if (ownerIds.includes(req.session.user.id)) {
+    return next();
+  }
+  return res.status(403).json({ error: 'Access denied: Bot administrator permissions required.' });
+}
+
+module.exports = { requireAuth, requireGuildAccess, requireGuildAdmin, requireBotAdmin };

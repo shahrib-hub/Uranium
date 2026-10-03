@@ -68,6 +68,7 @@ module.exports = {
       .addSubcommand((sub) => sub.setName('blackjack').setDescription('Play blackjack').addIntegerOption((opt) => opt.setName('bet').setDescription('Bet amount').setRequired(true)))
       .addSubcommand((sub) => sub.setName('dice').setDescription('Roll dice').addIntegerOption((opt) => opt.setName('bet').setDescription('Bet amount').setRequired(true)))
       .addSubcommand((sub) => sub.setName('crash').setDescription('Play crash').addIntegerOption((opt) => opt.setName('bet').setDescription('Bet amount').setRequired(true))))
+    .addSubcommand((sub) => sub.setName('help').setDescription('Show economy command center & guide'))
     .addSubcommand((sub) => sub.setName('shop').setDescription('Browse the shop'))
     .addSubcommand((sub) => sub.setName('sell').setDescription('Sell an item')
       .addStringOption((opt) => opt.setName('item').setDescription('Item id').setAutocomplete(true))
@@ -117,6 +118,42 @@ module.exports = {
     const sub = interaction.options.getSubcommand();
 
     try {
+      if (!group && sub === 'help') {
+        const { economyHelpSelect } = require('../../economy/components');
+        const embed = new EmbedBuilder()
+          .setColor(0x00ff88)
+          .setTitle('☢️ URANIUM ECONOMY — Command Center')
+          .setThumbnail(interaction.client.user.displayAvatarURL({ size: 512 }))
+          .setDescription([
+            '> *The most addictive economy system on Discord.*',
+            '',
+            '**Select a category below** to see detailed commands.',
+            '',
+            '━━━━━━━━━━━━━━━━━━━━━━',
+            '',
+            '⚛️ **Earning** — Daily, work, crime, beg, search, mine, chop',
+            '🎒 **Items & Shop** — 55+ items across 8 categories',
+            '🗺️ **Adventures** — 6 zones with unique loot',
+            '🎲 **Gambling** — Slots, blackjack, crash, roulette & more',
+            '📊 **Progression** — Levels, XP, prestige system',
+            '🏦 **Banking** — Deposit, withdraw, rob, transfer',
+            '',
+            '━━━━━━━━━━━━━━━━━━━━━━',
+            '',
+            '⚡ **Quick Start:** `/eco earn daily` → `/eco earn work` → `/eco shop`',
+            '🔥 **Pro Tip:** Daily streaks give up to **5x** bonus rewards!'
+          ].join('\n'))
+          .addFields(
+            { name: '⭐ Leveling', value: 'Earn XP from every action.\nUnlock better jobs, zones & items!', inline: true },
+            { name: '✨ Prestige', value: 'Reset at Lv.50 for permanent\nearning multipliers!', inline: true },
+            { name: '🛡️ Protection', value: 'Buy padlocks & shields\nto protect from robbers!', inline: true }
+          )
+          .setFooter({ text: '☢️ Uranium Economy • Use the dropdown below to explore' })
+          .setTimestamp();
+        const row = economyHelpSelect();
+        return interaction.reply({ embeds: [embed], components: [row] });
+      }
+
       if (group === 'info') {
         if (sub === 'balance') return infoHandler.balance(interaction);
         if (sub === 'profile') return infoHandler.profile(interaction);

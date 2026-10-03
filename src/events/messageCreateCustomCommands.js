@@ -8,6 +8,9 @@ const {
 } = require('../utils/customCommandStorage');
 const pluginStorage = require('../utils/pluginStorage');
 
+const commandCache = new Map(); // guildId -> { commands: Array, expiry: number }
+const CACHE_TTL = 30000; // 30 seconds
+
 module.exports = {
   name: 'messageCreate',
   async execute(message, client) {
@@ -25,7 +28,15 @@ module.exports = {
       const raw = message.content.trim();
       if (!raw) return;
 
-      const commands = await getCustomCommands(guildId);
+      // In-memory cached command lookup to prevent database starvation
+      let commands;
+      const cached = commandCache.get(guildId);
+      if (cached && cached.expiry > Date.now()) {
+        commands = cached.commands;
+      } else {
+        commands = await getCustomCommands(guildId);
+        commandCache.set(guildId, { commands: commands || [], expiry: Date.now() + CACHE_TTL });
+      }
       if (!commands || commands.length === 0) return;
 
       // Match dynamic prefix + command name (e.g. '!rules', '?help', '$donate')

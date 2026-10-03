@@ -80,10 +80,68 @@ module.exports = {
     .addSubcommand(sub =>
       sub.setName('fasttype')
         .setDescription('Test your typing speed and accuracy')
+    )
+    .addSubcommand(sub =>
+      sub.setName('leaderboard')
+        .setDescription('View game leaderboards')
+        .addStringOption(option =>
+          option.setName('game')
+            .setDescription('Select game type')
+            .setRequired(true)
+            .addChoices(
+              { name: 'Rock Paper Scissors', value: 'rps' },
+              { name: 'Hangman', value: 'hangman' },
+              { name: 'Tic-Tac-Toe', value: 'tictactoe' },
+              { name: 'Global XP', value: 'global' }
+            )
+        )
     ),
 
   async execute(interaction) {
     const sub = interaction.options.getSubcommand();
+
+    // -------------------------
+    // Leaderboard
+    // -------------------------
+    if (sub === 'leaderboard') {
+      const { getLeaderboard, getGlobalLeaderboard } = require('../../utils/leaderboard');
+      const gameType = interaction.options.getString('game', true);
+      const guildId = interaction.guild.id;
+      const gameIcons = { rps: '🪨', hangman: '🔤', tictactoe: '❎', global: '🌐' };
+
+      const leaderboard =
+        gameType === 'global'
+          ? getGlobalLeaderboard(guildId)
+          : getLeaderboard(guildId, gameType);
+
+      const top10 = (leaderboard || []).slice(0, 10);
+      const icon = gameIcons[gameType] || '🏆';
+      const title =
+        gameType === 'global'
+          ? `${icon} Global Leaderboard`
+          : `${icon} ${gameType.charAt(0).toUpperCase() + gameType.slice(1)} Leaderboard`;
+
+      const embed = new EmbedBuilder()
+        .setTitle(title)
+        .setColor('Gold')
+        .setThumbnail(interaction.client.user.displayAvatarURL())
+        .setFooter({ text: 'Uranium Games Leaderboard' })
+        .setTimestamp();
+
+      if (top10.length === 0) {
+        embed.setDescription('No stats available yet. Be the first to play!');
+      } else {
+        embed.setDescription(
+          top10.map((entry, i) => {
+            const userTag = `<@${entry.userId}>`;
+            const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
+            return `${medal} ${userTag} — **${entry.score || entry.wins || 0}** wins`;
+          }).join('\n')
+        );
+      }
+
+      return interaction.reply({ embeds: [embed] });
+    }
 
     // -------------------------
     // 8-ball

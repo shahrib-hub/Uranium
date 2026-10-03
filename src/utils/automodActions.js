@@ -78,6 +78,18 @@ module.exports = {
         evidence: [],
         references: []
       });
+
+      // Record strike and trigger escalation ladder (Warn -> Timeout -> Kick -> Ban)
+      try {
+        const automodEscalation = require('./automodEscalation');
+        const member = guild.members.cache.get(user.id) || await guild.members.fetch(user.id).catch(() => null);
+        if (member) {
+          await automodEscalation.recordStrikeAndEscalate(guild, member, reason, 'automod_warn', client);
+        }
+      } catch (escErr) {
+        console.warn('[automodActions] escalation check error:', escErr.message);
+      }
+
       return true;
     } catch { return false; }
   },

@@ -358,6 +358,33 @@ module.exports = {
       await channel.send({ embeds: [embed], files: [file] }).catch(() => {});
       await channel.permissionOverwrites.edit(ticket.opener_id, { ViewChannel: false }).catch(() => {});
       await channel.setParent(config.closed_category_id).catch(() => {});
+
+      // Send DM to opener with Transcript & CSAT rating buttons
+      try {
+        const openerUser = await interaction.client.users.fetch(ticket.opener_id).catch(() => null);
+        if (openerUser) {
+          const ratingRow = new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId(`ticket_rate_${ticket.id}_1`).setLabel('⭐ 1').setStyle(ButtonStyle.Secondary),
+            new ButtonBuilder().setCustomId(`ticket_rate_${ticket.id}_2`).setLabel('⭐ 2').setStyle(ButtonStyle.Secondary),
+            new ButtonBuilder().setCustomId(`ticket_rate_${ticket.id}_3`).setLabel('⭐ 3').setStyle(ButtonStyle.Secondary),
+            new ButtonBuilder().setCustomId(`ticket_rate_${ticket.id}_4`).setLabel('⭐ 4').setStyle(ButtonStyle.Primary),
+            new ButtonBuilder().setCustomId(`ticket_rate_${ticket.id}_5`).setLabel('⭐ 5 (Excellent)').setStyle(ButtonStyle.Success)
+          );
+
+          const { EmbedBuilder } = require('discord.js');
+          const dmEmbed = new EmbedBuilder()
+            .setColor(0x57F287)
+            .setTitle(`📬 Ticket #${ticket.id} Closed — ${guild.name}`)
+            .setDescription(`Your support ticket in **${guild.name}** has been closed.\nA complete HTML transcript of your conversation is attached below.\n\n**Please take a moment to rate our staff support:**`)
+            .setFooter({ text: 'Your feedback helps our team improve!' })
+            .setTimestamp();
+
+          await openerUser.send({ embeds: [dmEmbed], files: [file], components: [ratingRow] }).catch(() => {});
+        }
+      } catch (dmErr) {
+        console.warn('[Ticket Close] Could not DM user transcript:', dmErr.message);
+      }
+
       return interaction.reply({ content: '✅ Ticket closed.', flags: 64 });
     }
 

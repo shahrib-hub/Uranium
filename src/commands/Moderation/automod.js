@@ -92,7 +92,46 @@ module.exports = {
     )
 
     .addSubcommand(sc => sc.setName('status').setDescription('Show current automod status'))
-  ,
+
+    .addSubcommand(sc =>
+      sc.setName('escalation')
+        .setDescription('Configure automated strike punishment ladder')
+        .addStringOption(o =>
+          o.setName('action')
+            .setDescription('Action type')
+            .setRequired(true)
+            .addChoices(
+              { name: 'View Escalation Ladder', value: 'view' },
+              { name: 'Set Strike Rule', value: 'set' },
+              { name: 'Reset to Defaults', value: 'reset' }
+            )
+        )
+        .addIntegerOption(o => o.setName('strikes').setDescription('Strike count (for set)').setMinValue(1).setMaxValue(20))
+        .addStringOption(o =>
+          o.setName('penalty')
+            .setDescription('Penalty to enforce')
+            .addChoices(
+              { name: 'Timeout', value: 'timeout' },
+              { name: 'Kick', value: 'kick' },
+              { name: 'Ban', value: 'ban' }
+            )
+        )
+        .addIntegerOption(o => o.setName('timeout-minutes').setDescription('Timeout duration in minutes (if penalty is timeout)').setMinValue(1).setMaxValue(10080))
+    )
+
+    .addSubcommand(sc =>
+      sc.setName('strikes')
+        .setDescription('View or manage user strikes')
+        .addUserOption(o => o.setName('user').setDescription('Target user').setRequired(true))
+        .addStringOption(o =>
+          o.setName('action')
+            .setDescription('Action')
+            .addChoices(
+              { name: 'View Active Strikes', value: 'view' },
+              { name: 'Clear All Strikes', value: 'clear' }
+            )
+        )
+    ),
 
   async execute(interaction) {
     if (!requireManageGuild(interaction)) return;
@@ -216,6 +255,76 @@ module.exports = {
             await AutomodStorage.setConfig(guildId, cfg);
             return interaction.reply({ content: `Removed \`${domain}\` from whitelist.`, flags: 64 });
           }
+        }
+
+        case 'escalation': {
+          const automodEscalation = require('../../utils/automodEscalation');
+          const act = interaction.options.getString('action', true);
+          if (act === 'view') {
+            const rules = await automodEscalation.getEscalationRules(guildId);
+            const embed = new EmbedBuilder()
+              .setColor(0x5865F2)
+              .setTitle('⚡ AutoMod Punishment Escalation Ladder')
+              .setDescription('When a member repeatedly triggers AutoMod within 24 hours, the following automated penalties are enforced:')
+              .setFooter({ text: 'Uranium • AutoMod Escalation Defense' });
+
+            rules.forEach(r => {
+              embed.addFields({
+                name: `🚨 ${r.strikes} Strikes`,
+                value: `Enforces **${r.action.toUpperCase()}**${r.durationMs ? ` (${Math.round(r.durationMs / 60000)} minutes)` : ''}`,
+                inline: true
+              });
+            });
+            return interaction.reply({ embeds: [embed] });
+          }
+
+          if (act === 'reset') {
+            await automodEscalation.clearEscalationRules(guildId);
+            return interaction.reply({ content: '✅ Escalation rules reset to default ladder (2 strikes = 10m timeout, 3 strikes = 1h timeout, 4 strikes = kick, 5 strikes = ban).' });
+          }
+
+          if (act === 'set') {
+            const strikes = interaction.options.getInteger('strikes');
+            const penalty = interaction.options.getString('penalty');
+            const timeoutMinutes = interaction.options.getInteger('timeout-minutes') || 10;
+            if (!strikes || !penalty) {
+              return interaction.reply({ content: '❌ Please provide both `strikes` and `penalty`.', flags: 64 });
+            }
+            const durationMs = penalty === 'timeout' ? timeoutMinutes * 60 * 1000 : 0;
+            await automodEscalation.setEscalationRule(guildId, strikes, penalty, durationMs);
+            return interaction.reply({ content: `✅ Updated escalation rule: **${strikes} Strikes** → **${penalty.toUpperCase()}**${durationMs ? ` (${timeoutMinutes}m)` : ''}.` });
+          }
+          break;
+        }
+
+        case 'strikes': {
+          const automodEscalation = require('../../utils/automodEscalation');
+          const targetUser = interaction.options.getUser('user', true);
+          const act = interaction.options.getString('action') || 'view';
+
+          if (act === 'clear') {
+            await automodEscalation.clearStrikes(guildId, targetUser.id);
+            return interaction.reply({ content: `✅ Cleared all active AutoMod strikes for <@${targetUser.id}>.` });
+          }
+
+          const { count, strikes } = await automodEscalation.getStrikes(guildId, targetUser.id);
+          const embed = new EmbedBuilder()
+            .setColor(count > 0 ? 0xED4245 : 0x57F287)
+            .setTitle(`AutoMod Strikes — ${targetUser.tag || targetUser.username}`)
+            .setDescription(`<@${targetUser.id}> has **${count} active strike(s)** in the past 24 hours.`)
+            .setFooter({ text: 'Strikes automatically expire after 24 hours' })
+            .setTimestamp();
+
+          if (strikes.length) {
+            strikes.slice(0, 5).forEach((s, idx) => {
+              embed.addFields({
+                name: `Strike #${idx + 1} (${s.ruleType || 'rule'})`,
+                value: `${s.reason} — <t:${Math.floor(s.timestamp / 1000)}:R>`,
+                inline: false
+              });
+            });
+          }
+          return interaction.reply({ embeds: [embed] });
         }
 
         case 'status': {

@@ -29,17 +29,27 @@ const EVENTS = {
   voiceStateUpdate: 'voiceStateUpdate'
 };
 
-async function sendLog(client, guildId, embed) {
+const { sendSplitLog } = require('../utils/splitLogger');
+
+async function sendLog(client, guildId, embed, category = 'server') {
   try {
     const pluginStorage = require('../utils/pluginStorage');
     if (pluginStorage && !(await pluginStorage.isPluginEnabled(guildId, 'logging'))) return false;
   } catch {}
 
+  // 1. Try categorized split channel delivery (mod | message | voice | member | server)
+  try {
+    const splitOk = await sendSplitLog(client, guildId, category, embed);
+    if (splitOk) return true;
+  } catch {}
+
+  // 2. Fallback to webhook if configured
   try {
     const ok = await webhookHelper.sendViaWebhookIfConfigured(client, guildId, { embeds: [embed] });
     if (ok) return true;
   } catch {}
 
+  // 3. Fallback to legacy single log channel
   try {
     const channelId = await logStorage.getLogChannel(guildId);
     if (!channelId) return false;
@@ -51,7 +61,7 @@ async function sendLog(client, guildId, embed) {
     if (!ch || !ch.isTextBased?.()) return false;
 
     const me = guild.members.me;
-    if (!me.permissionsIn(ch).has(PermissionsBitField.Flags.SendMessages)) return false;
+    if (!me || !me.permissionsIn(ch).has(PermissionsBitField.Flags.SendMessages)) return false;
 
     await ch.send({ embeds: [embed] }).catch(() => {});
     return true;
